@@ -1,0 +1,17 @@
+.topbar {
+    background-color: rgb(60, 60, 60);
+    color: gainsboro;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.topbar .nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}

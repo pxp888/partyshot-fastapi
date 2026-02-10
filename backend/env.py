@@ -1,0 +1,3 @@
+SECRET_KEY = "your‑very‑long‑random‑string"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30

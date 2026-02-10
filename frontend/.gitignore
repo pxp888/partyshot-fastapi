@@ -1,0 +1,76 @@
+# Byte‑code
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env/
+.venv/
+ENV/
+ENV/
+env/
+venv/
+pipenv/           # pipenv's lock file is tracked
+env.py
+
+
+# Django
+# (Keep migrations – they are part of the repo – but ignore local media & static)
+media/
+staticfiles/
+*.log
+*.sqlite3
+*.sqlite
+*.sqlite3-journal
+db.sqlite3
+*.pyc
+*.pyo
+
+# Node / React
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+pnpm-lock.yaml
+.pnp.*
+*.lock
+*.tgz
+
+# Build artefacts
+build/
+dist/
+out/
+.next/
+coverage/
+*.coverage
+*.tmp
+*.temp
+
+# Environment variables
+.env.local
+.env.test
+.env.production
+.env.development
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+*.swo
+*.swp
+
+# Zed editor
+.zed/
+.zedcache/
+.zedconfig/
+.zedconfig
+.zedlock/
+
+# Miscellaneous
+.DS_Store
+Thumbs.db
+*.bak
+*.swp
+*.swo
