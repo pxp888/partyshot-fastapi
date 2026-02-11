@@ -1,6 +1,13 @@
 import "./style/FileItem.css";
 
-function FileItem({ file, selectMode, selected, setSelected, setFocus }) {
+function FileItem({
+  index,
+  file,
+  selectMode,
+  selected,
+  setSelected,
+  setFocus,
+}) {
   const isSelected = selected.includes(file.id);
 
   // console.log(file);
@@ -14,7 +21,7 @@ function FileItem({ file, selectMode, selected, setSelected, setFocus }) {
         setSelected([...selected, file.id]);
       }
     } else {
-      setFocus(file);
+      setFocus(index);
     }
   }
 
@@ -24,6 +31,7 @@ function FileItem({ file, selectMode, selected, setSelected, setFocus }) {
       onClick={handleClick}
     >
       <h2>{file.filename}</h2>
+      <p>{index}</p>
       <p>{file.username}</p>
       <p>{new Date(file.created_at).toLocaleDateString()}</p>
     </div>

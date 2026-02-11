@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { receiveJson, sendJson } from "./helpers";
 import FileItem from "./FileItem";
+import Imageview from "./Imageview";
 import "./style/Albumview.css";
 
 function Albumview(currentUser) {
@@ -10,7 +11,7 @@ function Albumview(currentUser) {
   const navigate = useNavigate();
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
-  const [focus, setFocus] = useState(null);
+  const [focus, setFocus] = useState(-1);
 
   useEffect(() => {
     async function fetchAlbum() {
@@ -82,6 +83,9 @@ function Albumview(currentUser) {
 
   return (
     <section>
+      {focus > -1 && (
+        <Imageview files={album.photos} focus={focus} setFocus={setFocus} />
+      )}
       <div className="albumview">
         <h3>Album View</h3>
         <div className="albumDetails">
@@ -139,8 +143,9 @@ function Albumview(currentUser) {
           <p>No files in this album.</p>
         ) : (
           <div className="fileList">
-            {album.photos.map((file) => (
+            {album.photos.map((file, index) => (
               <FileItem
+                index={index}
                 key={file.id}
                 file={file}
                 selectMode={selectMode}

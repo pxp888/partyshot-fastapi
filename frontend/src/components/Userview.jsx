@@ -46,7 +46,9 @@ function Userview({ currentUser, setCurrentUser }) {
         <form onSubmit={handleCreateAlbum}>
           <label htmlFor="albumName">Album Name:</label>
           <input type="text" id="albumName" name="albumName" />
-          <button type="submit">Create Album</button>
+          <button className="btn" type="submit">
+            Create Album
+          </button>
         </form>
       )}
       <div className="album-list">
