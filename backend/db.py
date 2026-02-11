@@ -176,6 +176,27 @@ def get_albums(user_id: int) -> list[dict]:
     ]
 
 
+def create_album(
+    user_id: int, name: str, open: bool = True, public: bool = True
+) -> int:
+    """Create a new album for a user and return the album ID."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO albums (user_id, name, open, public)
+        VALUES (%s, %s, %s, %s)
+        RETURNING id;
+        """,
+        (user_id, name, open, public),
+    )
+    album = cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return album
+
+
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #

@@ -31,7 +31,15 @@ export default function App() {
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/about" element={<About />} />
-        <Route path="/user/:username" element={<Userview />} />
+        <Route
+          path="/user/:username"
+          element={
+            <Userview
+              currentUser={currentUser}
+              setCurrentUser={setCurrentUser}
+            />
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

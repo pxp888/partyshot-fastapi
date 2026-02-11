@@ -30,6 +30,10 @@ class Settings(BaseModel):
     authjwt_secret_key: str = "secretstuffhere"
 
 
+class AlbumCreateRequest(BaseModel):
+    album_name: str
+
+
 @AuthJWT.load_config
 def get_config():
     return Settings()
@@ -107,15 +111,31 @@ def get_albums_for_user(username: str):
     Return a list of albums belonging to the user identified by *username*.
     The requester does not need to be logged in.
     """
-    # Retrieve the user record
     user_record = db.getUser(username)
     if user_record is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Fetch albums for that user ID
     albums = db.get_albums(user_record["id"])
-
+    print(albums)
     return albums
+
+
+@app.post("/api/create-album")
+def create_album(request: AlbumCreateRequest, Authorize: AuthJWT = Depends()):
+    """
+    Create a new album with the given name for the currently authenticated user.
+    The requester must be logged in to create an album.
+    """
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+
+    user_record = db.getUser(current_user)
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_album = db.create_album(user_record["id"], request.album_name)
+
+    return {"new_album": new_album}
 
 
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
