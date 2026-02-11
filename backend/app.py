@@ -20,6 +20,12 @@ class User(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
 class Settings(BaseModel):
     authjwt_secret_key: str = "secretstuffhere"
 
@@ -34,16 +40,33 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
-# @app.post("/login")
-@app.post("/api/login")
+@app.post("/login")
 def login(user: User, Authorize: AuthJWT = Depends()):
-    if user.username != "test" or user.password != "test":
+    db_user = db.getUser(user.username)
+    if db_user is None:
         raise HTTPException(status_code=401, detail="Bad username or password")
 
-    # Use create_access_token() and create_refresh_token() to create our
-    # access and refresh tokens
     access_token = Authorize.create_access_token(subject=user.username)
     refresh_token = Authorize.create_refresh_token(subject=user.username)
+    return {"access_token": access_token, "refresh_token": refresh_token}
+
+
+@app.post("/register")
+def register(request: RegisterRequest, Authorize: AuthJWT = Depends()):
+    """
+    Handle user registration.  The frontend sends a JSON body, so FastAPI
+    parses it into the RegisterRequest model.
+    """
+
+    prev = db.getUser(request.username)
+    if prev is not None:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    db.setUser(request.username, request.email, request.password)
+
+    print(f"Registering user: {request.username}, email: {request.email}, ")
+    access_token = Authorize.create_access_token(subject=request.username)
+    refresh_token = Authorize.create_refresh_token(subject=request.username)
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 

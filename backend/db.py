@@ -4,6 +4,8 @@ import random
 import sqlite3
 from pathlib import Path
 
+import env
+
 # Path to the SQLite database file, placed in the same directory as this module
 DB_PATH = Path(__file__).parent / "app.sqlite3"
 
@@ -41,6 +43,10 @@ def init_db() -> None:
     conn.close()
     print(f"Database initialized at {DB_PATH}")
 
+    # create admin user if it doesn't exist
+    if getUser(env.ADMIN_USERNAME) is None:
+        setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD)
+
 
 def get_connection() -> sqlite3.Connection:
     """Return a new SQLite connection to the database.
@@ -72,3 +78,32 @@ def setUser(username: str, email: str, password: str) -> None:
     conn.commit()
     cursor.close()
     conn.close()
+
+
+def getUser(username: str) -> dict | None:
+    """Retrieve a user from the database by username."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, username, email, passhash, salt, created_at
+        FROM users
+        WHERE username = ?;
+        """,
+        (username,),
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if row:
+        return {
+            "id": row[0],
+            "username": row[1],
+            "email": row[2],
+            "passhash": row[3],
+            "salt": row[4],
+            "created_at": row[5],
+        }
+    else:
+        return None

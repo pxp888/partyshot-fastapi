@@ -21,7 +21,7 @@ function Loginbox({ setShowLogin }) {
     setError("");
 
     try {
-      const data = await sendJson("/api/login", credentials);
+      const data = await sendJson("/login", credentials);
       console.log("Login successful:", data);
     } catch (err) {
       setError(err.message);
