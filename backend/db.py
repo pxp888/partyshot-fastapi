@@ -1,64 +1,71 @@
 import hashlib
-import os
 import random
-import sqlite3
-from pathlib import Path
 
 import env
+import psycopg2
+from psycopg2 import sql
 
-# Path to the SQLite database file, placed in the same directory as this module
-DB_PATH = Path(__file__).parent / "app.sqlite3"
+# --------------------------------------------------------------------------- #
+# Database connection helpers
+# --------------------------------------------------------------------------- #
+
+
+def get_connection():
+    """Return a new PostgreSQL connection to the database."""
+    return psycopg2.connect(
+        host=env.DB_HOST,
+        port=env.DB_PORT,
+        dbname=env.DB_NAME,
+        user=env.DB_USER,
+        password=env.DB_PASSWORD,
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Schema setup
+# --------------------------------------------------------------------------- #
 
 
 def init_db() -> None:
-    """Create the SQLite database and tables if they don't already exist.
+    """
+    Create the PostgreSQL database tables if they don't already exist.
 
     This function is intended to be called during the FastAPI application
     startup.  It will create a ``users`` table as a minimal example,
     but you can extend this function to create additional tables or perform
     migrations.
     """
-    db_exists = DB_PATH.exists()
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
 
-    if not db_exists:
-        # Create a simple users table. Feel free to modify or add more
-        # tables here as your application grows.
-        cursor.execute(
-            """
-            CREATE TABLE users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
-                email TEXT,
-                passhash TEXT NOT NULL,
-                salt TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-        )
-        conn.commit()
+    # Create a simple users table. Feel free to modify or add more tables
+    # here as your application grows.
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT,
+            passhash TEXT NOT NULL,
+            salt TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+    )
+    conn.commit()
 
     cursor.close()
     conn.close()
-    print(f"Database initialized at {DB_PATH}")
+    print("Database schema initialized.")
 
     # create admin user if it doesn't exist
     if getUser(env.ADMIN_USERNAME) is None:
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD)
 
 
-def get_connection() -> sqlite3.Connection:
-    """Return a new SQLite connection to the database.
-
-    Callers should close the connection when they are done to avoid
-    leaking file descriptors.
-    """
-    return sqlite3.connect(DB_PATH)
-
-
-# Expose the init_db function for import in the FastAPI startup event.
-__all__ = ["init_db", "get_connection"]
+# --------------------------------------------------------------------------- #
+# User CRUD helpers
+# --------------------------------------------------------------------------- #
 
 
 def setUser(username: str, email: str, password: str) -> None:
@@ -71,7 +78,7 @@ def setUser(username: str, email: str, password: str) -> None:
     cursor.execute(
         """
         INSERT INTO users (username, email, passhash, salt)
-        VALUES (?, ?, ?, ?);
+        VALUES (%s, %s, %s, %s);
         """,
         (username, email, passhash, salt),
     )
@@ -88,7 +95,7 @@ def getUser(username: str) -> dict | None:
         """
         SELECT id, username, email, passhash, salt, created_at
         FROM users
-        WHERE username = ?;
+        WHERE username = %s;
         """,
         (username,),
     )
@@ -119,3 +126,10 @@ def check_password(username: str, password: str) -> bool:
     expected_hash = user["passhash"]
     provided_hash = hashlib.sha256((password + salt).encode()).hexdigest()
     return provided_hash == expected_hash
+
+
+# --------------------------------------------------------------------------- #
+# Public API
+# --------------------------------------------------------------------------- #
+
+__all__ = ["init_db", "get_connection", "setUser", "getUser", "check_password"]
