@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./App.css";
 import Topbar from "./components/Topbar";
 import WelcomePage from "./components/WelcomePage";
+import Userview from "./components/Userview";
 
 function Home() {
   return <h2>Welcome to the Home page</h2>;
@@ -28,10 +29,9 @@ export default function App() {
       <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
       <Routes>
-        {/* <Route path="/" element={<Home />} />*/}
         <Route path="/" element={<WelcomePage />} />
         <Route path="/about" element={<About />} />
-        {/* 404 for unmatched paths */}
+        <Route path="/user/:username" element={<Userview />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

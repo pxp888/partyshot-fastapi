@@ -50,6 +50,25 @@ def init_db() -> None:
             salt TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS albums (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            open BOOLEAN DEFAULT TRUE,
+            public BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS photos (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            album_id INTEGER REFERENCES albums(id) ON DELETE CASCADE,
+            s3_key TEXT NOT NULL,
+            thumb_key TEXT NOT NULL,
+            filename TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         """
     )
     conn.commit()
@@ -60,6 +79,7 @@ def init_db() -> None:
 
     # create admin user if it doesn't exist
     if getUser(env.ADMIN_USERNAME) is None:
+        print(f"Creating admin user: {env.ADMIN_USERNAME}")
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD)
 
 
