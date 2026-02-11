@@ -36,7 +36,12 @@ function Topbar({ currentUser, setCurrentUser }) {
 
       {currentUser ? (
         <div className="userInfo">
-          <span>home {currentUser}</span>
+          <button
+            className="btn"
+            onClick={() => (window.location.href = `/user/${currentUser}`)}
+          >
+            {currentUser} home
+          </button>
           <button className="btn" onClick={handleLogout}>
             Logout
           </button>

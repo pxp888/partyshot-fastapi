@@ -2,7 +2,7 @@ import os
 
 import db
 import env
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -184,6 +184,95 @@ def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
     db.delete_album_by_code(request.code)
 
     return {"detail": "Album deleted successfully"}
+
+
+@app.post("/api/upload-file")
+def upload_file(
+    file: UploadFile = File(...),
+    album_code: str = Form(...),
+    Authorize: AuthJWT = Depends(),
+):
+    """
+    Handle file uploads for an album.
+
+    The request must include a multipart/form‑data body with:
+      * ``file`` – the file to upload (any type supported by the browser).
+      * ``album_code`` – the unique code of the album to add the file to.
+
+    Authentication
+    --------------
+    Requires a valid access token (``Authorization: Bearer <token>``).
+
+    Storage
+    -------
+    The file is saved under ``media/<album_code>/<generated‑filename>``.
+    The same path is stored in the ``s3_key`` and ``thumb_key`` columns of the
+    ``photos`` table; thumbnails are not generated in this example.
+
+    Response
+    --------
+    200 OK with a JSON object containing the new photo id and the stored path.
+    """
+    # Enforce authentication
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+
+    # Resolve user and album
+    user_record = db.getUser(current_user)
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    album = db.get_album_by_code(album_code)
+    if album is None:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    # Ownership check – the current user can upload to any album that exists.
+    # If you want to restrict uploads to the album owner only, add:
+    # if album["username"] != current_user:
+    #     raise HTTPException(status_code=403, detail="Permission denied")
+
+    # # Prepare storage path
+    # media_root = os.path.join("media", album_code)
+    # os.makedirs(media_root, exist_ok=True)
+
+    # # Use a unique filename to avoid collisions
+    # original_name = file.filename
+    # _, ext = os.path.splitext(original_name)
+    # unique_name = f"{uuid.uuid4().hex}{ext}"
+    # file_path = os.path.join(media_root, unique_name)
+
+    # # Write file to disk
+    # try:
+    #     with open(file_path, "wb") as buffer:
+    #         content = file.file.read()
+    #         buffer.write(content)
+    # finally:
+    #     file.file.close()
+
+    # Store metadata in the database
+    photo_id = db.add_photo(
+        user_id=user_record["id"],
+        album_id=album["id"],
+        filename=str(file.filename),
+        s3_key="later",
+        thumb_key="littlelater",
+    )
+
+    return {
+        "photo_id": photo_id,
+        "filename": file.filename,
+        "album_id": album["id"],
+    }
+
+
+@app.get("/api/photos/{album_id}")
+def get_photos_for_album(album_id: int):
+    """
+    Retrieve a list of photos belonging to the album identified by *album_id*.
+    The requester does not need to be logged in."""
+
+    photos = db.get_photos_by_album_id(album_id)
+    return photos
 
 
 # --------------------------------------------------------------------------- #

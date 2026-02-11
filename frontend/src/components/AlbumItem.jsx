@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import "./style/AlbumItem.css";
 
 function AlbumItem({ album }) {
   const navigate = useNavigate();

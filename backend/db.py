@@ -305,6 +305,67 @@ def delete_album_by_code(code: str) -> bool:
     return row is not None
 
 
+def add_photo(
+    user_id: int, album_id: int, s3_key: str, thumb_key: str, filename: str
+) -> dict:
+    """Add a photo to an album and return the photo record."""
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING id;
+        """,
+        (user_id, album_id, s3_key, thumb_key, filename),
+    )
+    row = cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return {
+        "id": row[0],
+        "user_id": user_id,
+        "album_id": album_id,
+        "s3_key": s3_key,
+        "thumb_key": thumb_key,
+        "filename": filename,
+    }
+
+
+def get_photos_by_album_id(album_id: int) -> list[dict]:
+    """Retrieve all photos for a given album ID."""
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
+        FROM photos p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.album_id = %s;
+        """,
+        (album_id,),
+    )
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return [
+        {
+            "id": row[0],
+            "s3_key": row[1],
+            "thumb_key": row[2],
+            "filename": row[3],
+            "created_at": row[4],
+            "username": row[5],
+        }
+        for row in rows
+    ]
+
+
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #
