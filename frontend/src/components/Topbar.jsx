@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
+import { receiveJson } from "./helpers";
 
 import "./style/Topbar.css";
 
@@ -12,16 +13,34 @@ function Topbar({ currentUser, setCurrentUser }) {
   //   setShowLogin(true);
   // };
 
+  function handleLogout() {
+    setCurrentUser(null);
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+  }
+
+  function test() {
+    receiveJson("/protected")
+      .then((data) => {
+        console.log("Test successful:", data);
+      })
+      .catch((err) => {
+        console.error("Test failed:", err);
+      });
+  }
+
   return (
     <div className="topbar">
       <div className="topLeft">
         <a href="/">Logo here</a>
       </div>
 
+      <button onClick={test}>Test Protected Route</button>
+
       {currentUser ? (
         <div className="userInfo">
           <span>home {currentUser}</span>
-          <button className="btn" onClick={() => setCurrentUser(null)}>
+          <button className="btn" onClick={handleLogout}>
             Logout
           </button>
         </div>
