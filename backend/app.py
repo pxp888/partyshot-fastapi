@@ -42,13 +42,17 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 @app.post("/login")
 def login(user: User, Authorize: AuthJWT = Depends()):
-    db_user = db.getUser(user.username)
-    if db_user is None:
+    db_user = db.check_password(user.username, user.password)
+    if not db_user:
         raise HTTPException(status_code=401, detail="Bad username or password")
 
     access_token = Authorize.create_access_token(subject=user.username)
     refresh_token = Authorize.create_refresh_token(subject=user.username)
-    return {"access_token": access_token, "refresh_token": refresh_token}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": user.username,
+    }
 
 
 @app.post("/register")
@@ -67,7 +71,11 @@ def register(request: RegisterRequest, Authorize: AuthJWT = Depends()):
     print(f"Registering user: {request.username}, email: {request.email}, ")
     access_token = Authorize.create_access_token(subject=request.username)
     refresh_token = Authorize.create_refresh_token(subject=request.username)
-    return {"access_token": access_token, "refresh_token": refresh_token}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": request.username,
+    }
 
 
 @app.post("/refresh")

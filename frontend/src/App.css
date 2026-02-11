@@ -5,6 +5,11 @@
     text-align: center;
 
     font-family: Arial, Helvetica, sans-serif;
+
+    :root {
+        background-color: rgb(32, 32, 32);
+        --bright-color: salmon;
+    }
 }
 
 body {
@@ -45,4 +50,24 @@ body {
 
 .read-the-docs {
     color: #888;
+}
+
+.btn {
+    /*margin: 0.25rem 0.25rem;*/
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    border: 1px solid rgb(65, 65, 65);
+    background-color: rgb(36, 36, 36);
+    color: white;
+    grid-column-start: 2;
+    transition: background-color 0.5s;
+}
+
+.btn:focus {
+    background-color: var(--bright-color);
+}
+
+.btn:hover {
+    background-color: salmon;
 }

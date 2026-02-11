@@ -21,3 +21,14 @@
 
     color: black;
 }
+
+.field {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    margin-bottom: 15px;
+}
+
+.field label {
+    margin-right: 10px;
+    text-align: right;
+}

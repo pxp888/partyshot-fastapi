@@ -107,3 +107,15 @@ def getUser(username: str) -> dict | None:
         }
     else:
         return None
+
+
+def check_password(username: str, password: str) -> bool:
+    """Check if the provided password matches the stored hash for the user."""
+    user = getUser(username)
+    if not user:
+        return False
+
+    salt = user["salt"]
+    expected_hash = user["passhash"]
+    provided_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+    return provided_hash == expected_hash

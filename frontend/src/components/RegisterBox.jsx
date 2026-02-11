@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./style/Loginbox.css";
 import { sendJson } from "./helpers";
 
-function RegisterBox({ setShowRegister }) {
+function RegisterBox({ setCurrentUser, setShowRegister }) {
   const [credentials, setCredentials] = useState({
     username: "",
     email: "",
@@ -24,6 +24,8 @@ function RegisterBox({ setShowRegister }) {
     try {
       const data = await sendJson("/register", credentials);
       console.log("Registration successful:", data);
+      setCurrentUser(data.user);
+      setShowRegister(false);
     } catch (err) {
       setError(err.message);
     }

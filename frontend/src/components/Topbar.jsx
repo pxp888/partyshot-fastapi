@@ -4,7 +4,7 @@ import RegisterBox from "./RegisterBox";
 
 import "./style/Topbar.css";
 
-function Topbar() {
+function Topbar({ currentUser, setCurrentUser }) {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
@@ -17,12 +17,28 @@ function Topbar() {
       <div className="topLeft">
         <a href="/">Logo here</a>
       </div>
-      <div className="nav">
-        <p onClick={() => setShowLogin(true)}>Login</p>
-        <p onClick={() => setShowRegister(true)}>Register</p>
-      </div>
-      {showLogin && <Loginbox setShowLogin={setShowLogin} />}
-      {showRegister && <RegisterBox setShowRegister={setShowRegister} />}
+
+      {currentUser ? (
+        <div className="userInfo">
+          <span>Welcome, {currentUser.username}!</span>
+          <button onClick={() => setCurrentUser(null)}>Logout</button>
+        </div>
+      ) : (
+        <div className="nav">
+          <p onClick={() => setShowLogin(true)}>Login</p>
+          <p onClick={() => setShowRegister(true)}>Register</p>
+        </div>
+      )}
+
+      {showLogin && (
+        <Loginbox setCurrentUser={setCurrentUser} setShowLogin={setShowLogin} />
+      )}
+      {showRegister && (
+        <RegisterBox
+          setCurrentUser={setCurrentUser}
+          setShowRegister={setShowRegister}
+        />
+      )}
     </div>
   );
 }

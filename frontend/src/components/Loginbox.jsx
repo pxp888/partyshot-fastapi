@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./style/Loginbox.css";
 import { sendJson } from "./helpers";
 
-function Loginbox({ setShowLogin }) {
+function Loginbox({ setCurrentUser, setShowLogin }) {
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
@@ -23,6 +23,8 @@ function Loginbox({ setShowLogin }) {
     try {
       const data = await sendJson("/login", credentials);
       console.log("Login successful:", data);
+      setCurrentUser(data.user);
+      setShowLogin(false);
     } catch (err) {
       setError(err.message);
     }

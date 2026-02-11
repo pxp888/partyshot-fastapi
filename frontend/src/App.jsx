@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./App.css";
 import Topbar from "./components/Topbar";
@@ -16,13 +17,15 @@ function NotFound() {
 }
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+
   return (
     <Router>
       {/* <nav style={{ marginBottom: "1rem" }}>
         <Link to="/">Home</Link>
         <Link to="/about">About</Link>
       </nav>*/}
-      <Topbar />
+      <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
       <Routes>
         {/* <Route path="/" element={<Home />} />*/}
