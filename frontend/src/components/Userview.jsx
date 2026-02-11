@@ -27,12 +27,13 @@ function Userview({ currentUser, setCurrentUser }) {
     const albumName = event.target.elements.albumName.value;
     sendJson("/api/create-album", { album_name: albumName })
       .then((response) => {
-        setAlbums((prevAlbums) => [...prevAlbums, response.new_album]);
+        console.log("Creating album:", response);
+
+        navigate(`/album/${response[0].code}`);
       })
       .catch((error) => {
         console.error("Failed to create album:", error);
       });
-    console.log("Creating album:", albumName);
   }
 
   return (

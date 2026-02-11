@@ -1,9 +1,21 @@
+import { useParams, useNavigate } from "react-router-dom";
+
 function AlbumItem({ album }) {
-  console.log(album);
+  const navigate = useNavigate();
+
+  function handleClick(event) {
+    event.preventDefault();
+    navigate(`/album/${album.code}`);
+  }
+
   return (
-    <div className="album-item">
+    <div
+      className="album-item"
+      onClick={handleClick}
+      style={{ cursor: "pointer" }}
+    >
       <h3>{album.name}</h3>
-      <p>Owner: {album.username} </p>
+      <p>Owner: {album.user_id} </p>
       <p>Open: {album.open ? "Yes" : "No"}</p>
       <p>Public: {album.public ? "Yes" : "No"}</p>
       <p>Created on: {new Date(album.created_at).toLocaleDateString()}</p>

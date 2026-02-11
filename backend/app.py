@@ -34,6 +34,10 @@ class AlbumCreateRequest(BaseModel):
     album_name: str
 
 
+class DeleteAlbumRequest(BaseModel):
+    code: str
+
+
 @AuthJWT.load_config
 def get_config():
     return Settings()
@@ -141,7 +145,45 @@ def create_album(request: AlbumCreateRequest, Authorize: AuthJWT = Depends()):
 
     new_album = db.create_album(user_record["id"], request.album_name)
 
-    return {"new_album": new_album}
+    return new_album
+
+
+@app.get("/api/album/{code}")
+def get_album_by_code(code: str):
+    """
+    Retrieve an album by its unique code. This endpoint is public and does not require authentication.
+    """
+    album = db.get_album_by_code(code)
+    if album is None:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    return album
+
+
+@app.post("/api/delete-album")
+def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
+    """
+    Delete an album identified by its unique code. The requester must be the owner of the album and must be logged in.
+    """
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+
+    user_record = db.getUser(current_user)
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    album = db.get_album_by_code(request.code)
+    if album is None:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    if album["username"] != current_user:
+        raise HTTPException(
+            status_code=403, detail="You do not have permission to delete this album"
+        )
+
+    db.delete_album_by_code(request.code)
+
+    return {"detail": "Album deleted successfully"}
 
 
 # --------------------------------------------------------------------------- #

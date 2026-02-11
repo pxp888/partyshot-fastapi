@@ -214,22 +214,31 @@ def create_album(
         """,
         (user_id, name, open, public, code),
     )
-    album = cursor.fetchone()
+    row = cursor.fetchone()
     conn.commit()
     cursor.close()
     conn.close()
-    return album
+    return [
+        {
+            "name": name,
+            "open": open,
+            "public": public,
+            "code": code,
+        }
+    ]
 
 
 def get_album_by_code(code: str) -> dict | None:
-    """Retrieve an album from the database by its unique code. Also return photos in the album."""
+    """Retrieve an album from the database by its unique code. Also return photos in the album. Each photo should include all fields, including the username of the owner."""
+
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT id, name, open, public, created_at, user_id
-        FROM albums
-        WHERE code = %s;
+        SELECT a.id, a.name, a.open, a.public, a.created_at, a.code, u.username
+        FROM albums a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.code = %s;
         """,
         (code,),
     )
@@ -245,33 +254,55 @@ def get_album_by_code(code: str) -> dict | None:
         "open": row[2],
         "public": row[3],
         "created_at": row[4],
-        "user_id": row[5],
+        "code": row[5],
+        "username": row[6],
+        "photos": [],
     }
 
     cursor.execute(
         """
-        SELECT id, s3_key, thumb_key, filename, created_at, user_id
-        FROM photos
-        WHERE album_id = %s;
+        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
+        FROM photos p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.album_id = %s;
         """,
         (album["id"],),
     )
-    photos = cursor.fetchall()
-    album["photos"] = [
-        {
-            "id": photo[0],
-            "s3_key": photo[1],
-            "thumb_key": photo[2],
-            "filename": photo[3],
-            "created_at": photo[4],
-            "user_id": photo[5],
-        }
-        for photo in photos
-    ]
-
+    photo_rows = cursor.fetchall()
+    for photo_row in photo_rows:
+        album["photos"].append(
+            {
+                "id": photo_row[0],
+                "s3_key": photo_row[1],
+                "thumb_key": photo_row[2],
+                "filename": photo_row[3],
+                "created_at": photo_row[4],
+                "username": photo_row[5],
+            }
+        )
     cursor.close()
     conn.close()
     return album
+
+
+def delete_album_by_code(code: str) -> bool:
+    """Delete an album from the database by its unique code. Return True if the album was deleted, False if it was not found."""
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        DELETE FROM albums
+        WHERE code = %s
+        RETURNING id;
+        """,
+        (code,),
+    )
+    row = cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return row is not None
 
 
 # --------------------------------------------------------------------------- #
