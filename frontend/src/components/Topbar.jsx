@@ -20,13 +20,19 @@ function Topbar({ currentUser, setCurrentUser }) {
 
       {currentUser ? (
         <div className="userInfo">
-          <span>Welcome, {currentUser.username}!</span>
-          <button onClick={() => setCurrentUser(null)}>Logout</button>
+          <span>home {currentUser}</span>
+          <button className="btn" onClick={() => setCurrentUser(null)}>
+            Logout
+          </button>
         </div>
       ) : (
         <div className="nav">
-          <p onClick={() => setShowLogin(true)}>Login</p>
-          <p onClick={() => setShowRegister(true)}>Register</p>
+          <button className="btn" onClick={() => setShowLogin(true)}>
+            Login
+          </button>
+          <button className="btn" onClick={() => setShowRegister(true)}>
+            Register
+          </button>
         </div>
       )}
 
