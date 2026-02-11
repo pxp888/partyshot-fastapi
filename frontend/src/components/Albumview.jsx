@@ -26,6 +26,10 @@ function Albumview(currentUser) {
   }, [albumcode, navigate]);
 
   async function handleDeleteAlbum() {
+    // confirm deletion with the user
+    if (!window.confirm("Are you sure you want to delete this album?")) {
+      return;
+    }
     try {
       sendJson("/api/delete-album", { code: album.code });
       console.log("Album deleted successfully");
