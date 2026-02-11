@@ -219,7 +219,7 @@ def upload_file(
     current_user = Authorize.get_jwt_subject()
 
     # Resolve user and album
-    user_record = db.getUser(current_user)
+    user_record = db.getUser(str(current_user))
     if user_record is None:
         raise HTTPException(status_code=404, detail="User not found")
 

@@ -9,6 +9,8 @@ function Albumview(currentUser) {
   const [album, setAlbum] = useState(null);
   const navigate = useNavigate();
   const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [focus, setFocus] = useState(null);
 
   useEffect(() => {
     async function fetchAlbum() {
@@ -75,8 +77,8 @@ function Albumview(currentUser) {
     }
   }
 
-  console.log("Rendering album view with album data:", album);
-  console.log("Current user:", currentUser);
+  // console.log("Rendering album view with album data:", album);
+  // console.log("Current user:", currentUser);
 
   return (
     <section>
@@ -138,7 +140,14 @@ function Albumview(currentUser) {
         ) : (
           <div className="fileList">
             {album.photos.map((file) => (
-              <FileItem key={file.id} file={file} />
+              <FileItem
+                key={file.id}
+                file={file}
+                selectMode={selectMode}
+                selected={selected}
+                setSelected={setSelected}
+                setFocus={setFocus}
+              />
             ))}
           </div>
         )}
