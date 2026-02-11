@@ -1,5 +1,6 @@
 import os
 
+import db
 import env
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -88,3 +89,7 @@ async def spa(full_path: str):
 
 
 # 1️⃣ Serve the Vite build under “/” (but don’t use html=True)
+@app.on_event("startup")
+def startup() -> None:
+    # Initialize the database when the application starts up
+    db.init_db()

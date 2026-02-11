@@ -1,4 +1,6 @@
+import hashlib
 import os
+import random
 import sqlite3
 from pathlib import Path
 
@@ -26,7 +28,9 @@ def init_db() -> None:
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL UNIQUE,
-                email TEXT NOT NULL UNIQUE,
+                email TEXT,
+                passhash TEXT NOT NULL,
+                salt TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             """
@@ -49,3 +53,22 @@ def get_connection() -> sqlite3.Connection:
 
 # Expose the init_db function for import in the FastAPI startup event.
 __all__ = ["init_db", "get_connection"]
+
+
+def setUser(username: str, email: str, password: str) -> None:
+    """Insert a new user into the database."""
+    salt = random.randbytes(16).hex()
+    passhash = hashlib.sha256((password + salt).encode()).hexdigest()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO users (username, email, passhash, salt)
+        VALUES (?, ?, ?, ?);
+        """,
+        (username, email, passhash, salt),
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
