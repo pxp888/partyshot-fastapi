@@ -10,7 +10,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [showRegister, setShowRegister] = useState(false);
 
   useEffect(() => {
-    receiveJson("/protected")
+    receiveJson("/api/protected")
       .then((data) => {
         console.log("Logged in:", data);
         if (data.user) {

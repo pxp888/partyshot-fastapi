@@ -21,7 +21,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
     setError("");
 
     try {
-      const data = await sendJson("/login", credentials);
+      const data = await sendJson("/api/login", credentials);
       console.log("Login successful:", data);
       setCurrentUser(data.user);
       setShowLogin(false);

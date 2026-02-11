@@ -148,6 +148,34 @@ def check_password(username: str, password: str) -> bool:
     return provided_hash == expected_hash
 
 
+def get_albums(user_id: int) -> list[dict]:
+    """Retrieve all albums for a given user."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, name, open, public, created_at
+        FROM albums
+        WHERE user_id = %s;
+        """,
+        (user_id,),
+    )
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return [
+        {
+            "id": row[0],
+            "name": row[1],
+            "open": row[2],
+            "public": row[3],
+            "created_at": row[4],
+        }
+        for row in rows
+    ]
+
+
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #

@@ -40,7 +40,7 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
-@app.post("/login")
+@app.post("/api/login")
 def login(user: User, Authorize: AuthJWT = Depends()):
     db_user = db.check_password(user.username, user.password)
     if not db_user:
@@ -55,7 +55,7 @@ def login(user: User, Authorize: AuthJWT = Depends()):
     }
 
 
-@app.post("/register")
+@app.post("/api/register")
 def register(request: RegisterRequest, Authorize: AuthJWT = Depends()):
     """
     Handle user registration.  The frontend sends a JSON body, so FastAPI
@@ -78,7 +78,7 @@ def register(request: RegisterRequest, Authorize: AuthJWT = Depends()):
     }
 
 
-@app.post("/refresh")
+@app.post("/api/refresh")
 def refresh(Authorize: AuthJWT = Depends()):
     """
     The jwt_refresh_token_required() function insures a valid refresh
@@ -93,7 +93,7 @@ def refresh(Authorize: AuthJWT = Depends()):
     return {"access_token": new_access_token}
 
 
-@app.get("/protected")
+@app.get("/api/protected")
 def protected(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
 
@@ -101,22 +101,33 @@ def protected(Authorize: AuthJWT = Depends()):
     return {"user": current_user}
 
 
-app.mount(
-    "/",  # root URL
-    StaticFiles(directory="static", html=True),
-    name="static",
-)
+@app.get("/api/user/{username}")
+def get_albums_for_user(username: str):
+    """
+    Return a list of albums belonging to the user identified by *username*.
+    The requester does not need to be logged in.
+    """
+    # Retrieve the user record
+    user_record = db.getUser(username)
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Fetch albums for that user ID
+    albums = db.get_albums(user_record["id"])
+
+    return albums
 
 
-# 2️⃣ Fallback for all other routes – this is the SPA entry point
+app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+
+
 @app.get("/{full_path:path}")
-async def spa(full_path: str):
-    """
-    Return the Vite‑generated index.html for any path that isn’t a
-    real file.  React Router will then take over.
-    """
-    index_path = os.path.join("static", "index.html")
-    return FileResponse(index_path)
+async def serve_spa(request: Request, full_path: str):
+    local_path = os.path.join("static", full_path)
+    if os.path.isfile(local_path):
+        return FileResponse(local_path)
+
+    return FileResponse("static/index.html")
 
 
 # 1️⃣ Serve the Vite build under “/” (but don’t use html=True)

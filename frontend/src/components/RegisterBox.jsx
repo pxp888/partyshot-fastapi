@@ -22,7 +22,7 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
     setError("");
 
     try {
-      const data = await sendJson("/register", credentials);
+      const data = await sendJson("/api/register", credentials);
       console.log("Registration successful:", data);
       setCurrentUser(data.user);
       setShowRegister(false);

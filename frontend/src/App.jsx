@@ -22,10 +22,10 @@ export default function App() {
 
   return (
     <Router>
-      {/* <nav style={{ marginBottom: "1rem" }}>
+      <nav style={{ marginBottom: "1rem" }}>
         <Link to="/">Home</Link>
         <Link to="/about">About</Link>
-      </nav>*/}
+      </nav>
       <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
       <Routes>
