@@ -1,7 +1,11 @@
 # Byte‑code
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
+backend/__pycache__/
+*.pyc
+backend/static/assets/
 
 # Virtual environments
 .env/
