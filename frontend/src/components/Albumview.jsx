@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { receiveJson, sendJson } from "./helpers";
+import FileItem from "./FileItem";
+import "./style/Albumview.css";
 
 function Albumview(currentUser) {
   const { albumcode } = useParams();
@@ -105,6 +107,9 @@ function Albumview(currentUser) {
               e.target.value = "";
             }}
           />
+          <button onClick={() => setSelectMode(true)} className="btn">
+            Select Files
+          </button>
 
           <button
             onClick={() => document.getElementById("hiddenFileInput").click()}
@@ -118,24 +123,24 @@ function Albumview(currentUser) {
         </div>
       )}
 
+      {album.username === currentUser.currentUser && selectMode && (
+        <div>
+          <button onClick={() => setSelectMode(false)} className="btn">
+            Cancel
+          </button>
+        </div>
+      )}
+
+      <h2>Files</h2>
       <div className="albumFiles">
-        <h2>Files</h2>
         {album.photos.length === 0 ? (
           <p>No files in this album.</p>
         ) : (
-          <ul>
+          <div className="fileList">
             {album.photos.map((file) => (
-              <li key={file.id}>
-                <a
-                  href={`/api/files/${file.id}/download`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {file.filename}
-                </a>
-              </li>
+              <FileItem key={file.id} file={file} />
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </section>

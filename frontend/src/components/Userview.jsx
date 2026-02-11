@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { receiveJson, sendJson } from "./helpers";
 import AlbumItem from "./AlbumItem";
+import "./style/Userview.css";
 
 function Userview({ currentUser, setCurrentUser }) {
   const { username } = useParams();
