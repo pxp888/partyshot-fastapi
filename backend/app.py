@@ -105,6 +105,11 @@ def protected(Authorize: AuthJWT = Depends()):
     return {"user": current_user}
 
 
+# --------------------------------------------------------------------------- #
+# App Logic
+# --------------------------------------------------------------------------- #
+
+
 @app.get("/api/user/{username}")
 def get_albums_for_user(username: str):
     """
@@ -116,7 +121,8 @@ def get_albums_for_user(username: str):
         raise HTTPException(status_code=404, detail="User not found")
 
     albums = db.get_albums(user_record["id"])
-    print(albums)
+    for album in albums:
+        album["username"] = username
     return albums
 
 
@@ -137,6 +143,10 @@ def create_album(request: AlbumCreateRequest, Authorize: AuthJWT = Depends()):
 
     return {"new_album": new_album}
 
+
+# --------------------------------------------------------------------------- #
+# End app Logic
+# --------------------------------------------------------------------------- #
 
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
 

@@ -4,6 +4,7 @@ import "./App.css";
 import Topbar from "./components/Topbar";
 import WelcomePage from "./components/WelcomePage";
 import Userview from "./components/Userview";
+import Albumview from "./components/Albumview";
 
 function Home() {
   return <h2>Welcome to the Home page</h2>;
@@ -39,6 +40,10 @@ export default function App() {
               setCurrentUser={setCurrentUser}
             />
           }
+        />
+        <Route
+          path="/album/:albumcode"
+          element={<Albumview currentUser={currentUser} />}
         />
         <Route path="*" element={<NotFound />} />
       </Routes>

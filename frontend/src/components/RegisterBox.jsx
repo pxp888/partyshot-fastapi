@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./style/Loginbox.css";
 import { sendJson } from "./helpers";
 
@@ -9,6 +10,8 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
     password: "",
   });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     setCredentials({
@@ -26,6 +29,9 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
       console.log("Registration successful:", data);
       setCurrentUser(data.user);
       setShowRegister(false);
+      if (location.pathname === "/") {
+        navigate(`/user/${data.user}`);
+      }
     } catch (err) {
       setError(err.message);
     }

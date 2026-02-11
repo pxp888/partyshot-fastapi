@@ -53,6 +53,7 @@ def init_db() -> None:
 
         CREATE TABLE IF NOT EXISTS albums (
             id SERIAL PRIMARY KEY,
+            code TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL,
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
             open BOOLEAN DEFAULT TRUE,
@@ -154,7 +155,7 @@ def get_albums(user_id: int) -> list[dict]:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT id, name, open, public, created_at
+        SELECT id, name, open, public, created_at, code
         FROM albums
         WHERE user_id = %s;
         """,
@@ -171,6 +172,7 @@ def get_albums(user_id: int) -> list[dict]:
             "open": row[2],
             "public": row[3],
             "created_at": row[4],
+            "code": row[5],
         }
         for row in rows
     ]
@@ -178,20 +180,95 @@ def get_albums(user_id: int) -> list[dict]:
 
 def create_album(
     user_id: int, name: str, open: bool = True, public: bool = True
-) -> int:
+) -> list[dict]:
     """Create a new album for a user and return the album ID."""
+
+    code = random.randbytes(12).hex()
+    while True:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id FROM albums WHERE code = %s;
+            """,
+            (code,),
+        )
+        if cursor.fetchone() is None:
+            # no collision, we can use this code
+            cursor.close()
+            conn.close()
+            break
+        else:
+            # collision, generate a new code and try again
+            cursor.close()
+            conn.close()
+            code = random.randbytes(16).hex()
+
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO albums (user_id, name, open, public)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO albums (user_id, name, open, public, code)
+        VALUES (%s, %s, %s, %s, %s)
         RETURNING id;
         """,
-        (user_id, name, open, public),
+        (user_id, name, open, public, code),
     )
     album = cursor.fetchone()
     conn.commit()
+    cursor.close()
+    conn.close()
+    return album
+
+
+def get_album_by_code(code: str) -> dict | None:
+    """Retrieve an album from the database by its unique code. Also return photos in the album."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, name, open, public, created_at, user_id
+        FROM albums
+        WHERE code = %s;
+        """,
+        (code,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        cursor.close()
+        conn.close()
+        return None
+
+    album = {
+        "id": row[0],
+        "name": row[1],
+        "open": row[2],
+        "public": row[3],
+        "created_at": row[4],
+        "user_id": row[5],
+    }
+
+    cursor.execute(
+        """
+        SELECT id, s3_key, thumb_key, filename, created_at, user_id
+        FROM photos
+        WHERE album_id = %s;
+        """,
+        (album["id"],),
+    )
+    photos = cursor.fetchall()
+    album["photos"] = [
+        {
+            "id": photo[0],
+            "s3_key": photo[1],
+            "thumb_key": photo[2],
+            "filename": photo[3],
+            "created_at": photo[4],
+            "user_id": photo[5],
+        }
+        for photo in photos
+    ]
+
     cursor.close()
     conn.close()
     return album

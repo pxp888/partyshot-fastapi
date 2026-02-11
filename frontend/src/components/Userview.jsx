@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { receiveJson, sendJson } from "./helpers";
+import AlbumItem from "./AlbumItem";
 
 function Userview({ currentUser, setCurrentUser }) {
   const { username } = useParams();
@@ -12,7 +13,7 @@ function Userview({ currentUser, setCurrentUser }) {
       try {
         const userAlbums = await receiveJson(`/api/user/${username}`);
         setAlbums(userAlbums);
-        console.log("Fetched albums for user:", username, userAlbums);
+        // console.log("Fetched albums for user:", username, userAlbums);
       } catch (error) {
         console.error("Failed to fetch albums for user:", username, error);
       }
@@ -46,6 +47,13 @@ function Userview({ currentUser, setCurrentUser }) {
           <button type="submit">Create Album</button>
         </form>
       )}
+      <div className="album-list">
+        {albums.length > 0 ? (
+          albums.map((album) => <AlbumItem key={album.id} album={album} />)
+        ) : (
+          <p>No albums found for this user.</p>
+        )}
+      </div>
     </div>
   );
 }
