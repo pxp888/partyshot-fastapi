@@ -30,6 +30,7 @@ function Imageview({ files, focus, setFocus }) {
       <div className="primo">
         <h2>{files[focus].filename}</h2>
         <p>{focus}</p>
+        <img src={files[focus].s3_key} alt={`${files[focus].filename}`} />
       </div>
     </div>
   );

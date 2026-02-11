@@ -34,6 +34,7 @@ function FileItem({
       <p>{index}</p>
       <p>{file.username}</p>
       <p>{new Date(file.created_at).toLocaleDateString()}</p>
+      <img src={file.thumb_key} alt={`${file.filename}`} />
     </div>
   );
 }

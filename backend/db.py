@@ -65,8 +65,8 @@ def init_db() -> None:
             id SERIAL PRIMARY KEY,
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
             album_id INTEGER REFERENCES albums(id) ON DELETE CASCADE,
-            s3_key TEXT NOT NULL,
-            thumb_key TEXT NOT NULL,
+            s3_key TEXT,
+            thumb_key TEXT,
             filename TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -306,7 +306,7 @@ def delete_album_by_code(code: str) -> bool:
 
 
 def add_photo(
-    user_id: int, album_id: int, s3_key: str, thumb_key: str, filename: str
+    user_id: int, album_id: int, s3_key: str, thumb_key: str | None, filename: str
 ) -> dict:
     """Add a photo to an album and return the photo record."""
 

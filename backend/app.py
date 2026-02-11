@@ -1,5 +1,8 @@
+import io
 import os
+import uuid
 
+import aws
 import db
 import env
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -9,6 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_jwt_auth2 import AuthJWT
 from fastapi_jwt_auth2.exceptions import AuthJWTException
+from PIL import Image
 
 # from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
@@ -158,6 +162,12 @@ def get_album_by_code(code: str):
     if album is None:
         raise HTTPException(status_code=404, detail="Album not found")
 
+    # convert album.photos to include presigned URLs
+    for photo in album.get("photos", []):
+        photo["s3_key"] = aws.create_presigned_url(photo["s3_key"])
+        if photo["thumb_key"]:
+            photo["thumb_key"] = aws.create_presigned_url(photo["thumb_key"])
+
     return album
 
 
@@ -227,42 +237,58 @@ def upload_file(
     if album is None:
         raise HTTPException(status_code=404, detail="Album not found")
 
-    # Ownership check – the current user can upload to any album that exists.
-    # If you want to restrict uploads to the album owner only, add:
-    # if album["username"] != current_user:
-    #     raise HTTPException(status_code=403, detail="Permission denied")
+    file_id = uuid.uuid4().hex
+    s3_key = f"{album_code}/{file_id}"
 
-    # # Prepare storage path
-    # media_root = os.path.join("media", album_code)
-    # os.makedirs(media_root, exist_ok=True)
+    try:
+        file_bytes = file.file.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Could not read uploaded file"
+        ) from e
+    finally:
+        file.file.close()
 
-    # # Use a unique filename to avoid collisions
-    # original_name = file.filename
-    # _, ext = os.path.splitext(original_name)
-    # unique_name = f"{uuid.uuid4().hex}{ext}"
-    # file_path = os.path.join(media_root, unique_name)
+    upload_success = aws.upload_bytes_to_s3(file_bytes, s3_key)
+    if not upload_success:
+        raise HTTPException(status_code=500, detail="Failed to upload file to S3")
 
-    # # Write file to disk
-    # try:
-    #     with open(file_path, "wb") as buffer:
-    #         content = file.file.read()
-    #         buffer.write(content)
-    # finally:
-    #     file.file.close()
+    thumb_key = None
+    try:
+        image = Image.open(io.BytesIO(file_bytes))
+        image.thumbnail((300, 300))
+        thumb_io = io.BytesIO()
+
+        try:
+            image.save(thumb_io, format="JPEG")
+            thumb_format = "image/jpeg"
+        except Exception:
+            image.save(thumb_io, format="PNG")
+            thumb_format = "image/png"
+
+        thumb_io.seek(0)
+        thumb_key = f"{album_code}/thumb_{file_id}"
+        if not aws.upload_bytes_to_s3(thumb_io.read(), thumb_key):
+            thumb_key = None
+    except Exception as e:
+        print(f"Thumbnail generation failed for {file.file.name}: {e}")
+        thumb_key = None
 
     # Store metadata in the database
     photo_id = db.add_photo(
         user_id=user_record["id"],
         album_id=album["id"],
         filename=str(file.filename),
-        s3_key="later",
-        thumb_key="littlelater",
+        s3_key=s3_key,
+        thumb_key=thumb_key,
     )
 
     return {
         "photo_id": photo_id,
         "filename": file.filename,
         "album_id": album["id"],
+        "s3_key": aws.create_presigned_url(s3_key),
+        "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
     }
 
 
@@ -273,6 +299,12 @@ def get_photos_for_album(album_id: int):
     The requester does not need to be logged in."""
 
     photos = db.get_photos_by_album_id(album_id)
+
+    # convert s3_key and thumb_key to presigned URLs
+    for photo in photos:
+        photo["s3_key"] = aws.create_presigned_url(photo["s3_key"])
+        if photo["thumb_key"]:
+            photo["thumb_key"] = aws.create_presigned_url(photo["thumb_key"])
     return photos
 
 
