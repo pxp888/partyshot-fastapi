@@ -8,17 +8,17 @@ function FileItem({
   setSelected,
   setFocus,
 }) {
-  const isSelected = selected.includes(file.id);
+  const isSelected = selected.includes(index);
 
   // console.log(file);
 
   function handleClick(e) {
     e.preventDefault();
     if (selectMode) {
-      if (selected.includes(file.id)) {
-        setSelected(selected.filter((id) => id !== file.id));
+      if (selected.includes(index)) {
+        setSelected(selected.filter((id) => id !== index));
       } else {
-        setSelected([...selected, file.id]);
+        setSelected([...selected, index]);
       }
     } else {
       setFocus(index);

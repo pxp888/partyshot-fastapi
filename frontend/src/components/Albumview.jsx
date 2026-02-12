@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { receiveJson, sendJson } from "./helpers";
 import FileItem from "./FileItem";
 import Imageview from "./Imageview";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+
 import "./style/Albumview.css";
 
 function Albumview(currentUser) {
@@ -78,6 +81,91 @@ function Albumview(currentUser) {
     }
   }
 
+  function downloadAll(e) {
+    e.preventDefault();
+    if (!album || !album.photos || album.photos.length === 0) {
+      alert("No photos available to download.");
+      return;
+    }
+
+    const zip = new JSZip();
+
+    const fetchBlob = async (url, filename) => {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
+      return await res.blob();
+    };
+
+    setSelectMode(true);
+
+    (async () => {
+      try {
+        for (const photo of album.photos) {
+          if (!photo.s3_key) continue;
+          const blob = await fetchBlob(photo.s3_key, photo.filename);
+          zip.file(photo.filename, blob);
+        }
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const zipName = `${album.name || "album"}_${album.photos.length}.zip`;
+        saveAs(zipBlob, zipName);
+      } catch (err) {
+        console.error("Error while creating ZIP:", err);
+        alert("An error occurred while preparing the ZIP file.");
+      } finally {
+        setSelectMode(false);
+      }
+    })();
+  }
+
+  function selectAll() {
+    const allIds = album.photos.map((_, index) => index);
+    setSelected(allIds);
+  }
+
+  function selectNone() {
+    setSelected([]);
+  }
+
+  function cancelSelect() {
+    setSelectMode(false);
+    setSelected([]);
+  }
+
+  function downloadSelected() {
+    if (selected.length === 0) {
+      return alert("No files selected for download.");
+    }
+
+    const zip = new JSZip();
+
+    const fetchBlob = async (url, filename) => {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
+      return await res.blob();
+    };
+
+    (async () => {
+      try {
+        for (const index of selected) {
+          const photo = album.photos[index];
+          if (!photo.s3_key) continue;
+          const blob = await fetchBlob(photo.s3_key, photo.filename);
+          zip.file(photo.filename, blob);
+        }
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const zipName = `${album.name || "selected_files"}.zip`;
+        saveAs(zipBlob, zipName);
+      } catch (err) {
+        console.error("Error while creating ZIP:", err);
+        alert("An error occurred while preparing the ZIP file.");
+      }
+    })();
+  }
+
+  function deleteSelected() {}
+
   // console.log("Rendering album view with album data:", album);
   // console.log("Current user:", currentUser);
 
@@ -123,6 +211,9 @@ function Albumview(currentUser) {
           >
             Upload Files
           </button>
+          <button onClick={downloadAll} className="btn">
+            Download All
+          </button>
           <button onClick={handleDeleteAlbum} className="btn">
             Delete Album
           </button>
@@ -131,8 +222,20 @@ function Albumview(currentUser) {
 
       {album.username === currentUser.currentUser && selectMode && (
         <div>
-          <button onClick={() => setSelectMode(false)} className="btn">
+          <button onClick={cancelSelect} className="btn">
             Cancel
+          </button>
+          <button onClick={selectAll} className="btn">
+            Select All
+          </button>
+          <button onClick={selectNone} className="btn">
+            Select None
+          </button>
+          <button onClick={downloadSelected} className="btn">
+            Download Selected
+          </button>
+          <button onClick={deleteSelected} className="btn">
+            Delete Selected
           </button>
         </div>
       )}
