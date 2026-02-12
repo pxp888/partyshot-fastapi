@@ -147,8 +147,12 @@ def create_album(request: AlbumCreateRequest, Authorize: AuthJWT = Depends()):
     """
     Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
+    if not current_user:
+        raise HTTPException(
+            status_code=401, detail="Invalid authentication credentials"
+        )
 
-    user_record = db.getUser(current_user)
+    user_record = db.getUser(str(current_user))
     if user_record is None:
         raise HTTPException(status_code=404, detail="User not found")
 
