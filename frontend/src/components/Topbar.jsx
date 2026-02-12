@@ -22,6 +22,43 @@ function Topbar({ currentUser, setCurrentUser }) {
       });
   }, [setCurrentUser]); // Test protected route on mount
 
+  /* ---- Keep‑alive logic ---- */
+  useEffect(() => {
+    // Only run if we have a refresh token (user is logged in)
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) return;
+
+    // Call /api/refresh every 12 minutes (less than the default 15 min expiry)
+    const intervalId = setInterval(
+      async () => {
+        try {
+          const resp = await fetch("/api/refresh", {
+            method: "POST",
+            headers: {
+              // The library expects the refresh token in the Authorization header
+              Authorization: `Bearer ${refreshToken}`,
+            },
+          });
+
+          if (!resp.ok) throw new Error("Refresh failed");
+
+          const data = await resp.json();
+          // Replace the old access token
+          localStorage.setItem("access_token", data.access_token);
+          console.log("Refreshed access token");
+        } catch (e) {
+          console.warn("Keep‑alive failed, logging out", e);
+          // Token chain is broken – log the user out
+          handleLogout();
+        }
+      },
+      12 * 60 * 1000,
+    );
+
+    // Clean up when component unmounts
+    return () => clearInterval(intervalId);
+  }, []); // Only once on mount
+
   function handleLogout() {
     setCurrentUser(null);
     localStorage.removeItem("access_token");

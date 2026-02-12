@@ -58,6 +58,7 @@ def init_db() -> None:
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
             open BOOLEAN DEFAULT TRUE,
             public BOOLEAN DEFAULT TRUE,
+            thumb_key TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -364,6 +365,92 @@ def get_photos_by_album_id(album_id: int) -> list[dict]:
         }
         for row in rows
     ]
+
+
+def delete_photo_by_id(photo_id: int) -> bool:
+    """Delete a photo from the database by its ID. Return True if the photo was deleted, False if it was not found."""
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        DELETE FROM photos
+        WHERE id = %s
+        RETURNING id;
+        """,
+        (photo_id,),
+    )
+    row = cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return row is not None
+
+
+def get_photo(photo_id: int) -> dict | None:
+    """Retrieve a photo from the database by its ID."""
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
+        FROM photos p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id = %s;
+        """,
+        (photo_id,),
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if row:
+        return {
+            "id": row[0],
+            "s3_key": row[1],
+            "thumb_key": row[2],
+            "filename": row[3],
+            "created_at": row[4],
+            "username": row[5],
+        }
+    else:
+        return None
+
+
+def get_album(album_id: int) -> dict | None:
+    """Retrieve an album from the database by its ID. Also return photos in the album. Each photo should include all fields, including the username of the owner."""
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT a.id, a.name, a.open, a.public, a.created_at, a.code, u.username
+        FROM albums a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.id = %s;
+        """,
+        (album_id,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        cursor.close()
+        conn.close()
+        return None
+
+    album = {
+        "id": row[0],
+        "name": row[1],
+        "open": row[2],
+        "public": row[3],
+        "created_at": row[4],
+        "code": row[5],
+        "username": row[6],
+        "photos": [],
+    }
+    cursor.close()
+    conn.close()
+    return album
 
 
 # --------------------------------------------------------------------------- #
