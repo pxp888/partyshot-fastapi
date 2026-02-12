@@ -76,6 +76,9 @@ function Albumview(currentUser) {
       }
 
       console.log(`File "${file.name}" uploaded successfully`);
+      // Refresh album data to show the new file
+      const updatedAlbum = await receiveJson(`/api/album/${albumcode}`);
+      setAlbum(updatedAlbum);
     } catch (error) {
       console.error(`Failed to upload file "${file.name}":`, error);
     }
@@ -164,10 +167,40 @@ function Albumview(currentUser) {
     })();
   }
 
-  function deleteSelected() {}
+  function deleteSelected() {
+    if (selected.length === 0) {
+      return alert("No files selected for deletion.");
+    }
 
-  // console.log("Rendering album view with album data:", album);
-  // console.log("Current user:", currentUser);
+    if (
+      !window.confirm("Are you sure you want to delete the selected files?")
+    ) {
+      return;
+    }
+    setSelected([]);
+
+    const idsToDelete = selected.map((index) => album.photos[index].id);
+
+    // loop through ids and send delete request for each
+    idsToDelete.forEach(async (id) => {
+      try {
+        await sendJson("/api/delete-photo", { photo_id: id });
+        console.log(`File with ID ${id} deleted successfully`);
+        // remove deleted photo from album state to update UI
+        setAlbum((prevAlbum) => ({
+          ...prevAlbum,
+          photos: prevAlbum.photos.filter((photo) => photo.id !== id),
+        }));
+      } catch (error) {
+        console.error(`Failed to delete file with ID ${id}:`, error);
+      }
+    });
+
+    // Refresh album data after deletion
+    // setTimeout(() => {
+    //   window.location.reload();
+    // }, 1000);
+  }
 
   return (
     <section>

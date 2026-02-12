@@ -43,6 +43,10 @@ class DeleteAlbumRequest(BaseModel):
     code: str
 
 
+class DeletePhotoRequest(BaseModel):
+    photo_id: int
+
+
 @AuthJWT.load_config
 def get_config():
     return Settings()
@@ -310,7 +314,7 @@ def get_photos_for_album(album_id: int):
 
 # delete photo endpoint
 @app.post("/api/delete-photo")
-def delete_photo(photo_id: int = Form(...), Authorize: AuthJWT = Depends()):
+def delete_photo(request: DeletePhotoRequest, Authorize: AuthJWT = Depends()):
     """
     Delete a photo by its ID. This is possible if the requester is
     the owner of the photo and is logged in, or if the requestetr is the owner
@@ -323,7 +327,7 @@ def delete_photo(photo_id: int = Form(...), Authorize: AuthJWT = Depends()):
     if user_record is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    photo = db.get_photo(photo_id)
+    photo = db.get_photo(request.photo_id)
     if photo is None:
         raise HTTPException(status_code=404, detail="Photo not found")
 
@@ -331,12 +335,15 @@ def delete_photo(photo_id: int = Form(...), Authorize: AuthJWT = Depends()):
     if album is None:
         raise HTTPException(status_code=404, detail="Album not found")
 
-    if photo["user_id"] != user_record["id"] and album["user_id"] != user_record["id"]:
+    if (
+        photo["username"] != user_record["username"]
+        and album["user_id"] != user_record["id"]
+    ):
         raise HTTPException(
             status_code=403, detail="You do not have permission to delete this photo"
         )
 
-    db.delete_photo_by_id(photo_id)
+    db.delete_photo_by_id(request.photo_id)
     aws.delete_file_from_s3(photo["s3_key"])
     if photo["thumb_key"]:
         aws.delete_file_from_s3(photo["thumb_key"])

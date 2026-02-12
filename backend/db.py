@@ -394,7 +394,7 @@ def get_photo(photo_id: int) -> dict | None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
+        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username, p.album_id
         FROM photos p
         JOIN users u ON p.user_id = u.id
         WHERE p.id = %s;
@@ -413,6 +413,7 @@ def get_photo(photo_id: int) -> dict | None:
             "filename": row[3],
             "created_at": row[4],
             "username": row[5],
+            "album_id": row[6],
         }
     else:
         return None
