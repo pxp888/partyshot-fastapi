@@ -218,7 +218,7 @@ function Albumview(currentUser) {
           <p>Code: {album.code}</p>
         </div>
       </div>
-      {album.username === currentUser.currentUser && !selectMode && (
+      {!selectMode && (
         <div>
           <input
             type="file"
@@ -253,7 +253,7 @@ function Albumview(currentUser) {
         </div>
       )}
 
-      {album.username === currentUser.currentUser && selectMode && (
+      {selectMode && (
         <div>
           <button onClick={cancelSelect} className="btn">
             Cancel
