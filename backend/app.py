@@ -373,6 +373,54 @@ def delete_photo(request: DeletePhotoRequest, Authorize: AuthJWT = Depends()):
     return {"detail": "Photo deleted successfully"}
 
 
+@app.post("/api/s3-presigned")
+async def get_presigned(
+    filename: str = Form(...),
+    album_code: str = Form(...),
+    Authorize: AuthJWT = Depends(),
+):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+
+    # unique key inside the album
+    file_id = uuid.uuid4().hex
+    s3_key = f"{album_code}/{file_id}/{filename}"
+
+    s3_client = aws.get_s3_client()
+    try:
+        # **No ACL field** – let S3 keep the object private (the default)
+        response = s3_client.generate_presigned_post(
+            Bucket=aws.BUCKET_NAME,
+            Key=s3_key,
+            ExpiresIn=3600,
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"s3_key": s3_key, "presigned": response}
+
+
+@app.post("/api/add-photo-metadata")
+def add_photo_metadata(
+    payload: dict,
+    Authorize: AuthJWT = Depends(),
+):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    user_record = db.getUser(str(current_user))
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    photo_id = db.add_photo(
+        user_id=user_record["id"],
+        album_id=payload["album_id"],
+        filename=payload["filename"],
+        s3_key=payload["s3_key"],
+        thumb_key=payload.get("thumb_key"),
+    )
+    return {"photo_id": photo_id}
+
+
 # --------------------------------------------------------------------------- #
 # End app Logic
 # --------------------------------------------------------------------------- #

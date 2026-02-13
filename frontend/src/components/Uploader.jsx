@@ -69,46 +69,92 @@ function Uploader({ album, setAlbum }) {
    * @param {File} file - The user‑selected file.
    */
   async function uploadFile(file) {
+    // 1️⃣  Ask for presigned data
+    const presignRes = await fetch("/api/s3-presigned", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        filename: file.name,
+        album_code: album.code,
+      }),
+    });
+    const { s3_key, presigned } = await presignRes.json();
+
+    // 2️⃣  Build the form exactly as the bucket expects
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("album_code", album.code);
+    Object.entries(presigned.fields).forEach(([k, v]) => formData.append(k, v));
+    formData.append("file", file); // key must be "file"
 
-    // Create the thumbnail and attach it to the same FormData
-    try {
-      const thumbnailBlob = await createThumbnail(file);
-      formData.append("thumbnail", thumbnailBlob, `${file.name}_thumb.png`);
-    } catch (thumbErr) {
-      // Thumbnail generation failed – use the provided blank image to satisfy the API
-      console.warn(
-        `Could not generate thumbnail for "${file.name}":`,
-        thumbErr,
-      );
-      const placeholderResponse = await fetch(blankImage);
-      const placeholderBlob = await placeholderResponse.blob();
-      formData.append("thumbnail", placeholderBlob, `${file.name}_thumb.png`);
+    // 3️⃣  POST to S3
+    const s3Res = await fetch(presigned.url, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!s3Res.ok) {
+      const errText = await s3Res.text();
+      throw new Error(`S3 upload failed: ${s3Res.status} ${errText}`);
     }
 
-    try {
-      const response = await fetch("/api/upload-file", {
-        method: "POST",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
+    console.log(`Uploaded ${file.name} to S3 as ${s3_key}`);
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Upload failed: ${response.status} ${errText}`);
-      }
+    // 3️⃣ (Optional) Create a thumbnail and upload it the same way
+    const thumbnailBlob = await createThumbnail(file);
+    const thumbPresignRes = await fetch("/api/s3-presigned", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        filename: `${file.name}_thumb.png`,
+        album_code: album.code,
+      }),
+    });
 
-      console.log(`File "${file.name}" uploaded successfully`);
-      // Refresh album data to show the new file
-      const updatedAlbum = await receiveJson(`/api/album/${albumcode}`);
-      setAlbum(updatedAlbum);
-    } catch (error) {
-      console.error(`Failed to upload file "${file.name}":`, error);
+    const { s3_key: thumb_key, presigned: thumbPresign } =
+      await thumbPresignRes.json();
+
+    const thumbForm = new FormData();
+    Object.entries(thumbPresign.fields).forEach(([k, v]) =>
+      thumbForm.append(k, v),
+    );
+    thumbForm.append("file", thumbnailBlob);
+
+    const thumbS3Res = await fetch(thumbPresign.url, {
+      method: "POST",
+      body: thumbForm,
+    });
+
+    if (!thumbS3Res.ok) {
+      console.warn("Thumbnail upload failed, continuing without thumb");
+    } else {
+      console.log(`Uploaded thumbnail to ${thumb_key}`);
     }
+
+    // 4️⃣ Inform your backend about the new photo (metadata only)
+    const metaRes = await fetch("/api/add-photo-metadata", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        album_id: album.id,
+        filename: file.name,
+        s3_key,
+        thumb_key: thumb_key || null,
+      }),
+    });
+
+    if (!metaRes.ok) throw new Error("Failed to record metadata");
+
+    // 5️⃣ Refresh UI
+    const updatedAlbum = await receiveJson(`/api/album/${albumcode}`);
+    setAlbum(updatedAlbum);
   }
 
   return (
