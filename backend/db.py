@@ -477,6 +477,103 @@ def checkthumb(album_id: int, thumb_key: str) -> None:
     conn.close()
 
 
+def toggleLock(album_id: int, user: str) -> int:
+    """
+    Toggle the `open` flag of an album.
+    """
+    # Retrieve album owner and current open state
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT user_id, open FROM albums WHERE id = %s;
+        """,
+        (album_id,),
+    )
+    row = cursor.fetchone()
+
+    # Album does not exist
+    if row is None:
+        cursor.close()
+        conn.close()
+        return 2
+
+    owner_id, current_open = row
+
+    # Resolve the user id of the caller
+    user_record = getUser(user)
+    if user_record is None or user_record["id"] != owner_id:
+        cursor.close()
+        conn.close()
+        return 3
+
+    new_open = not current_open
+    cursor.execute(
+        """
+        UPDATE albums SET open = %s WHERE id = %s;
+        """,
+        (new_open, album_id),
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return int(new_open)
+
+
+def openCheck(user, album_id):
+    """
+    Check if an album is accessible to a given user.
+
+    Returns 1 if either of the following is true:
+        1. The user is the owner of the album.
+        2. The album's `open` flag is set to True.
+    Otherwise, returns 0.
+
+    Parameters
+    ----------
+    user : str
+        The username of the requester.
+    album_id : int | str
+        The primary key of the album to check, or the album code string.
+    """
+    # Determine whether we have an integer id or a string code.
+    conn = get_connection()
+    cursor = conn.cursor()
+    if isinstance(album_id, int):
+        cursor.execute(
+            """
+            SELECT user_id, open FROM albums WHERE id = %s;
+            """,
+            (album_id,),
+        )
+    else:
+        # Treat as a code string.
+        cursor.execute(
+            """
+            SELECT user_id, open FROM albums WHERE code = %s;
+            """,
+            (album_id,),
+        )
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if row is None:
+        # Album does not exist – treat as not accessible.
+        return 0
+
+    owner_id, is_open = row
+    # If the album is already open, grant access.
+    if is_open:
+        return 1
+    # Otherwise, check ownership.
+    user_record = getUser(user)
+    if user_record is None:
+        return 0
+    return 1 if user_record["id"] == owner_id else 0
+
+
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #

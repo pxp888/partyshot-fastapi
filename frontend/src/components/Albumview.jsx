@@ -175,6 +175,18 @@ function Albumview(currentUser) {
     // }, 1000);
   }
 
+  async function toggleLock() {
+    try {
+      await sendJson("/api/togglelock", { album_id: album.id });
+      setAlbum((prev) => ({
+        ...prev,
+        open: !prev.open,
+      }));
+    } catch (error) {
+      console.error("Toggle lock failed : ", error);
+    }
+  }
+
   return (
     <section>
       {focus > -1 && (
@@ -217,6 +229,9 @@ function Albumview(currentUser) {
           <Uploader album={album} setAlbum={setAlbum} />
           <button onClick={downloadAll} className="btn">
             Download All
+          </button>
+          <button onClick={toggleLock} className="btn">
+            {album.open ? "Lock Album" : "Unlock Album"}
           </button>
           <button onClick={handleDeleteAlbum} className="btn">
             Delete Album

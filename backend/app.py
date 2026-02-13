@@ -50,6 +50,10 @@ class DeletePhotoRequest(BaseModel):
     photo_id: int
 
 
+class ToggleLockRequest(BaseModel):
+    album_id: int
+
+
 @AuthJWT.load_config
 def get_config():
     return Settings()
@@ -382,7 +386,11 @@ async def get_presigned(
     Authorize: AuthJWT = Depends(),
 ):
     Authorize.jwt_required()
+
     current_user = Authorize.get_jwt_subject()
+    x = db.openCheck(str(current_user), album_code)
+    if x == 0:
+        raise HTTPException(status_code=403, detail="Not Allowed")
 
     # unique key inside the album
     file_id = uuid.uuid4().hex
@@ -423,6 +431,23 @@ def add_photo_metadata(
 
     db.checkthumb(payload["album_id"], payload["thumb_key"])
     return {"photo_id": photo_id}
+
+
+@app.post("/api/togglelock")
+def toggleLock(request: ToggleLockRequest, Authorize: AuthJWT = Depends()):
+    # Authorize.jwt_required()
+
+    current_user = Authorize.get_jwt_subject()
+
+    x = db.toggleLock(request.album_id, str(current_user))
+    print(x)
+    if x == 2:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    if x == 3:
+        raise HTTPException(status_code=403, detail="Not Allowed")
+
+    return [{"open": 0}]
 
 
 # --------------------------------------------------------------------------- #
