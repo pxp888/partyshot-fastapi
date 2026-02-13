@@ -125,13 +125,13 @@ def protected(Authorize: AuthJWT = Depends()):
     return {"user": current_user}
 
 
+async def get_redis(request: Request):
+    return request.app.state.redis
+
+
 # --------------------------------------------------------------------------- #
 # App Logic
 # --------------------------------------------------------------------------- #
-
-
-async def get_redis(request: Request):
-    return request.app.state.redis
 
 
 @app.get("/api/user/{username}")
