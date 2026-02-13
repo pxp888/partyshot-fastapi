@@ -2,5 +2,10 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    padding: 20px;
+    /*padding: 4px;*/
+}
+
+.userview form {
+    background-color: var(--form-color);
+    padding: 2px;
 }

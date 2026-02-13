@@ -39,12 +39,12 @@ function Userview({ currentUser, setCurrentUser }) {
 
   return (
     <div className="userview">
-      <h1>User View</h1>
-      <p>This is the user view of the application.</p>
+      {/* <h1>User View</h1>
+      <p>This is the user view of the application.</p>*/}
 
       {username === currentUser && (
         <form onSubmit={handleCreateAlbum}>
-          <label htmlFor="albumName">Album Name:</label>
+          <label htmlFor="albumName">New Album Name : </label>
           <input type="text" id="albumName" name="albumName" />
           <button className="btn" type="submit">
             Create Album

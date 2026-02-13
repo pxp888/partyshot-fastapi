@@ -4,3 +4,30 @@
     gap: 20px;
     padding: 20px;
 }
+
+.albumDetails {
+    background-color: var(--form-color);
+
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+}
+
+.infoItem {
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+    align-items: baseline;
+}
+
+.infoItem label {
+    text-align: right;
+    color: gray;
+}
+
+.infoItem p {
+    text-align: left;
+    margin-left: 10px;
+}
+
+.albumActions {
+    background-color: var(--form-color);
+}

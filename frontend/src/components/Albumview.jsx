@@ -181,22 +181,39 @@ function Albumview(currentUser) {
         <Imageview files={album.photos} focus={focus} setFocus={setFocus} />
       )}
       <div className="albumview">
-        <h3>Album View</h3>
         <div className="albumDetails">
-          <h1>{album.name}</h1>
-          <p>Owner: {album.username} </p>
-          <p>Open: {album.open ? "Yes" : "No"}</p>
-          <p>Public: {album.public ? "Yes" : "No"}</p>
-          <p>Created on: {new Date(album.created_at).toLocaleDateString()}</p>
-          <p>Code: {album.code}</p>
+          <div className="infoItem">
+            <label>Album Name: </label>
+            <p>{album.name}</p>
+          </div>
+          <div className="infoItem">
+            <label> Owner: </label>
+            <p>{album.username} </p>
+          </div>
+          <div className="infoItem">
+            <label>Open: </label>
+            <p>{album.open ? "Yes" : "No"}</p>
+          </div>
+          <div className="infoItem">
+            <label>Public: </label>
+            <p>{album.public ? "Yes" : "No"}</p>
+          </div>
+          <div className="infoItem">
+            <label>Created on: </label>
+            <p>{new Date(album.created_at).toLocaleDateString()}</p>
+          </div>
+          <div className="infoItem">
+            <label>Code: </label>
+            <p>{album.code}</p>
+          </div>
         </div>
       </div>
-      {!selectMode && (
-        <div>
-          <button onClick={() => setSelectMode(true)} className="btn">
-            Select Files
-          </button>
 
+      {!selectMode && (
+        <div className="albumActions">
+          <button onClick={() => setSelectMode(true)} className="btn">
+            Selection Mode
+          </button>
           <Uploader album={album} setAlbum={setAlbum} />
           <button onClick={downloadAll} className="btn">
             Download All
@@ -208,9 +225,9 @@ function Albumview(currentUser) {
       )}
 
       {selectMode && (
-        <div>
+        <div className="albumActions">
           <button onClick={cancelSelect} className="btn">
-            Cancel
+            Cancel Selection
           </button>
           <button onClick={selectAll} className="btn">
             Select All
@@ -227,7 +244,6 @@ function Albumview(currentUser) {
         </div>
       )}
 
-      <h2>Files</h2>
       <div className="albumFiles">
         {album.photos.length === 0 ? (
           <p>No files in this album.</p>
