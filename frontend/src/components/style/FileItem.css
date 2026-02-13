@@ -1,17 +1,21 @@
 .fileItem {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /*width: 150px;*/
-    margin: 10px;
-
     border: 1px solid #ccc;
-    border-radius: 8px;
+    /*border-radius: 8px;*/
     padding: 10px;
     background-color: #f9f9f9;
     transition:
         transform 0.3s ease,
         box-shadow 0.3s ease;
+
+    /* Make the element a block/inline‑block so it can accept width/height */
+    display: block;
+
+    /* Keep the container square – 1:1 aspect ratio */
+    aspect-ratio: 1 / 1;
+
+    /* Positioning context for absolutely positioned children */
+    position: relative;
+    overflow: hidden;
 }
 
 .fileItem:hover {
@@ -21,6 +25,49 @@
 }
 
 .selected {
-    border-color: #007bff;
-    background-color: #e7f1ff;
+    border-color: salmon;
+    background-color: salmon;
+}
+
+.selectscreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+    background-color: rgba(255, 192, 203, 0.5);
+}
+
+.thumbnail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    object-fit: cover;
+}
+
+.fileInfo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+}
+
+.fileItem:hover .fileInfo {
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }

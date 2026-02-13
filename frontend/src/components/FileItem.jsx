@@ -30,11 +30,23 @@ function FileItem({
       className={`fileItem ${isSelected ? "selected" : ""}`}
       onClick={handleClick}
     >
-      <h2>{file.filename}</h2>
-      <p>{index}</p>
-      <p>{file.username}</p>
-      <p>{new Date(file.created_at).toLocaleDateString()}</p>
-      <img src={file.thumb_key} alt={`${file.filename}`} />
+      <div className="thumbnail">
+        <img src={file.thumb_key} alt={`${file.filename}`} />
+      </div>
+      {isSelected && <div className="selectscreen" />}
+      <div className="fileInfo">
+        <div className="info">
+          <p>{file.filename}</p>
+        </div>
+        <div className="info">
+          <label>user</label>
+          <p>{file.username}</p>
+        </div>
+        <div className="info">
+          <label>uploaded</label>
+          <p>{new Date(file.created_at).toLocaleString()}</p>
+        </div>
+      </div>
     </div>
   );
 }

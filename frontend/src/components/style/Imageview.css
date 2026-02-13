@@ -11,13 +11,18 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.85);
     z-index: 9999;
 }
 
 .primo {
     width: 100%;
     height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     object-fit: contain;
-    color: white;
+    /*color: white;*/
 }

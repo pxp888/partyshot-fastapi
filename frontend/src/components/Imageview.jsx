@@ -28,8 +28,8 @@ function Imageview({ files, focus, setFocus }) {
   return (
     <div className="imageView">
       <div className="primo">
-        <h2>{files[focus].filename}</h2>
-        <p>{focus}</p>
+        {/* <h2>{files[focus].filename}</h2>*/}
+        {/* <p>{focus}</p>*/}
         <img src={files[focus].s3_key} alt={`${files[focus].filename}`} />
       </div>
     </div>
