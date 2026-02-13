@@ -143,7 +143,8 @@ def get_albums_for_user(username: str):
     albums = db.get_albums(user_record["id"])
     for album in albums:
         album["username"] = username
-        album["thumb_key"] = aws.create_presigned_url(album["thumb_key"])
+        if album["thumb_key"]:
+            album["thumb_key"] = aws.create_presigned_url(album["thumb_key"])
     return albums
 
 
