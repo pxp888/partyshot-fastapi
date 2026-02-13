@@ -36,7 +36,7 @@ function FileItem({
       {isSelected && <div className="selectscreen" />}
       <div className="fileInfo">
         <div className="info">
-          <p>{file.filename}</p>
+          <p className="title">{file.filename}</p>
         </div>
         <div className="info">
           <label>user</label>

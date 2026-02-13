@@ -48,15 +48,6 @@ function Albumview(currentUser) {
     }
   }
 
-  if (!album) {
-    return (
-      <div className="albumview">
-        <h1>Album View</h1>
-        <p>Loading album data...</p>
-      </div>
-    );
-  }
-
   function downloadAll(e) {
     e.preventDefault();
     if (!album || !album.photos || album.photos.length === 0) {
@@ -185,6 +176,15 @@ function Albumview(currentUser) {
     } catch (error) {
       console.error("Toggle lock failed : ", error);
     }
+  }
+
+  if (!album) {
+    return (
+      <div className="albumview">
+        <h1>Album View</h1>
+        <p>Loading album data...</p>
+      </div>
+    );
   }
 
   return (

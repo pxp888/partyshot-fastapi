@@ -224,107 +224,6 @@ def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
     return {"detail": "Album deleted successfully"}
 
 
-@app.post("/api/upload-file")
-async def upload_file(
-    file: UploadFile = File(...),
-    album_code: str = Form(...),
-    thumbnail: UploadFile = File(...),
-    Authorize: AuthJWT = Depends(),
-    redis=Depends(get_redis),
-):
-    """
-    Handle file uploads for an album.
-    """
-    # Enforce authentication
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-
-    # Resolve user and album
-    user_record = db.getUser(str(current_user))
-    if user_record is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    album = db.get_album_by_code(album_code)
-    if album is None:
-        raise HTTPException(status_code=404, detail="Album not found")
-
-    if album["open"] is False:
-        if album["username"] != current_user:
-            raise HTTPException(
-                status_code=403,
-                detail="You do not have permission to upload to this album",
-            )
-
-    file_id = uuid.uuid4().hex
-    s3_key = f"{album_code}/{file_id}"
-
-    # upload original file to S3
-    try:
-        file_bytes = file.file.read()
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Could not read uploaded file"
-        ) from e
-    finally:
-        file.file.close()
-
-    upload_success = aws.upload_bytes_to_s3(file_bytes, s3_key)
-    if not upload_success:
-        raise HTTPException(status_code=500, detail="Failed to upload file to S3")
-
-    # # Thumbnail generation
-    # thumb_key = None
-    # try:
-    #     image = Image.open(io.BytesIO(file_bytes))
-    #     image.thumbnail((300, 300))
-    #     thumb_io = io.BytesIO()
-
-    #     image.save(thumb_io, format="JPEG")
-
-    #     thumb_io.seek(0)
-    #     thumb_key = f"{album_code}/thumb_{file_id}"
-    #     if not aws.upload_bytes_to_s3(thumb_io.read(), thumb_key):
-    #         thumb_key = None
-    # except Exception as e:
-    #     print(f"Thumbnail generation failed for {file.file.name}: {e}")
-    #     thumb_key = None
-
-    # Upload thu
-    thumb_key = f"{album_code}/thumb_{file_id}"
-    try:
-        thumbnail_bytes = thumbnail.file.read()
-    except Exception as e:
-        print(f"Could not read thumbnail file: {e}")
-        thumb_key = None
-    finally:
-        thumbnail.file.close()
-
-    if thumb_key:
-        if not aws.upload_bytes_to_s3(thumbnail_bytes, thumb_key):
-            thumb_key = None
-
-    # Store metadata in the database
-    photo_id = db.add_photo(
-        user_id=user_record["id"],
-        album_id=album["id"],
-        filename=str(file.filename),
-        s3_key=s3_key,
-        thumb_key=thumb_key,
-    )
-
-    # job = f"{user_record['username']} {file.filename}"
-    # await redis.enqueue_job("say_hello", name=job)
-    # print(job)
-
-    return {
-        "photo_id": photo_id,
-        "filename": file.filename,
-        "album_id": album["id"],
-        "s3_key": aws.create_presigned_url(s3_key),
-        "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
-    }
-
-
 @app.get("/api/photos/{album_id}")
 def get_photos_for_album(album_id: int):
     """
@@ -366,7 +265,7 @@ def delete_photo(request: DeletePhotoRequest, Authorize: AuthJWT = Depends()):
 
     if (
         photo["username"] != user_record["username"]
-        and album["user_id"] != user_record["id"]
+        and album["username"] != user_record["username"]
     ):
         raise HTTPException(
             status_code=403, detail="You do not have permission to delete this photo"
@@ -435,8 +334,7 @@ def add_photo_metadata(
 
 @app.post("/api/togglelock")
 def toggleLock(request: ToggleLockRequest, Authorize: AuthJWT = Depends()):
-    # Authorize.jwt_required()
-
+    Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
 
     x = db.toggleLock(request.album_id, str(current_user))
