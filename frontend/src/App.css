@@ -64,10 +64,6 @@ body {
     transition: background-color 0.5s;
 }
 
-.btn:focus {
-    background-color: var(--bright-color);
-}
-
 .btn:hover {
     background-color: salmon;
 }

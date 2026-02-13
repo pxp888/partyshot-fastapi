@@ -1,5 +1,7 @@
 import asyncio
 
+import aws
+import env
 from arq.connections import RedisSettings
 
 

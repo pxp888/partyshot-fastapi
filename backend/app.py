@@ -35,7 +35,7 @@ class RegisterRequest(BaseModel):
 
 
 class Settings(BaseModel):
-    authjwt_secret_key: str = "secretstuffhere"
+    authjwt_secret_key: str = "secretstuffherethis is a long secret key for jwt signing"
 
 
 class AlbumCreateRequest(BaseModel):
@@ -126,6 +126,10 @@ def protected(Authorize: AuthJWT = Depends()):
 # --------------------------------------------------------------------------- #
 
 
+async def get_redis(request: Request):
+    return request.app.state.redis
+
+
 @app.get("/api/user/{username}")
 def get_albums_for_user(username: str):
     """
@@ -209,10 +213,11 @@ def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
 
 
 @app.post("/api/upload-file")
-def upload_file(
+async def upload_file(
     file: UploadFile = File(...),
     album_code: str = Form(...),
     Authorize: AuthJWT = Depends(),
+    redis=Depends(get_redis),
 ):
     """
     Handle file uploads for an album.
@@ -224,12 +229,6 @@ def upload_file(
     Authentication
     --------------
     Requires a valid access token (``Authorization: Bearer <token>``).
-
-    Storage
-    -------
-    The file is saved under ``media/<album_code>/<generated‑filename>``.
-    The same path is stored in the ``s3_key`` and ``thumb_key`` columns of the
-    ``photos`` table; thumbnails are not generated in this example.
 
     Response
     --------
@@ -293,6 +292,10 @@ def upload_file(
         s3_key=s3_key,
         thumb_key=thumb_key,
     )
+
+    job = f"{user_record['username']} {file.filename}"
+    await redis.enqueue_job("say_hello", name=job)
+    print(job)
 
     return {
         "photo_id": photo_id,
@@ -375,6 +378,6 @@ async def serve_spa(request: Request, full_path: str):
 
 # 1️⃣ Serve the Vite build under “/” (but don’t use html=True)
 @app.on_event("startup")
-def startup() -> None:
-    # Initialize the database when the application starts up
+async def startup():
     db.init_db()
+    app.state.redis = await create_pool(RedisSettings(host="localhost", port=6379))
