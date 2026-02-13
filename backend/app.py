@@ -207,6 +207,12 @@ def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
             status_code=403, detail="You do not have permission to delete this album"
         )
 
+    pics = db.get_photos_by_album_id(album["id"])
+    for pic in pics:
+        aws.delete_file_from_s3(pic["s3_key"])
+        if pic["thumb_key"]:
+            aws.delete_file_from_s3(pic["thumb_key"])
+
     db.delete_album_by_code(request.code)
 
     return {"detail": "Album deleted successfully"}
@@ -216,23 +222,12 @@ def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
 async def upload_file(
     file: UploadFile = File(...),
     album_code: str = Form(...),
+    thumbnail: UploadFile = File(...),
     Authorize: AuthJWT = Depends(),
     redis=Depends(get_redis),
 ):
     """
     Handle file uploads for an album.
-
-    The request must include a multipart/form‑data body with:
-      * ``file`` – the file to upload (any type supported by the browser).
-      * ``album_code`` – the unique code of the album to add the file to.
-
-    Authentication
-    --------------
-    Requires a valid access token (``Authorization: Bearer <token>``).
-
-    Response
-    --------
-    200 OK with a JSON object containing the new photo id and the stored path.
     """
     # Enforce authentication
     Authorize.jwt_required()
@@ -257,7 +252,7 @@ async def upload_file(
     file_id = uuid.uuid4().hex
     s3_key = f"{album_code}/{file_id}"
 
-    # process the file upload and thumbnail generation in memory without saving to disk
+    # upload original file to S3
     try:
         file_bytes = file.file.read()
     except Exception as e:
@@ -271,27 +266,36 @@ async def upload_file(
     if not upload_success:
         raise HTTPException(status_code=500, detail="Failed to upload file to S3")
 
-    # attempt to generate a thumbnail, but if it fails for any reason, we can still proceed without it
-    thumb_key = None
+    # # Thumbnail generation
+    # thumb_key = None
+    # try:
+    #     image = Image.open(io.BytesIO(file_bytes))
+    #     image.thumbnail((300, 300))
+    #     thumb_io = io.BytesIO()
+
+    #     image.save(thumb_io, format="JPEG")
+
+    #     thumb_io.seek(0)
+    #     thumb_key = f"{album_code}/thumb_{file_id}"
+    #     if not aws.upload_bytes_to_s3(thumb_io.read(), thumb_key):
+    #         thumb_key = None
+    # except Exception as e:
+    #     print(f"Thumbnail generation failed for {file.file.name}: {e}")
+    #     thumb_key = None
+
+    # Upload thu
+    thumb_key = f"{album_code}/thumb_{file_id}"
     try:
-        image = Image.open(io.BytesIO(file_bytes))
-        image.thumbnail((300, 300))
-        thumb_io = io.BytesIO()
-
-        try:
-            image.save(thumb_io, format="JPEG")
-            thumb_format = "image/jpeg"
-        except Exception:
-            image.save(thumb_io, format="PNG")
-            thumb_format = "image/png"
-
-        thumb_io.seek(0)
-        thumb_key = f"{album_code}/thumb_{file_id}"
-        if not aws.upload_bytes_to_s3(thumb_io.read(), thumb_key):
-            thumb_key = None
+        thumbnail_bytes = thumbnail.file.read()
     except Exception as e:
-        print(f"Thumbnail generation failed for {file.file.name}: {e}")
+        print(f"Could not read thumbnail file: {e}")
         thumb_key = None
+    finally:
+        thumbnail.file.close()
+
+    if thumb_key:
+        if not aws.upload_bytes_to_s3(thumbnail_bytes, thumb_key):
+            thumb_key = None
 
     # Store metadata in the database
     photo_id = db.add_photo(
