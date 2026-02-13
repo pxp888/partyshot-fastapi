@@ -247,9 +247,17 @@ async def upload_file(
     if album is None:
         raise HTTPException(status_code=404, detail="Album not found")
 
+    if album["open"] is False:
+        if album["username"] != current_user:
+            raise HTTPException(
+                status_code=403,
+                detail="You do not have permission to upload to this album",
+            )
+
     file_id = uuid.uuid4().hex
     s3_key = f"{album_code}/{file_id}"
 
+    # process the file upload and thumbnail generation in memory without saving to disk
     try:
         file_bytes = file.file.read()
     except Exception as e:
@@ -263,6 +271,7 @@ async def upload_file(
     if not upload_success:
         raise HTTPException(status_code=500, detail="Failed to upload file to S3")
 
+    # attempt to generate a thumbnail, but if it fails for any reason, we can still proceed without it
     thumb_key = None
     try:
         image = Image.open(io.BytesIO(file_bytes))
@@ -293,9 +302,9 @@ async def upload_file(
         thumb_key=thumb_key,
     )
 
-    job = f"{user_record['username']} {file.filename}"
-    await redis.enqueue_job("say_hello", name=job)
-    print(job)
+    # job = f"{user_record['username']} {file.filename}"
+    # await redis.enqueue_job("say_hello", name=job)
+    # print(job)
 
     return {
         "photo_id": photo_id,
