@@ -384,7 +384,7 @@ async def get_presigned(
 
     # unique key inside the album
     file_id = uuid.uuid4().hex
-    s3_key = f"{album_code}/{file_id}/{filename}"
+    s3_key = f"{album_code}/{file_id}"
 
     s3_client = aws.get_s3_client()
     try:
