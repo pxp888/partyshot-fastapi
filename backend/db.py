@@ -156,7 +156,7 @@ def get_albums(user_id: int) -> list[dict]:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT id, name, open, public, created_at, code
+        SELECT id, name, open, public, created_at, code, thumb_key
         FROM albums
         WHERE user_id = %s;
         """,
@@ -174,6 +174,7 @@ def get_albums(user_id: int) -> list[dict]:
             "public": row[3],
             "created_at": row[4],
             "code": row[5],
+            "thumb_key": row[6],
         }
         for row in rows
     ]
@@ -452,6 +453,28 @@ def get_album(album_id: int) -> dict | None:
     cursor.close()
     conn.close()
     return album
+
+
+def checkthumb(album_id: int, thumb_key: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT thumb_key FROM albums WHERE id = %s;
+        """,
+        (album_id,),
+    )
+    row = cursor.fetchone()
+    if row and row[0] is None:
+        cursor.execute(
+            """
+            UPDATE albums SET thumb_key = %s WHERE id = %s;
+            """,
+            (thumb_key, album_id),
+        )
+        conn.commit()
+    cursor.close()
+    conn.close()
 
 
 # --------------------------------------------------------------------------- #

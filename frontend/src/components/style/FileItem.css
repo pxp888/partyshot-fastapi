@@ -7,13 +7,10 @@
         transform 0.3s ease,
         box-shadow 0.3s ease;
 
-    /* Make the element a block/inline‑block so it can accept width/height */
     display: block;
 
-    /* Keep the container square – 1:1 aspect ratio */
     aspect-ratio: 1 / 1;
 
-    /* Positioning context for absolutely positioned children */
     position: relative;
     overflow: hidden;
 }
@@ -39,15 +36,15 @@
     background-color: rgba(255, 192, 203, 0.5);
 }
 
-.thumbnail {
+.thumbnail img {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    object-fit: cover;
+    /*border-radius: 4px;*/
+    /*margin-bottom: 10px;*/
+    object-fit: contain;
 }
 
 .fileInfo {

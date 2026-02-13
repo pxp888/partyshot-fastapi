@@ -143,6 +143,7 @@ def get_albums_for_user(username: str):
     albums = db.get_albums(user_record["id"])
     for album in albums:
         album["username"] = username
+        album["thumb_key"] = aws.create_presigned_url(album["thumb_key"])
     return albums
 
 
@@ -418,6 +419,8 @@ def add_photo_metadata(
         s3_key=payload["s3_key"],
         thumb_key=payload.get("thumb_key"),
     )
+
+    db.checkthumb(payload["album_id"], payload["thumb_key"])
     return {"photo_id": photo_id}
 
 

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./style/AlbumItem.css";
 
 function AlbumItem({ album }) {
@@ -15,6 +15,7 @@ function AlbumItem({ album }) {
       onClick={handleClick}
       style={{ cursor: "pointer" }}
     >
+      <img src={album.thumb_key} alt={album.name} />
       <h3>{album.name}</h3>
       <p>Owner: {album.user_id} </p>
       <p>Open: {album.open ? "Yes" : "No"}</p>

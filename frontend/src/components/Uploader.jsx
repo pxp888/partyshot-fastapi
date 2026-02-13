@@ -102,7 +102,19 @@ function Uploader({ album, setAlbum }) {
     console.log(`Uploaded ${file.name} to S3 as ${s3_key}`);
 
     // 3️⃣ (Optional) Create a thumbnail and upload it the same way
-    const thumbnailBlob = await createThumbnail(file);
+    let thumbnailBlob;
+    try {
+      thumbnailBlob = await createThumbnail(file);
+    } catch (err) {
+      console.warn(
+        "Thumbnail creation failed, using blank image instead.",
+        err,
+      );
+      // Fetch the placeholder image and convert to a Blob
+      const res = await fetch(blankImage);
+      thumbnailBlob = await res.blob();
+    }
+
     const thumbPresignRes = await fetch("/api/s3-presigned", {
       method: "POST",
       headers: {
