@@ -60,7 +60,8 @@ def init_db() -> None:
             open BOOLEAN DEFAULT TRUE,
             public BOOLEAN DEFAULT TRUE,
             thumb_key TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            modified TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS photos (

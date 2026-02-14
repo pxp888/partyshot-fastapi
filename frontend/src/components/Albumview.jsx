@@ -204,7 +204,9 @@ function Albumview(currentUser) {
           </div>
           <div className="infoItem">
             <label>Open: </label>
-            <p>{album.open ? "Yes" : "No"}</p>
+            <p onClick={toggleLock} className="clickable">
+              {album.open ? "Yes" : "No"}
+            </p>
           </div>
           <div className="infoItem">
             <label>Public: </label>
@@ -221,24 +223,18 @@ function Albumview(currentUser) {
         </div>
       </div>
 
-      {!selectMode && (
-        <div className="albumActions">
-          <button onClick={() => setSelectMode(true)} className="btn">
-            Selection Mode
-          </button>
-          <Uploader album={album} setAlbum={setAlbum} />
-          <button onClick={downloadAll} className="btn">
-            Download All
-          </button>
-          <button onClick={toggleLock} className="btn">
-            {album.open ? "Lock Album" : "Unlock Album"}
-          </button>
-          <button onClick={handleDeleteAlbum} className="btn">
-            Delete Album
-          </button>
-        </div>
-      )}
-
+      <div className="albumActions">
+        <button onClick={() => setSelectMode(true)} className="btn">
+          Selection Mode
+        </button>
+        <Uploader album={album} setAlbum={setAlbum} />
+        <button onClick={downloadAll} className="btn">
+          Download All
+        </button>
+        <button onClick={handleDeleteAlbum} className="btn">
+          Delete Album
+        </button>
+      </div>
       {selectMode && (
         <div className="albumActions">
           <button onClick={cancelSelect} className="btn">
