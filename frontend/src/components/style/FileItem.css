@@ -1,7 +1,7 @@
 .fileItem {
-    border: 1px solid gray;
+    /*border: 1px solid gray;*/
     /*border-radius: 8px;*/
-    padding: 10px;
+    /*padding: 10px;*/
     background-color: rgb(32, 32, 32);
     transition:
         transform 0.3s ease,
@@ -16,7 +16,7 @@
 }
 
 .fileItem:hover {
-    /*transform: scale(1.05);*/
+    transform: scale(1.05);
     transition: transform 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -44,7 +44,7 @@
     height: 100%;
     /*border-radius: 4px;*/
     /*margin-bottom: 10px;*/
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .fileInfo {

@@ -200,7 +200,7 @@ def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
 
-    user_record = db.getUser(current_user)
+    user_record = db.getUser(str(current_user))
     if user_record is None:
         raise HTTPException(status_code=404, detail="User not found")
 
