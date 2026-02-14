@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import random
 
@@ -179,56 +180,6 @@ def get_albums(user_id: int) -> list[dict]:
             "thumb_key": row[6],
         }
         for row in rows
-    ]
-
-
-def create_album(
-    user_id: int, name: str, open: bool = True, public: bool = True
-) -> list[dict]:
-    """Create a new album for a user and return the album ID."""
-
-    code = random.randbytes(12).hex()
-    while True:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT id FROM albums WHERE code = %s;
-            """,
-            (code,),
-        )
-        if cursor.fetchone() is None:
-            # no collision, we can use this code
-            cursor.close()
-            conn.close()
-            break
-        else:
-            # collision, generate a new code and try again
-            cursor.close()
-            conn.close()
-            code = random.randbytes(16).hex()
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO albums (user_id, name, open, public, code)
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING id;
-        """,
-        (user_id, name, open, public, code),
-    )
-    row = cursor.fetchone()
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return [
-        {
-            "name": name,
-            "open": open,
-            "public": public,
-            "code": code,
-        }
     ]
 
 
@@ -574,6 +525,61 @@ def openCheck(user, album_id):
     if user_record is None:
         return 0
     return 1 if user_record["id"] == owner_id else 0
+
+
+def createAlbum(
+    username: str, albumname: str, open: bool = True, public: bool = True
+) -> dict:
+    # 1. Resolve the user ID
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id FROM users WHERE username = %s;",
+        (username,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        cursor.close()
+        conn.close()
+        raise ValueError(f"User '{username}' not found")
+    user_id = row[0]
+
+    # 2. Generate a unique album code
+    code = random.randbytes(16).hex()
+    while True:
+        cursor.execute(
+            "SELECT 1 FROM albums WHERE code = %s;",
+            (code,),
+        )
+        if cursor.fetchone() is None:
+            break
+        code = random.randbytes(16).hex()
+
+    # 3. Generate the modified timestamp and insert the album record
+    modified_ts = datetime.datetime.now(datetime.timezone.utc)
+    cursor.execute(
+        """
+        INSERT INTO albums (user_id, name, open, public, code, modified)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id;
+        """,
+        (user_id, albumname, open, public, code, modified_ts),
+    )
+    album_id = cursor.fetchone()[0]
+    conn.commit()
+
+    # 4. Clean up and return
+    cursor.close()
+    conn.close()
+    return {
+        "action": "createAlbum",
+        "id": album_id,
+        "name": albumname,
+        "open": open,
+        "public": public,
+        "code": code,
+        "modified": modified_ts.isoformat(),
+    }
 
 
 # --------------------------------------------------------------------------- #

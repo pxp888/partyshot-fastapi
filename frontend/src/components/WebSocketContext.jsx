@@ -5,7 +5,10 @@ import useWebSocket from "react-use-websocket";
 const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
-  const socketUrl = "ws://localhost:8000/ws";
+  const wssecret = localStorage.getItem("wssecret");
+  const username = localStorage.getItem("username");
+  const socketUrl = `ws://localhost:8000/ws?wssecret=${wssecret}&username=${encodeURIComponent(username)}`;
+  // const socketUrl = `ws://localhost:8000/ws`;
 
   // The hook lives here in the Provider
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(

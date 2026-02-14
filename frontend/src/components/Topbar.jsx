@@ -63,6 +63,8 @@ function Topbar({ currentUser, setCurrentUser }) {
     setCurrentUser(null);
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("wssecret");
+    localStorage.removeItem("username");
   }
 
   return (

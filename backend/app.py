@@ -1,11 +1,13 @@
 import asyncio
 import io
+import json
 import os
 import uuid
 
 import aws
 import db
 import env
+import redis.asyncio as redis
 from arq import create_pool
 from arq.connections import RedisSettings
 from fastapi import (
@@ -28,6 +30,8 @@ from PIL import Image
 
 # from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
+
+redis_client = redis.from_url("redis://localhost:6379", decode_responses=True)
 
 app = FastAPI()
 
@@ -81,6 +85,7 @@ def login(user: User, Authorize: AuthJWT = Depends()):
 
     access_token = Authorize.create_access_token(subject=user.username)
     refresh_token = Authorize.create_refresh_token(subject=user.username)
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -159,28 +164,6 @@ def get_albums_for_user(username: str):
         if album["thumb_key"]:
             album["thumb_key"] = aws.create_presigned_url(album["thumb_key"])
     return albums
-
-
-@app.post("/api/create-album")
-def create_album(request: AlbumCreateRequest, Authorize: AuthJWT = Depends()):
-    """
-    Create a new album with the given name for the currently authenticated user.
-    The requester must be logged in to create an album.
-    """
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    if not current_user:
-        raise HTTPException(
-            status_code=401, detail="Invalid authentication credentials"
-        )
-
-    user_record = db.getUser(str(current_user))
-    if user_record is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    new_album = db.create_album(user_record["id"], request.album_name)
-
-    return new_album
 
 
 @app.get("/api/album/{code}")
@@ -357,15 +340,59 @@ def toggleLock(request: ToggleLockRequest, Authorize: AuthJWT = Depends()):
     return [{"open": 0}]
 
 
+# --------------------------------------------------------------------------- #
+# Websocket stuff
+# --------------------------------------------------------------------------- #
+
+
+@app.post("/api/generate-wssecret")
+async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    wssecret = uuid.uuid4().hex
+    await redis_client.set(f"user:{current_user}:uuid", wssecret)
+    return {"wssecret": wssecret}
+
+
+async def createAlbum(websocket, data):
+    username = data["payload"]["owner"]
+    album_name = data["payload"]["album_name"]
+    result = db.createAlbum(username, album_name)
+    await websocket.send_json(result)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    wssecret = websocket.query_params.get("wssecret")
+    username = websocket.query_params.get("username")
+
+    if not wssecret:
+        await websocket.close(code=1008)  # 1008 = policy violation
+        return
+
+    if not username:
+        await websocket.close(code=1008)  # 1008 = policy violation
+        return
+
+    old = await redis_client.get(f"user:{username}:uuid")
+    if old != wssecret:
+        print("not logged in", username)
+        await websocket.close(code=1008)  # 1008 = policy violation
+        return
+
     await websocket.accept()
     try:
         while True:
-            # Wait for any message from the client
             data = await websocket.receive_text()
-            # Send a response back
-            await websocket.send_text(f"Message text was: {data}")
+            try:
+                data = json.loads(data)
+            except json.JSONDecodeError:
+                await websocket.send_json({"type": "bad message"})
+                return
+
+            if data["action"] == "createAlbum":
+                await createAlbum(websocket, data)
+
     except Exception as e:
         print(f"Connection closed: {e}")
 
