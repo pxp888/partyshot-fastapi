@@ -34,12 +34,7 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route
           path="/user/:username"
-          element={
-            <Userview
-              currentUser={currentUser}
-              setCurrentUser={setCurrentUser}
-            />
-          }
+          element={<Userview currentUser={currentUser} />}
         />
         <Route
           path="/album/:albumcode"

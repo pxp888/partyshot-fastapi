@@ -40,7 +40,7 @@ function Albumview(currentUser) {
       return;
     }
     try {
-      sendJson("/api/delete-album", { code: album.code });
+      await sendJson("/api/delete-album", { code: album.code });
       console.log("Album deleted successfully");
       window.location.href = `/user/${currentUser.currentUser}`;
     } catch (error) {

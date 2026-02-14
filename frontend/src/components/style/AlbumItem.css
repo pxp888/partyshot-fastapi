@@ -5,8 +5,8 @@
     /*width: 150px;*/
     margin: 10px;
 
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    /*border: 1px solid #ccc;*/
+    /*border-radius: 8px;*/
     padding: 10px;
     background-color: black;
     color: gainsboro;
@@ -16,7 +16,7 @@
 }
 
 .album-item:hover {
-    transform: scale(1.05);
+    /*transform: scale(1.05);*/
     transition: transform 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
