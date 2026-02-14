@@ -8,10 +8,19 @@ import db
 import env
 from arq import create_pool
 from arq.connections import RedisSettings
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    WebSocket,
+)
 
 # from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_jwt_auth2 import AuthJWT
 from fastapi_jwt_auth2.exceptions import AuthJWTException
@@ -346,6 +355,19 @@ def toggleLock(request: ToggleLockRequest, Authorize: AuthJWT = Depends()):
         raise HTTPException(status_code=403, detail="Not Allowed")
 
     return [{"open": 0}]
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            # Wait for any message from the client
+            data = await websocket.receive_text()
+            # Send a response back
+            await websocket.send_text(f"Message text was: {data}")
+    except Exception as e:
+        print(f"Connection closed: {e}")
 
 
 # --------------------------------------------------------------------------- #

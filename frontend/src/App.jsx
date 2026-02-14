@@ -5,6 +5,7 @@ import Topbar from "./components/Topbar";
 import WelcomePage from "./components/WelcomePage";
 import Userview from "./components/Userview";
 import Albumview from "./components/Albumview";
+import { WebSocketProvider } from "./components/WebSocketContext";
 
 function Home() {
   return <h2>Welcome to the Home page</h2>;
@@ -22,26 +23,28 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
   return (
-    <Router>
-      {/* <nav style={{ marginBottom: "1rem" }}>
+    <WebSocketProvider>
+      <Router>
+        {/* <nav style={{ marginBottom: "1rem" }}>
         <Link to="/">Home</Link>
         <Link to="/about">About</Link>
       </nav>*/}
-      <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
+        <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
-      <Routes>
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/about" element={<About />} />
-        <Route
-          path="/user/:username"
-          element={<Userview currentUser={currentUser} />}
-        />
-        <Route
-          path="/album/:albumcode"
-          element={<Albumview currentUser={currentUser} />}
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Router>
+        <Routes>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/about" element={<About />} />
+          <Route
+            path="/user/:username"
+            element={<Userview currentUser={currentUser} />}
+          />
+          <Route
+            path="/album/:albumcode"
+            element={<Albumview currentUser={currentUser} />}
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </WebSocketProvider>
   );
 }
