@@ -8,6 +8,7 @@ import aws
 import db
 import env
 import redis.asyncio as redis
+import watcher
 from arq import create_pool
 from arq.connections import RedisSettings
 from fastapi import (
@@ -31,12 +32,9 @@ from PIL import Image
 # from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
 
-redis_client = redis.from_url("redis://localhost:6379", decode_responses=True)
+redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
-# holders for pub/sub info
-subjects: dict[str, set[WebSocket]] = {}
-listeners: dict[str, asyncio.Task] = {}
-
+manager = watcher.Watcher()
 
 app = FastAPI()
 
@@ -367,15 +365,19 @@ async def createAlbum(websocket, data, username):
         await websocket.close(code=1008)  # 1008 = policy violation
         return
 
-    result = db.createAlbum(username, album_name)
-    await websocket.send_json(result)
+    # result = db.createAlbum(username, album_name)
+    # await websocket.send_json(result)
+    message = {"action": "test", "payload": "test"}
+
+    await redis_client.publish(f"albums-{username}", json.dumps(message))
 
 
 async def getAlbums(websocket, data, username):
     target = data["payload"]["target"]
-    if target == username:
-        result = db.getMyAlbums(username)
-        await websocket.send_json(result)
+    result = db.getAlbums(username, target)
+    await websocket.send_json(result)
+
+    await manager.subscribe(websocket, f"albums-{username}")
 
 
 @app.websocket("/ws")
@@ -394,8 +396,8 @@ async def websocket_endpoint(websocket: WebSocket):
     old = await redis_client.get(f"user:{username}:uuid")
     if old != wssecret:
         print("not logged in", username)
-        await websocket.close(code=1008)  # 1008 = policy violation
-        return
+        # await websocket.close(code=1008)  # 1008 = policy violation
+        # return
 
     await websocket.accept()
     try:
@@ -415,8 +417,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print(f"Connection closed: {e}")
     finally:
-        # Ensure cleanup
-        # await manager.disconnect(websocket)
+        # await manager.unsubscribe(websocket)
         pass
 
 

@@ -589,7 +589,7 @@ def createAlbum(
     }
 
 
-def getMyAlbums(username):
+def getAlbums(asker, username):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -616,11 +616,13 @@ def getMyAlbums(username):
 
     albums = []
     for album_row in album_rows:
-        try:
-            tum = aws.create_presigned_url(album_row[6])
-        except:
-            tum = None
+        if asker != username:
+            if not album_row[3]:
+                continue
 
+        tum = None
+        if album_row[6] is not None:
+            tum = aws.create_presigned_url(album_row[6])
         albums.append(
             {
                 "id": album_row[0],
