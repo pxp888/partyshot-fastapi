@@ -640,6 +640,59 @@ def getAlbums(asker, username):
     return message
 
 
+def deleteAlbum(username: str, albumcode: str) -> bool:
+    """
+    Delete an album identified by *albumcode* only if it belongs to the
+    specified *username*.
+
+    The implementation queries the database directly and does **not**
+    rely on any helper functions defined elsewhere in ``db.py``.
+    It returns ``True`` when the album was deleted, ``False`` when the
+    album does not exist or the username does not match.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # 1️⃣ Verify ownership by selecting the album that matches the code
+        #     and is owned by the provided username.
+        cursor.execute(
+            """
+            SELECT a.id
+            FROM albums a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.code = %s AND u.username = %s;
+            """,
+            (albumcode, username),
+        )
+        album_row = cursor.fetchone()
+
+        if album_row is None:
+            # Album not found or username mismatch
+            return False
+
+        # 2️⃣ Delete the album.  The foreign‑key constraints in the schema
+        #     (e.g. photos referencing albums) are declared with
+        #     ``ON DELETE CASCADE`` so the related photos will be
+        #     removed automatically.
+        cursor.execute(
+            """
+            DELETE FROM albums
+            WHERE code = %s
+            RETURNING id;
+            """,
+            (albumcode,),
+        )
+        deleted = cursor.fetchone() is not None
+        conn.commit()
+        return bool(deleted)
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #

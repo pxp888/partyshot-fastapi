@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { receiveJson, sendJson } from "./helpers";
+import { useSocket } from "./WebSocketContext"; // ← NEW
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import FileItem from "./FileItem";
@@ -16,6 +17,7 @@ function Albumview(currentUser) {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
   const [focus, setFocus] = useState(-1);
+  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
 
   useEffect(() => {
     async function fetchAlbum() {
@@ -39,13 +41,20 @@ function Albumview(currentUser) {
     if (!window.confirm("Are you sure you want to delete this album?")) {
       return;
     }
-    try {
-      await sendJson("/api/delete-album", { code: album.code });
-      console.log("Album deleted successfully");
-      window.location.href = `/user/${currentUser.currentUser}`;
-    } catch (error) {
-      console.error("Failed to delete album:", error);
-    }
+
+    sendJsonMessage({
+      action: "deleteAlbum",
+      payload: { target: albumcode },
+    });
+    window.location.href = `/user/${currentUser.currentUser}`;
+
+    // try {
+    //   await sendJson("/api/delete-album", { code: album.code });
+    //   console.log("Album deleted successfully");
+    //   window.location.href = `/user/${currentUser.currentUser}`;
+    // } catch (error) {
+    //   console.error("Failed to delete album:", error);
+    // }
   }
 
   function downloadAll(e) {
