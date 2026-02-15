@@ -241,24 +241,24 @@ def get_album_by_code(code: str) -> dict | None:
     return album
 
 
-def delete_album_by_code(code: str) -> bool:
-    """Delete an album from the database by its unique code. Return True if the album was deleted, False if it was not found."""
+# def delete_album_by_code(code: str) -> bool:
+#     """Delete an album from the database by its unique code. Return True if the album was deleted, False if it was not found."""
 
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        DELETE FROM albums
-        WHERE code = %s
-        RETURNING id;
-        """,
-        (code,),
-    )
-    row = cursor.fetchone()
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return row is not None
+#     conn = get_connection()
+#     cursor = conn.cursor()
+#     cursor.execute(
+#         """
+#         DELETE FROM albums
+#         WHERE code = %s
+#         RETURNING id;
+#         """,
+#         (code,),
+#     )
+#     row = cursor.fetchone()
+#     conn.commit()
+#     cursor.close()
+#     conn.close()
+#     return row is not None
 
 
 def add_photo(
@@ -637,6 +637,72 @@ def getAlbums(asker, username):
     cursor.close()
     conn.close()
     message = {"action": "getAlbums", "payload": albums}
+    return message
+
+
+def getPhotos(code: str) -> dict | None:
+    """Retrieve an album from the database by its unique code. Also return photos in the album. Each photo should include all fields, including the username of the owner."""
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT a.id, a.name, a.open, a.public, a.created_at, a.code, u.username
+        FROM albums a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.code = %s;
+        """,
+        (code,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        cursor.close()
+        conn.close()
+        return None
+
+    album = {
+        "id": row[0],
+        "name": row[1],
+        "open": row[2],
+        "public": row[3],
+        "created_at": row[4].isoformat() if row[4] else None,
+        "code": row[5],
+        "username": row[6],
+        "photos": [],
+    }
+
+    cursor.execute(
+        """
+        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
+        FROM photos p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.album_id = %s;
+        """,
+        (album["id"],),
+    )
+    photo_rows = cursor.fetchall()
+    for photo_row in photo_rows:
+        s3 = None
+        if photo_row[1] is not None:
+            s3 = aws.create_presigned_url(photo_row[1])
+        tum = None
+        if photo_row[2] is not None:
+            tum = aws.create_presigned_url(photo_row[2])
+
+        album["photos"].append(
+            {
+                "id": photo_row[0],
+                "s3_key": s3,
+                "thumb_key": tum,
+                "filename": photo_row[3],
+                "created_at": photo_row[4].isoformat() if photo_row[4] else None,
+                "username": photo_row[5],
+            }
+        )
+    cursor.close()
+    conn.close()
+
+    message = {"action": "getPhotos", "payload": album}
     return message
 
 

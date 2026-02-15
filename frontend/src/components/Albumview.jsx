@@ -13,31 +13,53 @@ import "./style/Albumview.css";
 function Albumview(currentUser) {
   const { albumcode } = useParams();
   const [album, setAlbum] = useState(null);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
   const [focus, setFocus] = useState(-1);
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
 
   useEffect(() => {
-    async function fetchAlbum() {
-      try {
-        const albumData = await receiveJson(`/api/album/${albumcode}`);
-        setAlbum(albumData);
-        console.log("Fetched album data for album code:", albumData);
-      } catch (error) {
-        console.error(
-          "Failed to fetch album data for album code:",
-          albumcode,
-          error,
-        );
-      }
+    sendJsonMessage({
+      action: "getPhotos",
+      payload: { albumcode: albumcode },
+    });
+  }, [sendJsonMessage, albumcode]);
+
+  // --------------------------------------------
+  // 2️⃣  React to messages that come from the WS
+  // --------------------------------------------
+  useEffect(() => {
+    if (!lastJsonMessage) return;
+    const { action, payload } = lastJsonMessage;
+
+    // 1️⃣  Initial list of albums (sent from db.py)
+    if (action === "getPhotos") {
+      setAlbum(payload);
+      console.log(payload);
+      return;
     }
-    fetchAlbum();
-  }, [albumcode, navigate]);
+  }, [lastJsonMessage, album]);
+
+  // OLD INITIAL GRAB
+  // useEffect(() => {
+  //   async function fetchAlbum() {
+  //     try {
+  //       const albumData = await receiveJson(`/api/album/${albumcode}`);
+  //       setAlbum(albumData);
+  //       console.log("Fetched album data for album code:", albumData);
+  //     } catch (error) {
+  //       console.error(
+  //         "Failed to fetch album data for album code:",
+  //         albumcode,
+  //         error,
+  //       );
+  //     }
+  //   }
+  //   fetchAlbum();
+  // }, [albumcode, navigate]);
 
   async function handleDeleteAlbum() {
-    // confirm deletion with the user
     if (!window.confirm("Are you sure you want to delete this album?")) {
       return;
     }

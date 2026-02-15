@@ -43,7 +43,7 @@ function Userview({ currentUser }) {
     }
 
     console.log(lastJsonMessage);
-  }, [lastJsonMessage, albums]); // Note the extra `albums` dependency
+  }, [lastJsonMessage, albums, sendJsonMessage, username]); // Note the extra `albums` dependency
 
   // --------------------------------------------
   // 3️⃣  Create a new album – send via WS

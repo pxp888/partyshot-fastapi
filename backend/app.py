@@ -368,15 +368,14 @@ async def createAlbum(websocket, data, username):
     result = db.createAlbum(username, album_name)
     # await websocket.send_json(result)
     message = {"action": "newAlbum", "payload": {"type": "update"}}
-    await redis_client.publish(f"albums-{username}", json.dumps(message))
+    await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
 async def getAlbums(websocket, data, username):
     target = data["payload"]["target"]
     result = db.getAlbums(username, target)
     await websocket.send_json(result)
-
-    await manager.subscribe(websocket, f"albums-{target}")
+    await manager.subscribe(websocket, f"user-{target}")
 
 
 async def deleteAlbum(websocket, data, username):
@@ -386,6 +385,13 @@ async def deleteAlbum(websocket, data, username):
 
     message = {"action": "newAlbum", "payload": {"type": "update"}}
     await redis_client.publish(f"albums-{username}", json.dumps(message))
+
+
+async def getPhotos(websocket, data, username):
+    albumcode = data["payload"]["albumcode"]
+    album = db.getPhotos(albumcode)
+    await websocket.send_json(album)
+    await manager.subscribe(websocket, f"album-{albumcode}")
 
 
 @app.websocket("/ws")
@@ -423,6 +429,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await getAlbums(websocket, data, username)
             if data["action"] == "deleteAlbum":
                 await deleteAlbum(websocket, data, username)
+            if data["action"] == "getPhotos":
+                await getPhotos(websocket, data, username)
 
     except Exception as e:
         print(f"Connection closed: {e}")
