@@ -365,10 +365,9 @@ async def createAlbum(websocket, data, username):
         await websocket.close(code=1008)  # 1008 = policy violation
         return
 
-    # result = db.createAlbum(username, album_name)
+    result = db.createAlbum(username, album_name)
     # await websocket.send_json(result)
-    message = {"action": "test", "payload": "test"}
-
+    message = {"action": "newAlbum", "payload": result}
     await redis_client.publish(f"albums-{username}", json.dumps(message))
 
 
