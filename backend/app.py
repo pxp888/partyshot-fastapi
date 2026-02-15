@@ -33,6 +33,11 @@ from pydantic import BaseModel
 
 redis_client = redis.from_url("redis://localhost:6379", decode_responses=True)
 
+# holders for pub/sub info
+subjects: dict[str, set[WebSocket]] = {}
+listeners: dict[str, asyncio.Task] = {}
+
+
 app = FastAPI()
 
 
@@ -148,22 +153,22 @@ async def get_redis(request: Request):
 # --------------------------------------------------------------------------- #
 
 
-@app.get("/api/user/{username}")
-def get_albums_for_user(username: str):
-    """
-    Return a list of albums belonging to the user identified by *username*.
-    The requester does not need to be logged in.
-    """
-    user_record = db.getUser(username)
-    if user_record is None:
-        raise HTTPException(status_code=404, detail="User not found")
+# @app.get("/api/user/{username}")
+# def get_albums_for_user(username: str):
+#     """
+#     Return a list of albums belonging to the user identified by *username*.
+#     The requester does not need to be logged in.
+#     """
+#     user_record = db.getUser(username)
+#     if user_record is None:
+#         raise HTTPException(status_code=404, detail="User not found")
 
-    albums = db.get_albums(user_record["id"])
-    for album in albums:
-        album["username"] = username
-        if album["thumb_key"]:
-            album["thumb_key"] = aws.create_presigned_url(album["thumb_key"])
-    return albums
+#     albums = db.get_albums(user_record["id"])
+#     for album in albums:
+#         album["username"] = username
+#         if album["thumb_key"]:
+#             album["thumb_key"] = aws.create_presigned_url(album["thumb_key"])
+#     return albums
 
 
 @app.get("/api/album/{code}")
@@ -354,11 +359,23 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     return {"wssecret": wssecret}
 
 
-async def createAlbum(websocket, data):
-    username = data["payload"]["owner"]
+async def createAlbum(websocket, data, username):
+    target = data["payload"]["owner"]
     album_name = data["payload"]["album_name"]
+
+    if target != username:
+        await websocket.close(code=1008)  # 1008 = policy violation
+        return
+
     result = db.createAlbum(username, album_name)
     await websocket.send_json(result)
+
+
+async def getAlbums(websocket, data, username):
+    target = data["payload"]["target"]
+    if target == username:
+        result = db.getMyAlbums(username)
+        await websocket.send_json(result)
 
 
 @app.websocket("/ws")
@@ -391,15 +408,22 @@ async def websocket_endpoint(websocket: WebSocket):
                 return
 
             if data["action"] == "createAlbum":
-                await createAlbum(websocket, data)
+                await createAlbum(websocket, data, username)
+            if data["action"] == "getAlbums":
+                await getAlbums(websocket, data, username)
 
     except Exception as e:
         print(f"Connection closed: {e}")
+    finally:
+        # Ensure cleanup
+        # await manager.disconnect(websocket)
+        pass
 
 
 # --------------------------------------------------------------------------- #
 # End app Logic
 # --------------------------------------------------------------------------- #
+
 
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
 
@@ -417,4 +441,5 @@ async def serve_spa(request: Request, full_path: str):
 @app.on_event("startup")
 async def startup():
     db.init_db()
+    # create pool for arq workers
     app.state.redis = await create_pool(RedisSettings(host="localhost", port=6379))

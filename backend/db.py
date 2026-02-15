@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import random
 
+import aws
 import env
 import psycopg2
 
@@ -527,6 +528,11 @@ def openCheck(user, album_id):
     return 1 if user_record["id"] == owner_id else 0
 
 
+# --------------------------------------------------------------------------- #
+# socket helpers
+# --------------------------------------------------------------------------- #
+
+
 def createAlbum(
     username: str, albumname: str, open: bool = True, public: bool = True
 ) -> dict:
@@ -557,6 +563,7 @@ def createAlbum(
 
     # 3. Generate the modified timestamp and insert the album record
     modified_ts = datetime.datetime.now(datetime.timezone.utc)
+
     cursor.execute(
         """
         INSERT INTO albums (user_id, name, open, public, code, modified)
@@ -580,6 +587,55 @@ def createAlbum(
         "code": code,
         "modified": modified_ts.isoformat(),
     }
+
+
+def getMyAlbums(username):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id FROM users WHERE username = %s;",
+        (username,),
+    )
+    user_row = cursor.fetchone()
+    if user_row is None:
+        cursor.close()
+        conn.close()
+        return None
+    user_id = user_row[0]
+
+    cursor.execute(
+        """
+        SELECT id, name, open, public, created_at, code, thumb_key, modified
+        FROM albums
+        WHERE user_id = %s;
+        """,
+        (user_id,),
+    )
+    album_rows = cursor.fetchall()
+
+    albums = []
+    for album_row in album_rows:
+        try:
+            tum = aws.create_presigned_url(album_row[6])
+        except:
+            tum = None
+
+        albums.append(
+            {
+                "id": album_row[0],
+                "name": album_row[1],
+                "open": album_row[2],
+                "public": album_row[3],
+                "created_at": album_row[4].isoformat() if album_row[4] else None,
+                "code": album_row[5],
+                "thumb_key": tum,
+            }
+        )
+    cursor.close()
+    conn.close()
+    message = {"action": "getAlbums", "payload": albums}
+    return message
 
 
 # --------------------------------------------------------------------------- #
