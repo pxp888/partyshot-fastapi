@@ -34,6 +34,14 @@ function Userview({ currentUser }) {
       return;
     }
 
+    if (action === "newAlbum" && payload?.type === "update") {
+      sendJsonMessage({
+        action: "getAlbums",
+        payload: { target: username },
+      });
+      return;
+    }
+
     console.log(lastJsonMessage);
   }, [lastJsonMessage, albums]); // Note the extra `albums` dependency
 

@@ -367,7 +367,8 @@ async def createAlbum(websocket, data, username):
 
     result = db.createAlbum(username, album_name)
     # await websocket.send_json(result)
-    message = {"action": "newAlbum", "payload": result}
+
+    message = {"action": "newAlbum", "payload": {"type": "update"}}
     await redis_client.publish(f"albums-{username}", json.dumps(message))
 
 
@@ -376,7 +377,7 @@ async def getAlbums(websocket, data, username):
     result = db.getAlbums(username, target)
     await websocket.send_json(result)
 
-    await manager.subscribe(websocket, f"albums-{username}")
+    await manager.subscribe(websocket, f"albums-{target}")
 
 
 @app.websocket("/ws")
