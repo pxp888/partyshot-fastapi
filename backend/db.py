@@ -759,6 +759,64 @@ def deleteAlbum(username: str, albumcode: str) -> bool:
         conn.close()
 
 
+def addPhoto(payload: dict, username: str) -> dict:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Resolve the user id
+        cursor.execute(
+            "SELECT id FROM users WHERE username = %s",
+            (username,),
+        )
+        user_row = cursor.fetchone()
+        if user_row is None:
+            raise ValueError(f"User '{username}' not found")
+        user_id = user_row[0]
+
+        # Resolve the album id using the album code
+        cursor.execute(
+            "SELECT id FROM albums WHERE code = %s",
+            (payload["album_code"],),
+        )
+        album_row = cursor.fetchone()
+        if album_row is None:
+            raise ValueError(f"Album code '{payload['album_code']}' not found")
+        album_id = album_row[0]
+
+        # Insert the new photo record
+        cursor.execute(
+            """
+            INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id, created_at
+            """,
+            (
+                user_id,
+                album_id,
+                payload["s3_key"],
+                payload.get("thumb_key"),
+                payload["filename"],
+            ),
+        )
+        photo_row = cursor.fetchone()
+        photo_id, created_at = photo_row
+        conn.commit()
+
+        return {
+            "id": photo_id,
+            "user_id": user_id,
+            "album_id": album_id,
+            "s3_key": aws.create_presigned_url(payload["s3_key"]),
+            "thumb_key": aws.create_presigned_url(payload.get("thumb_key")),
+            "filename": payload["filename"],
+            "created_at": created_at.isoformat() if photo_row[1] else None,
+            "username": username,
+        }
+    except Exception:
+        conn.rollback()
+        raise
+
+
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #

@@ -33,31 +33,28 @@ function Albumview(currentUser) {
     if (!lastJsonMessage) return;
     const { action, payload } = lastJsonMessage;
 
-    // 1️⃣  Initial list of albums (sent from db.py)
     if (action === "getPhotos") {
-      setAlbum(payload);
+      setAlbum((prev) => {
+        if (
+          prev === payload ||
+          JSON.stringify(prev) === JSON.stringify(payload)
+        ) {
+          return prev;
+        }
+        return payload;
+      });
       console.log(payload);
       return;
     }
-  }, [lastJsonMessage, album]);
 
-  // OLD INITIAL GRAB
-  // useEffect(() => {
-  //   async function fetchAlbum() {
-  //     try {
-  //       const albumData = await receiveJson(`/api/album/${albumcode}`);
-  //       setAlbum(albumData);
-  //       console.log("Fetched album data for album code:", albumData);
-  //     } catch (error) {
-  //       console.error(
-  //         "Failed to fetch album data for album code:",
-  //         albumcode,
-  //         error,
-  //       );
-  //     }
-  //   }
-  //   fetchAlbum();
-  // }, [albumcode, navigate]);
+    if (action === "addPhoto") {
+      setAlbum((prev) => ({
+        ...prev,
+        photos: [...(prev?.photos || []), payload],
+      }));
+      console.log("Photo added:", payload);
+    }
+  }, [lastJsonMessage]);
 
   async function handleDeleteAlbum() {
     if (!window.confirm("Are you sure you want to delete this album?")) {
@@ -69,14 +66,6 @@ function Albumview(currentUser) {
       payload: { target: albumcode },
     });
     window.location.href = `/user/${currentUser.currentUser}`;
-
-    // try {
-    //   await sendJson("/api/delete-album", { code: album.code });
-    //   console.log("Album deleted successfully");
-    //   window.location.href = `/user/${currentUser.currentUser}`;
-    // } catch (error) {
-    //   console.error("Failed to delete album:", error);
-    // }
   }
 
   function downloadAll(e) {

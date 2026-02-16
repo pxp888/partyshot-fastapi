@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { receiveJson } from "./helpers";
 import blankImage from "../assets/blank.jpg";
+import { useSocket } from "./WebSocketContext"; // ← NEW
 
 /**
  * Creates a thumbnail `Blob` from an image file.
@@ -62,7 +63,7 @@ function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
 
 function Uploader({ album, setAlbum }) {
   const { albumcode } = useParams();
-
+  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
   /**
    * Uploads the original file and its thumbnail.
    *
@@ -99,7 +100,7 @@ function Uploader({ album, setAlbum }) {
       throw new Error(`S3 upload failed: ${s3Res.status} ${errText}`);
     }
 
-    console.log(`Uploaded ${file.name} to S3 as ${s3_key}`);
+    // console.log(`Uploaded ${file.name} to S3 as ${s3_key}`);
 
     // 3️⃣ (Optional) Create a thumbnail and upload it the same way
     let thumbnailBlob;
@@ -144,29 +145,18 @@ function Uploader({ album, setAlbum }) {
     if (!thumbS3Res.ok) {
       console.warn("Thumbnail upload failed, continuing without thumb");
     } else {
-      console.log(`Uploaded thumbnail to ${thumb_key}`);
+      // console.log(`Uploaded thumbnail to ${thumb_key}`);
     }
 
-    // 4️⃣ Inform your backend about the new photo (metadata only)
-    const metaRes = await fetch("/api/add-photo-metadata", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        album_id: album.id,
+    sendJsonMessage({
+      action: "addPhoto",
+      payload: {
+        album_code: album.code,
         filename: file.name,
         s3_key,
         thumb_key: thumb_key || null,
-      }),
+      },
     });
-
-    if (!metaRes.ok) throw new Error("Failed to record metadata");
-
-    // 5️⃣ Refresh UI
-    const updatedAlbum = await receiveJson(`/api/album/${albumcode}`);
-    setAlbum(updatedAlbum);
   }
 
   return (

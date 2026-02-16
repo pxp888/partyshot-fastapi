@@ -41,8 +41,6 @@ function Userview({ currentUser }) {
       });
       return;
     }
-
-    console.log(lastJsonMessage);
   }, [lastJsonMessage, albums, sendJsonMessage, username]); // Note the extra `albums` dependency
 
   // --------------------------------------------

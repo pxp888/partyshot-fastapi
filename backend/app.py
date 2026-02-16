@@ -27,7 +27,6 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_jwt_auth2 import AuthJWT
 from fastapi_jwt_auth2.exceptions import AuthJWTException
-from PIL import Image
 
 # from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
@@ -384,7 +383,7 @@ async def deleteAlbum(websocket, data, username):
     print(f"delete {ok} for {target}")
 
     message = {"action": "newAlbum", "payload": {"type": "update"}}
-    await redis_client.publish(f"albums-{username}", json.dumps(message))
+    await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
 async def getPhotos(websocket, data, username):
@@ -392,6 +391,14 @@ async def getPhotos(websocket, data, username):
     album = db.getPhotos(albumcode)
     await websocket.send_json(album)
     await manager.subscribe(websocket, f"album-{albumcode}")
+    print("subscribed to : ", f"album-{albumcode}")
+
+
+async def addPhoto(websocket, data, username):
+    photo = db.addPhoto(data["payload"], username)
+    album_code = data["payload"]["album_code"]
+    message = {"action": "addPhoto", "payload": photo}
+    await redis_client.publish(f"album-{album_code}", json.dumps(message))
 
 
 @app.websocket("/ws")
@@ -431,6 +438,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await deleteAlbum(websocket, data, username)
             if data["action"] == "getPhotos":
                 await getPhotos(websocket, data, username)
+            if data["action"] == "addPhoto":
+                await addPhoto(websocket, data, username)
 
     except Exception as e:
         print(f"Connection closed: {e}")
