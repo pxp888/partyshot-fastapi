@@ -30,7 +30,6 @@ from fastapi_jwt_auth2.exceptions import AuthJWTException
 
 # from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
-from starlette.websockets import WebSocketDisconnect
 
 redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
@@ -142,12 +141,209 @@ def protected(Authorize: AuthJWT = Depends()):
     return {"user": current_user}
 
 
-# async def get_redis(request: Request):
-#     return request.app.state.redis
+async def get_redis(request: Request):
+    return request.app.state.redis
 
 
 # --------------------------------------------------------------------------- #
 # App Logic
+# --------------------------------------------------------------------------- #
+
+
+# @app.get("/api/user/{username}")
+# def get_albums_for_user(username: str):
+#     """
+#     Return a list of albums belonging to the user identified by *username*.
+#     The requester does not need to be logged in.
+#     """
+#     user_record = db.getUser(username)
+#     if user_record is None:
+#         raise HTTPException(status_code=404, detail="User not found")
+
+#     albums = db.get_albums(user_record["id"])
+#     for album in albums:
+#         album["username"] = username
+#         if album["thumb_key"]:
+#             album["thumb_key"] = aws.create_presigned_url(album["thumb_key"])
+#     return albums
+
+
+@app.get("/api/album/{code}")
+def get_album_by_code(code: str):
+    """
+    Retrieve an album by its unique code. This endpoint is public and does not require authentication.
+    """
+    album = db.get_album_by_code(code)
+    if album is None:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    # convert album.photos to include presigned URLs
+    for photo in album.get("photos", []):
+        photo["s3_key"] = aws.create_presigned_url(photo["s3_key"])
+        if photo["thumb_key"]:
+            photo["thumb_key"] = aws.create_presigned_url(photo["thumb_key"])
+
+    return album
+
+
+@app.post("/api/delete-album")
+def delete_album(request: DeleteAlbumRequest, Authorize: AuthJWT = Depends()):
+    """
+    Delete an album identified by its unique code. The requester must be the owner of the album and must be logged in.
+    """
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+
+    user_record = db.getUser(str(current_user))
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    album = db.get_album_by_code(request.code)
+    if album is None:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    if album["username"] != current_user:
+        raise HTTPException(
+            status_code=403, detail="You do not have permission to delete this album"
+        )
+
+    pics = db.get_photos_by_album_id(album["id"])
+    for pic in pics:
+        aws.delete_file_from_s3(pic["s3_key"])
+        if pic["thumb_key"]:
+            aws.delete_file_from_s3(pic["thumb_key"])
+
+    db.delete_album_by_code(request.code)
+
+    return {"detail": "Album deleted successfully"}
+
+
+@app.get("/api/photos/{album_id}")
+def get_photos_for_album(album_id: int):
+    """
+    Retrieve a list of photos belonging to the album identified by *album_id*.
+    The requester does not need to be logged in."""
+
+    photos = db.get_photos_by_album_id(album_id)
+
+    # convert s3_key and thumb_key to presigned URLs
+    for photo in photos:
+        photo["s3_key"] = aws.create_presigned_url(photo["s3_key"])
+        if photo["thumb_key"]:
+            photo["thumb_key"] = aws.create_presigned_url(photo["thumb_key"])
+    return photos
+
+
+# delete photo endpoint
+@app.post("/api/delete-photo")
+def delete_photo(request: DeletePhotoRequest, Authorize: AuthJWT = Depends()):
+    """
+    Delete a photo by its ID. This is possible if the requester is
+    the owner of the photo and is logged in, or if the requestetr is the owner
+    of the album the photo belongs to and is logged in.
+    """
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+
+    user_record = db.getUser(str(current_user))
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    photo = db.get_photo(request.photo_id)
+    if photo is None:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    album = db.get_album(photo["album_id"])
+    if album is None:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    if (
+        photo["username"] != user_record["username"]
+        and album["username"] != user_record["username"]
+    ):
+        raise HTTPException(
+            status_code=403, detail="You do not have permission to delete this photo"
+        )
+
+    db.delete_photo_by_id(request.photo_id)
+    aws.delete_file_from_s3(photo["s3_key"])
+    if photo["thumb_key"]:
+        aws.delete_file_from_s3(photo["thumb_key"])
+    return {"detail": "Photo deleted successfully"}
+
+
+@app.post("/api/s3-presigned")
+async def get_presigned(
+    filename: str = Form(...),
+    album_code: str = Form(...),
+    Authorize: AuthJWT = Depends(),
+):
+    Authorize.jwt_required()
+
+    current_user = Authorize.get_jwt_subject()
+    x = db.openCheck(str(current_user), album_code)
+    if x == 0:
+        raise HTTPException(status_code=403, detail="Not Allowed")
+
+    # unique key inside the album
+    file_id = uuid.uuid4().hex
+    s3_key = f"{album_code}/{file_id}"
+
+    s3_client = aws.get_s3_client()
+    try:
+        # **No ACL field** – let S3 keep the object private (the default)
+        response = s3_client.generate_presigned_post(
+            Bucket=aws.BUCKET_NAME,
+            Key=s3_key,
+            ExpiresIn=3600,
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"s3_key": s3_key, "presigned": response}
+
+
+@app.post("/api/add-photo-metadata")
+def add_photo_metadata(
+    payload: dict,
+    Authorize: AuthJWT = Depends(),
+):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    user_record = db.getUser(str(current_user))
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    photo_id = db.add_photo(
+        user_id=user_record["id"],
+        album_id=payload["album_id"],
+        filename=payload["filename"],
+        s3_key=payload["s3_key"],
+        thumb_key=payload.get("thumb_key"),
+    )
+
+    db.checkthumb(payload["album_id"], payload["thumb_key"])
+    return {"photo_id": photo_id}
+
+
+@app.post("/api/togglelock")
+def toggleLock(request: ToggleLockRequest, Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+
+    x = db.toggleLock(request.album_id, str(current_user))
+    print(x)
+    if x == 2:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    if x == 3:
+        raise HTTPException(status_code=403, detail="Not Allowed")
+
+    return [{"open": 0}]
+
+
+# --------------------------------------------------------------------------- #
+# Websocket stuff
 # --------------------------------------------------------------------------- #
 
 
@@ -161,21 +357,23 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
 
 
 async def createAlbum(websocket, data, username):
+    target = data["payload"]["owner"]
     album_name = data["payload"]["album_name"]
 
-    result = db.createAlbum(username, album_name)
-    if not result:
-        print("createAlbum error")
+    if target != username:
+        await websocket.close(code=1008)  # 1008 = policy violation
         return
+
+    result = db.createAlbum(username, album_name)
+    # await websocket.send_json(result)
     message = {"action": "newAlbum", "payload": {"type": "update"}}
     await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
 async def getAlbums(websocket, data, username):
     target = data["payload"]["target"]
-    result = db.getAlbums(target)
-    message = {"action": "getAlbums", "payload": result}
-    await websocket.send_json(message)
+    result = db.getAlbums(username, target)
+    await websocket.send_json(result)
     await manager.subscribe(websocket, f"user-{target}")
 
 
@@ -188,25 +386,12 @@ async def deleteAlbum(websocket, data, username):
     await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
-async def getAlbum(websocket, data, username):
-    albumcode = data["payload"]["albumcode"]
-    album = db.getAlbum_code(albumcode)
-    if not album:
-        print("getAlbum - no album found")
-        return
-    message = {"action": "getAlbum", "payload": album}
-    await websocket.send_json(message)
-    await manager.subscribe(websocket, f"album-{albumcode}")
-    print("subscribed to : ", f"album-{albumcode}")
-
-
 async def getPhotos(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
-    photos = db.getPhotos(albumcode)
-    message = {"action": "getPhotos", "payload": photos}
-    await websocket.send_json(message)
-    # await manager.subscribe(websocket, f"album-{albumcode}")
-    # print("subscribed to : ", f"album-{albumcode}")
+    album = db.getPhotos(albumcode)
+    await websocket.send_json(album)
+    await manager.subscribe(websocket, f"album-{albumcode}")
+    print("subscribed to : ", f"album-{albumcode}")
 
 
 async def addPhoto(websocket, data, username):
@@ -261,27 +446,17 @@ async def websocket_endpoint(websocket: WebSocket):
                 await getPhotos(websocket, payload, username)
             elif action == "addPhoto":
                 await addPhoto(websocket, payload, username)
-            elif action == "getAlbum":
-                await getAlbum(websocket, payload, username)
             else:
                 # Unknown action – close to prevent abuse
                 await websocket.send_json({"type": "unknown action"})
                 await websocket.close(code=1008)
                 return
 
-    # Handle normal client disconnects cleanly without attempting a second close
-    except WebSocketDisconnect as e:
-        # WebSocketDisconnect is expected when the client closes the connection
-        print(f"WebSocket disconnected: {e.code}")
-        return
     except Exception as e:
         # Log the error – keep the log readable
         print(f"WebSocket error: {e}")
-        # Ensure we close cleanly only if the socket is still open
-        try:
-            await websocket.close(code=1011)  # 1011 = internal error
-        except Exception as close_err:
-            print(f"Failed to close websocket cleanly: {close_err}")
+        # Ensure we close cleanly
+        await websocket.close(code=1011)  # 1011 = internal error
 
 
 # --------------------------------------------------------------------------- #

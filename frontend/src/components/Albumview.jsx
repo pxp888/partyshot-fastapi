@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { receiveJson, sendJson } from "./helpers";
+import { sendJson } from "./helpers";
 import { useSocket } from "./WebSocketContext"; // ← NEW
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -13,11 +13,18 @@ import "./style/Albumview.css";
 function Albumview(currentUser) {
   const { albumcode } = useParams();
   const [album, setAlbum] = useState(null);
-  // const navigate = useNavigate();
+  const [photos, setPhotos] = useState([]);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
   const [focus, setFocus] = useState(-1);
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
+
+  useEffect(() => {
+    sendJsonMessage({
+      action: "getAlbum",
+      payload: { albumcode: albumcode },
+    });
+  }, [sendJsonMessage, albumcode]);
 
   useEffect(() => {
     sendJsonMessage({
@@ -26,32 +33,24 @@ function Albumview(currentUser) {
     });
   }, [sendJsonMessage, albumcode]);
 
-  // --------------------------------------------
-  // 2️⃣  React to messages that come from the WS
-  // --------------------------------------------
+  // React to messages that come from the WS
   useEffect(() => {
     if (!lastJsonMessage) return;
     const { action, payload } = lastJsonMessage;
 
+    if (action === "getAlbum") {
+      setAlbum(payload);
+      return;
+    }
+
     if (action === "getPhotos") {
-      setAlbum((prev) => {
-        if (
-          prev === payload ||
-          JSON.stringify(prev) === JSON.stringify(payload)
-        ) {
-          return prev;
-        }
-        return payload;
-      });
-      console.log(payload);
+      const photosArray = payload?.photos ?? [];
+      setPhotos(photosArray);
       return;
     }
 
     if (action === "addPhoto") {
-      setAlbum((prev) => ({
-        ...prev,
-        photos: [...(prev?.photos || []), payload],
-      }));
+      setPhotos((prev) => [...prev, payload]);
       console.log("Photo added:", payload);
     }
   }, [lastJsonMessage]);
@@ -70,7 +69,7 @@ function Albumview(currentUser) {
 
   function downloadAll(e) {
     e.preventDefault();
-    if (!album || !album.photos || album.photos.length === 0) {
+    if (!photos || photos.length === 0) {
       alert("No photos available to download.");
       return;
     }
@@ -87,14 +86,14 @@ function Albumview(currentUser) {
 
     (async () => {
       try {
-        for (const photo of album.photos) {
+        for (const photo of photos) {
           if (!photo.s3_key) continue;
           const blob = await fetchBlob(photo.s3_key, photo.filename);
           zip.file(photo.filename, blob);
         }
 
         const zipBlob = await zip.generateAsync({ type: "blob" });
-        const zipName = `${album.name || "album"}_${album.photos.length}.zip`;
+        const zipName = `${album.name || "album"}_${photos.length}.zip`;
         saveAs(zipBlob, zipName);
       } catch (err) {
         console.error("Error while creating ZIP:", err);
@@ -106,7 +105,7 @@ function Albumview(currentUser) {
   }
 
   function selectAll() {
-    const allIds = album.photos.map((_, index) => index);
+    const allIds = photos.map((_, index) => index);
     setSelected(allIds);
   }
 
@@ -135,7 +134,7 @@ function Albumview(currentUser) {
     (async () => {
       try {
         for (const index of selected) {
-          const photo = album.photos[index];
+          const photo = photos[index];
           if (!photo.s3_key) continue;
           const blob = await fetchBlob(photo.s3_key, photo.filename);
           zip.file(photo.filename, blob);
@@ -163,27 +162,18 @@ function Albumview(currentUser) {
     }
     setSelected([]);
 
-    const idsToDelete = selected.map((index) => album.photos[index].id);
+    const idsToDelete = selected.map((index) => photos[index].id);
 
-    // loop through ids and send delete request for each
     idsToDelete.forEach(async (id) => {
       try {
-        await sendJson("/api/delete-photo", { photo_id: id });
-        console.log(`File with ID ${id} deleted successfully`);
-        // remove deleted photo from album state to update UI
-        setAlbum((prevAlbum) => ({
-          ...prevAlbum,
-          photos: prevAlbum.photos.filter((photo) => photo.id !== id),
-        }));
+        sendJsonMessage({
+          action: "deletePhoto",
+          payload: { photo_id: id, album_code: album.code },
+        });
       } catch (error) {
         console.error(`Failed to delete file with ID ${id}:`, error);
       }
     });
-
-    // Refresh album data after deletion
-    // setTimeout(() => {
-    //   window.location.reload();
-    // }, 1000);
   }
 
   async function toggleLock() {
@@ -210,7 +200,7 @@ function Albumview(currentUser) {
   return (
     <section>
       {focus > -1 && (
-        <Imageview files={album.photos} focus={focus} setFocus={setFocus} />
+        <Imageview files={photos} focus={focus} setFocus={setFocus} />
       )}
       <div className="albumview">
         <div className="albumDetails">
@@ -276,11 +266,11 @@ function Albumview(currentUser) {
       )}
 
       <div className="albumFiles">
-        {album.photos.length === 0 ? (
+        {photos.length === 0 ? (
           <p>No files in this album.</p>
         ) : (
           <div className="fileList">
-            {album.photos.map((file, index) => (
+            {photos.map((file, index) => (
               <FileItem
                 index={index}
                 key={file.id}

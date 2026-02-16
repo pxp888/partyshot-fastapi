@@ -30,6 +30,8 @@ def create_presigned_url(object_name, expiration=3600):
     Generate a presigned URL to SHARE/VIEW an object.
     :param expiration: Time in seconds (default 1 hour)
     """
+    if object_name is None:
+        return None
     s3_client = get_s3_client()
     try:
         response = s3_client.generate_presigned_url(

@@ -1,6 +1,5 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-// import { receiveJson } from "./helpers";
 import AlbumItem from "./AlbumItem";
 import "./style/Userview.css";
 import { useSocket } from "./WebSocketContext"; // ← NEW
@@ -10,9 +9,9 @@ function Userview({ currentUser }) {
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
   const [albums, setAlbums] = useState([]);
 
-  // --------------------------------------------
+  // --------------------------------------------------------
   // 1️⃣  Initial load – same as before
-  // --------------------------------------------
+  // --------------------------------------------------------
 
   useEffect(() => {
     sendJsonMessage({
@@ -21,31 +20,34 @@ function Userview({ currentUser }) {
     });
   }, [sendJsonMessage, username]);
 
-  // --------------------------------------------
+  // --------------------------------------------------------
   // 2️⃣  React to messages that come from the WS
-  // --------------------------------------------
+  // --------------------------------------------------------
   useEffect(() => {
     if (!lastJsonMessage) return;
+
     const { action, payload } = lastJsonMessage;
 
-    // 1️⃣  Initial list of albums (sent from db.py)
-    if (action === "getAlbums") {
-      setAlbums(Array.isArray(payload) ? payload : []);
-      return;
+    switch (action) {
+      case "getAlbums":
+        setAlbums(Array.isArray(payload?.albums) ? payload.albums : []);
+        break;
+      case "newAlbum":
+        if (payload?.type === "update") {
+          sendJsonMessage({
+            action: "getAlbums",
+            payload: { target: username },
+          });
+        }
+        break;
+      default:
+        break;
     }
+  }, [lastJsonMessage, sendJsonMessage, username]); // Removed albums dependency
 
-    if (action === "newAlbum" && payload?.type === "update") {
-      sendJsonMessage({
-        action: "getAlbums",
-        payload: { target: username },
-      });
-      return;
-    }
-  }, [lastJsonMessage, albums, sendJsonMessage, username]); // Note the extra `albums` dependency
-
-  // --------------------------------------------
+  // --------------------------------------------------------
   // 3️⃣  Create a new album – send via WS
-  // --------------------------------------------
+  // --------------------------------------------------------
   function handleCreateAlbum(event) {
     event.preventDefault();
     const albumName = event.target.elements.albumName.value;

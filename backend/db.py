@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import random
+import uuid
 
 import aws
 import env
@@ -62,8 +63,7 @@ def init_db() -> None:
             open BOOLEAN DEFAULT TRUE,
             public BOOLEAN DEFAULT TRUE,
             thumb_key TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            modified TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS photos (
@@ -154,667 +154,239 @@ def check_password(username: str, password: str) -> bool:
     return provided_hash == expected_hash
 
 
-def get_albums(user_id: int) -> list[dict]:
-    """Retrieve all albums for a given user."""
+def getAlbum_code(code: str) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT id, name, open, public, created_at, code, thumb_key
-        FROM albums
-        WHERE user_id = %s;
-        """,
-        (user_id,),
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return [
-        {
-            "id": row[0],
-            "name": row[1],
-            "open": row[2],
-            "public": row[3],
-            "created_at": row[4],
-            "code": row[5],
-            "thumb_key": row[6],
-        }
-        for row in rows
-    ]
-
-
-def get_album_by_code(code: str) -> dict | None:
-    """Retrieve an album from the database by its unique code. Also return photos in the album. Each photo should include all fields, including the username of the owner."""
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT a.id, a.name, a.open, a.public, a.created_at, a.code, u.username
+        SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.thumb_key, a.created_at, u.username
         FROM albums a
         JOIN users u ON a.user_id = u.id
         WHERE a.code = %s;
         """,
         (code,),
-    )
-    row = cursor.fetchone()
-    if not row:
-        cursor.close()
-        conn.close()
-        return None
-
-    album = {
-        "id": row[0],
-        "name": row[1],
-        "open": row[2],
-        "public": row[3],
-        "created_at": row[4],
-        "code": row[5],
-        "username": row[6],
-        "photos": [],
-    }
-
-    cursor.execute(
-        """
-        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
-        FROM photos p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.album_id = %s;
-        """,
-        (album["id"],),
-    )
-    photo_rows = cursor.fetchall()
-    for photo_row in photo_rows:
-        album["photos"].append(
-            {
-                "id": photo_row[0],
-                "s3_key": photo_row[1],
-                "thumb_key": photo_row[2],
-                "filename": photo_row[3],
-                "created_at": photo_row[4],
-                "username": photo_row[5],
-            }
-        )
-    cursor.close()
-    conn.close()
-    return album
-
-
-# def delete_album_by_code(code: str) -> bool:
-#     """Delete an album from the database by its unique code. Return True if the album was deleted, False if it was not found."""
-
-#     conn = get_connection()
-#     cursor = conn.cursor()
-#     cursor.execute(
-#         """
-#         DELETE FROM albums
-#         WHERE code = %s
-#         RETURNING id;
-#         """,
-#         (code,),
-#     )
-#     row = cursor.fetchone()
-#     conn.commit()
-#     cursor.close()
-#     conn.close()
-#     return row is not None
-
-
-def add_photo(
-    user_id: int, album_id: int, s3_key: str, thumb_key: str | None, filename: str
-) -> dict:
-    """Add a photo to an album and return the photo record."""
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING id;
-        """,
-        (user_id, album_id, s3_key, thumb_key, filename),
-    )
-    row = cursor.fetchone()
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return {
-        "id": row[0],
-        "user_id": user_id,
-        "album_id": album_id,
-        "s3_key": s3_key,
-        "thumb_key": thumb_key,
-        "filename": filename,
-    }
-
-
-def get_photos_by_album_id(album_id: int) -> list[dict]:
-    """Retrieve all photos for a given album ID."""
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
-        FROM photos p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.album_id = %s;
-        """,
-        (album_id,),
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return [
-        {
-            "id": row[0],
-            "s3_key": row[1],
-            "thumb_key": row[2],
-            "filename": row[3],
-            "created_at": row[4],
-            "username": row[5],
-        }
-        for row in rows
-    ]
-
-
-def delete_photo_by_id(photo_id: int) -> bool:
-    """Delete a photo from the database by its ID. Return True if the photo was deleted, False if it was not found."""
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        DELETE FROM photos
-        WHERE id = %s
-        RETURNING id;
-        """,
-        (photo_id,),
-    )
-    row = cursor.fetchone()
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return row is not None
-
-
-def get_photo(photo_id: int) -> dict | None:
-    """Retrieve a photo from the database by its ID."""
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username, p.album_id
-        FROM photos p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.id = %s;
-        """,
-        (photo_id,),
     )
     row = cursor.fetchone()
     cursor.close()
     conn.close()
 
     if row:
+        created_at = row[7]
+        if isinstance(created_at, datetime.datetime):
+            created_at = created_at.isoformat()
         return {
             "id": row[0],
-            "s3_key": row[1],
-            "thumb_key": row[2],
-            "filename": row[3],
-            "created_at": row[4],
-            "username": row[5],
-            "album_id": row[6],
+            "code": row[1],
+            "name": row[2],
+            "user_id": row[3],
+            "open": bool(row[4]),
+            "public": bool(row[5]),
+            "thumb_key": aws.create_presigned_url(row[6]),
+            "created_at": created_at,
+            "username": row[8],  # <‑‑ new field
         }
     else:
         return None
 
 
-def get_album(album_id: int) -> dict | None:
-    """Retrieve an album from the database by its ID. Also return photos in the album. Each photo should include all fields, including the username of the owner."""
+def getPhotos(album_code: str) -> dict | None:
+    album = getAlbum_code(album_code)
+    if album is None:
+        return None
+    album_id = album["id"]
 
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT a.id, a.name, a.open, a.public, a.created_at, a.code, u.username
-        FROM albums a
-        JOIN users u ON a.user_id = u.id
-        WHERE a.id = %s;
+        SELECT id, user_id, album_id, s3_key, thumb_key, filename, created_at
+        FROM photos
+        WHERE album_id = %s
+        ORDER BY created_at ASC;
         """,
         (album_id,),
     )
-    row = cursor.fetchone()
-    if not row:
-        cursor.close()
-        conn.close()
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    if not rows:
         return None
 
-    album = {
-        "id": row[0],
-        "name": row[1],
-        "open": row[2],
-        "public": row[3],
-        "created_at": row[4],
-        "code": row[5],
-        "username": row[6],
-        "photos": [],
-    }
-    cursor.close()
-    conn.close()
-    return album
-
-
-def checkthumb(album_id: int, thumb_key: str) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT thumb_key FROM albums WHERE id = %s;
-        """,
-        (album_id,),
-    )
-    row = cursor.fetchone()
-    if row and row[0] is None:
-        cursor.execute(
-            """
-            UPDATE albums SET thumb_key = %s WHERE id = %s;
-            """,
-            (thumb_key, album_id),
-        )
-        conn.commit()
-    cursor.close()
-    conn.close()
-
-
-def toggleLock(album_id: int, user: str) -> int:
-    """
-    Toggle the `open` flag of an album.
-    """
-    # Retrieve album owner and current open state
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT user_id, open FROM albums WHERE id = %s;
-        """,
-        (album_id,),
-    )
-    row = cursor.fetchone()
-
-    # Album does not exist
-    if row is None:
-        cursor.close()
-        conn.close()
-        return 2
-
-    owner_id, current_open = row
-
-    # Resolve the user id of the caller
-    user_record = getUser(user)
-    if user_record is None or user_record["id"] != owner_id:
-        cursor.close()
-        conn.close()
-        return 3
-
-    new_open = not current_open
-    cursor.execute(
-        """
-        UPDATE albums SET open = %s WHERE id = %s;
-        """,
-        (new_open, album_id),
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return int(new_open)
-
-
-def openCheck(user, album_id):
-    """
-    Check if an album is accessible to a given user.
-
-    Returns 1 if either of the following is true:
-        1. The user is the owner of the album.
-        2. The album's `open` flag is set to True.
-    Otherwise, returns 0.
-
-    Parameters
-    ----------
-    user : str
-        The username of the requester.
-    album_id : int | str
-        The primary key of the album to check, or the album code string.
-    """
-    # Determine whether we have an integer id or a string code.
-    conn = get_connection()
-    cursor = conn.cursor()
-    if isinstance(album_id, int):
-        cursor.execute(
-            """
-            SELECT user_id, open FROM albums WHERE id = %s;
-            """,
-            (album_id,),
-        )
-    else:
-        # Treat as a code string.
-        cursor.execute(
-            """
-            SELECT user_id, open FROM albums WHERE code = %s;
-            """,
-            (album_id,),
-        )
-    row = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if row is None:
-        # Album does not exist – treat as not accessible.
-        return 0
-
-    owner_id, is_open = row
-    # If the album is already open, grant access.
-    if is_open:
-        return 1
-    # Otherwise, check ownership.
-    user_record = getUser(user)
-    if user_record is None:
-        return 0
-    return 1 if user_record["id"] == owner_id else 0
-
-
-# --------------------------------------------------------------------------- #
-# socket helpers
-# --------------------------------------------------------------------------- #
-
-
-def createAlbum(
-    username: str, albumname: str, open: bool = True, public: bool = True
-) -> dict:
-    # 1. Resolve the user ID
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id FROM users WHERE username = %s;",
-        (username,),
-    )
-    row = cursor.fetchone()
-    if not row:
-        cursor.close()
-        conn.close()
-        raise ValueError(f"User '{username}' not found")
-    user_id = row[0]
-
-    # 2. Generate a unique album code
-    code = random.randbytes(16).hex()
-    while True:
-        cursor.execute(
-            "SELECT 1 FROM albums WHERE code = %s;",
-            (code,),
-        )
-        if cursor.fetchone() is None:
-            break
-        code = random.randbytes(16).hex()
-
-    # 3. Generate the modified timestamp and insert the album record
-    modified_ts = datetime.datetime.now(datetime.timezone.utc)
-
-    cursor.execute(
-        """
-        INSERT INTO albums (user_id, name, open, public, code, modified)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        RETURNING id;
-        """,
-        (user_id, albumname, open, public, code, modified_ts),
-    )
-    album_id = cursor.fetchone()[0]
-    conn.commit()
-
-    # 4. Clean up and return
-    cursor.close()
-    conn.close()
-    return {
-        "action": "createAlbum",
-        "id": album_id,
-        "name": albumname,
-        "open": open,
-        "public": public,
-        "code": code,
-        "modified": modified_ts.isoformat(),
-    }
-
-
-def getAlbums(asker, username):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT id FROM users WHERE username = %s;",
-        (username,),
-    )
-    user_row = cursor.fetchone()
-    if user_row is None:
-        cursor.close()
-        conn.close()
-        return None
-    user_id = user_row[0]
-
-    cursor.execute(
-        """
-        SELECT id, name, open, public, created_at, code, thumb_key, modified
-        FROM albums
-        WHERE user_id = %s;
-        """,
-        (user_id,),
-    )
-    album_rows = cursor.fetchall()
-
-    albums = []
-    for album_row in album_rows:
-        if asker != username:
-            if not album_row[3]:
-                continue
-
-        tum = None
-        if album_row[6] is not None:
-            tum = aws.create_presigned_url(album_row[6])
-        albums.append(
+    photos = []
+    for row in rows:
+        created_at = row[6]
+        if isinstance(created_at, datetime.datetime):
+            created_at = created_at.isoformat()
+        photos.append(
             {
-                "id": album_row[0],
-                "name": album_row[1],
-                "open": album_row[2],
-                "public": album_row[3],
-                "created_at": album_row[4].isoformat() if album_row[4] else None,
-                "code": album_row[5],
-                "thumb_key": tum,
+                "id": row[0],
+                "user_id": row[1],
+                "album_id": row[2],
+                "s3_key": aws.create_presigned_url(row[3]),
+                "thumb_key": aws.create_presigned_url(row[4]),
+                "filename": row[5],
+                "created_at": created_at,
             }
         )
-    cursor.close()
-    conn.close()
-    message = {"action": "getAlbums", "payload": albums}
-    return message
+    return {"photos": photos}
 
 
-def getPhotos(code: str) -> dict | None:
-    """Retrieve an album from the database by its unique code. Also return photos in the album. Each photo should include all fields, including the username of the owner."""
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT a.id, a.name, a.open, a.public, a.created_at, a.code, u.username
-        FROM albums a
-        JOIN users u ON a.user_id = u.id
-        WHERE a.code = %s;
-        """,
-        (code,),
-    )
-    row = cursor.fetchone()
-    if not row:
-        cursor.close()
-        conn.close()
-        return None
-
-    album = {
-        "id": row[0],
-        "name": row[1],
-        "open": row[2],
-        "public": row[3],
-        "created_at": row[4].isoformat() if row[4] else None,
-        "code": row[5],
-        "username": row[6],
-        "photos": [],
-    }
-
-    cursor.execute(
-        """
-        SELECT p.id, p.s3_key, p.thumb_key, p.filename, p.created_at, u.username
-        FROM photos p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.album_id = %s;
-        """,
-        (album["id"],),
-    )
-    photo_rows = cursor.fetchall()
-    for photo_row in photo_rows:
-        s3 = None
-        if photo_row[1] is not None:
-            s3 = aws.create_presigned_url(photo_row[1])
-        tum = None
-        if photo_row[2] is not None:
-            tum = aws.create_presigned_url(photo_row[2])
-
-        album["photos"].append(
-            {
-                "id": photo_row[0],
-                "s3_key": s3,
-                "thumb_key": tum,
-                "filename": photo_row[3],
-                "created_at": photo_row[4].isoformat() if photo_row[4] else None,
-                "username": photo_row[5],
-            }
-        )
-    cursor.close()
-    conn.close()
-
-    message = {"action": "getPhotos", "payload": album}
-    return message
-
-
-def deleteAlbum(username: str, albumcode: str) -> bool:
-    """
-    Delete an album identified by *albumcode* only if it belongs to the
-    specified *username*.
-
-    The implementation queries the database directly and does **not**
-    rely on any helper functions defined elsewhere in ``db.py``.
-    It returns ``True`` when the album was deleted, ``False`` when the
-    album does not exist or the username does not match.
-    """
+def deleteAlbum(code: str) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # 1️⃣ Verify ownership by selecting the album that matches the code
-        #     and is owned by the provided username.
-        cursor.execute(
-            """
-            SELECT a.id
-            FROM albums a
-            JOIN users u ON a.user_id = u.id
-            WHERE a.code = %s AND u.username = %s;
-            """,
-            (albumcode, username),
-        )
-        album_row = cursor.fetchone()
-
-        if album_row is None:
-            # Album not found or username mismatch
-            return False
-
-        # 2️⃣ Delete the album.  The foreign‑key constraints in the schema
-        #     (e.g. photos referencing albums) are declared with
-        #     ``ON DELETE CASCADE`` so the related photos will be
-        #     removed automatically.
         cursor.execute(
             """
             DELETE FROM albums
             WHERE code = %s
             RETURNING id;
             """,
-            (albumcode,),
+            (code,),
+        )
+        # If RETURNING returns a row, the album existed and was deleted.
+        deleted = cursor.fetchone() is not None
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        deleted = False
+    finally:
+        cursor.close()
+        conn.close()
+    return deleted
+
+
+def addPhoto(data: dict) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id;
+            """,
+            (
+                data.get("user_id"),
+                data.get("album_id"),
+                data.get("s3_key"),
+                data.get("thumb_key"),
+                data.get("filename"),
+            ),
+        )
+        inserted = cursor.fetchone() is not None
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        inserted = False
+    finally:
+        cursor.close()
+        conn.close()
+    return inserted
+
+
+def deletePhoto(id: int) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            DELETE FROM photos
+            WHERE id = %s
+            RETURNING id;
+            """,
+            (id,),
         )
         deleted = cursor.fetchone() is not None
         conn.commit()
-        return bool(deleted)
     except Exception:
         conn.rollback()
-        raise
+        deleted = False
+    finally:
+        cursor.close()
+        conn.close()
+    return deleted
+
+
+def getAlbums(username: str) -> dict | None:
+    user = getUser(username)
+    if not user:
+        return None
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id, code, name, user_id, open, public, thumb_key, created_at
+            FROM albums
+            WHERE user_id = %s
+            ORDER BY created_at DESC;
+            """,
+            (user["id"],),
+        )
+        rows = cursor.fetchall()
+    except Exception:
+        rows = []
     finally:
         cursor.close()
         conn.close()
 
+    if not rows:
+        return None
 
-def addPhoto(payload: dict, username: str) -> dict:
+    albums = []
+    for row in rows:
+        created_at = row[7]
+        if isinstance(created_at, datetime.datetime):
+            created_at = created_at.isoformat()
+        albums.append(
+            {
+                "id": row[0],
+                "code": row[1],
+                "name": row[2],
+                "user_id": row[3],
+                "open": bool(row[4]),
+                "public": bool(row[5]),
+                "thumb_key": aws.create_presigned_url(row[6]) if row[6] else None,
+                "created_at": created_at,
+            }
+        )
+    return {"albums": albums}
+
+
+def createAlbum(username: str, album_name: str) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Resolve the user id
         cursor.execute(
             "SELECT id FROM users WHERE username = %s",
             (username,),
         )
         user_row = cursor.fetchone()
         if user_row is None:
-            raise ValueError(f"User '{username}' not found")
+            return False
         user_id = user_row[0]
 
-        # Resolve the album id using the album code
-        cursor.execute(
-            "SELECT id FROM albums WHERE code = %s",
-            (payload["album_code"],),
-        )
-        album_row = cursor.fetchone()
-        if album_row is None:
-            raise ValueError(f"Album code '{payload['album_code']}' not found")
-        album_id = album_row[0]
+        album_code = uuid.uuid4().hex
 
-        # Insert the new photo record
         cursor.execute(
             """
-            INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING id, created_at
+            INSERT INTO albums (name, user_id, code)
+            VALUES (%s, %s, %s)
+            RETURNING id;
             """,
-            (
-                user_id,
-                album_id,
-                payload["s3_key"],
-                payload.get("thumb_key"),
-                payload["filename"],
-            ),
+            (album_name, user_id, album_code),
         )
-        photo_row = cursor.fetchone()
-        photo_id, created_at = photo_row
+        cursor.fetchone()  # consume the returned id
         conn.commit()
-
-        return {
-            "id": photo_id,
-            "user_id": user_id,
-            "album_id": album_id,
-            "s3_key": aws.create_presigned_url(payload["s3_key"]),
-            "thumb_key": aws.create_presigned_url(payload.get("thumb_key")),
-            "filename": payload["filename"],
-            "created_at": created_at.isoformat() if photo_row[1] else None,
-            "username": username,
-        }
+        return True
     except Exception:
         conn.rollback()
-        raise
+        return False
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # --------------------------------------------------------------------------- #
