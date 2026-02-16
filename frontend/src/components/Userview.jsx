@@ -2,11 +2,11 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import AlbumItem from "./AlbumItem";
 import "./style/Userview.css";
-import { useSocket } from "./WebSocketContext"; // ← NEW
+import { useSocket } from "./WebSocketContext"; // ← websocket
 
 function Userview({ currentUser }) {
   const { username } = useParams();
-  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
+  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← websocket
   const [albums, setAlbums] = useState([]);
 
   // --------------------------------------------------------
@@ -23,6 +23,7 @@ function Userview({ currentUser }) {
   // --------------------------------------------------------
   // 2️⃣  React to messages that come from the WS
   // --------------------------------------------------------
+
   useEffect(() => {
     if (!lastJsonMessage) return;
 
@@ -43,7 +44,7 @@ function Userview({ currentUser }) {
       default:
         break;
     }
-  }, [lastJsonMessage, sendJsonMessage, username]); // Removed albums dependency
+  }, [lastJsonMessage, sendJsonMessage, username]);
 
   // --------------------------------------------------------
   // 3️⃣  Create a new album – send via WS

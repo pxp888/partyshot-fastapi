@@ -35,7 +35,6 @@ function Topbar({ currentUser, setCurrentUser }) {
           const resp = await fetch("/api/refresh", {
             method: "POST",
             headers: {
-              // The library expects the refresh token in the Authorization header
               Authorization: `Bearer ${refreshToken}`,
             },
           });
@@ -43,7 +42,6 @@ function Topbar({ currentUser, setCurrentUser }) {
           if (!resp.ok) throw new Error("Refresh failed");
 
           const data = await resp.json();
-          // Replace the old access token
           localStorage.setItem("access_token", data.access_token);
           console.log("Refreshed access token");
         } catch (e) {
@@ -52,7 +50,7 @@ function Topbar({ currentUser, setCurrentUser }) {
           handleLogout();
         }
       },
-      12 * 60 * 1000,
+      10 * 60 * 1000,
     );
 
     // Clean up when component unmounts

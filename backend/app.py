@@ -302,7 +302,6 @@ async def deletePhoto(websocket, data, username):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    # 1️⃣  Validate query‑params
     wssecret = websocket.query_params.get("wssecret")
     username = websocket.query_params.get("username")
 
@@ -318,10 +317,8 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close(code=1008)
         return
 
-    # 3️⃣  Accept the socket
     await websocket.accept()
 
-    # 4️⃣  Main receive loop
     try:
         while True:
             data = await websocket.receive_text()
@@ -329,11 +326,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 payload = json.loads(data)
             except json.JSONDecodeError:
                 # Bad payload – let the client know and terminate
-                await websocket.send_json({"type": "bad message"})
+                print("websocket - bad message")
                 await websocket.close(code=1008)
                 return
 
-            # Dispatch on action
             action = payload.get("action")
             if action == "createAlbum":
                 await createAlbum(websocket, payload, username)
@@ -349,7 +345,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await deletePhoto(websocket, payload, username)
             else:
                 # Unknown action – close to prevent abuse
-                await websocket.send_json({"type": "unknown action"})
+                print("websocket - unknown action")
                 await websocket.close(code=1008)
                 return
 
