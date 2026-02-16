@@ -2,6 +2,7 @@ import React, { useState, useEffect, use } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { receiveJson } from "./helpers";
+import Searchbar from "./Searchbar";
 
 import "./style/Topbar.css";
 
@@ -71,6 +72,7 @@ function Topbar({ currentUser, setCurrentUser }) {
         <a href="/">Logo here</a>
       </div>
 
+      <Searchbar />
       {currentUser ? (
         <div className="userInfo">
           <button

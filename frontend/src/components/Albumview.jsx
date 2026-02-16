@@ -254,19 +254,7 @@ function Albumview(currentUser) {
         </div>
       </div>
 
-      <div className="albumActions">
-        <button onClick={() => setSelectMode(true)} className="btn">
-          Selection Mode
-        </button>
-        <Uploader album={album} setAlbum={setAlbum} />
-        <button onClick={downloadAll} className="btn">
-          Download All
-        </button>
-        <button onClick={handleDeleteAlbum} className="btn">
-          Delete Album
-        </button>
-      </div>
-      {selectMode && (
+      {selectMode ? (
         <div className="albumActions">
           <button onClick={cancelSelect} className="btn">
             Cancel Selection
@@ -282,6 +270,19 @@ function Albumview(currentUser) {
           </button>
           <button onClick={deleteSelected} className="btn">
             Delete Selected
+          </button>
+        </div>
+      ) : (
+        <div className="albumActions">
+          <button onClick={() => setSelectMode(true)} className="btn">
+            Selection Mode
+          </button>
+          <Uploader album={album} setAlbum={setAlbum} />
+          <button onClick={downloadAll} className="btn">
+            Download All
+          </button>
+          <button onClick={handleDeleteAlbum} className="btn">
+            Delete Album
           </button>
         </div>
       )}

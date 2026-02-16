@@ -129,8 +129,13 @@ def protected(Authorize: AuthJWT = Depends()):
     return {"user": current_user}
 
 
-# async def get_redis(request: Request):
-#     return request.app.state.redis
+@app.post("/api/generate-wssecret")
+async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    wssecret = uuid.uuid4().hex
+    await redis_client.set(f"user:{current_user}:uuid", wssecret)
+    return {"wssecret": wssecret}
 
 
 @app.post("/api/s3-presigned")
@@ -208,15 +213,6 @@ def cleanup_endpoint(Authorize: AuthJWT = Depends()):
 # --------------------------------------------------------------------------- #
 # App Logic
 # --------------------------------------------------------------------------- #
-
-
-@app.post("/api/generate-wssecret")
-async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    wssecret = uuid.uuid4().hex
-    await redis_client.set(f"user:{current_user}:uuid", wssecret)
-    return {"wssecret": wssecret}
 
 
 @app.post("/api/toggleOpen")
@@ -300,6 +296,14 @@ async def deletePhoto(websocket, data, username):
         print("not deleted", photo_id)
 
 
+async def search(websocket, data, username):
+    term = data["payload"]["term"]
+    print("search", term)
+    result = db.search(term)
+    message = {"action": "search", "payload": result}
+    await websocket.send_json(message)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     wssecret = websocket.query_params.get("wssecret")
@@ -343,6 +347,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await getAlbum(websocket, payload, username)
             elif action == "deletePhoto":
                 await deletePhoto(websocket, payload, username)
+            elif action == "search":
+                await search(websocket, payload, username)
             else:
                 # Unknown action – close to prevent abuse
                 print("websocket - unknown action")

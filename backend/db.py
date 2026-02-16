@@ -624,6 +624,21 @@ def toggleOpen(id: str, username: str) -> dict | None:
         conn.close()
 
 
+def search(term: str) -> str:
+    # 1. Check for a matching username.
+    user = getUser(term)
+    if user:
+        return f"/user/{user['username']}"
+
+    # 2. Check for a matching album code.
+    album = getAlbum_code(term)
+    if album:
+        return f"/album/{album['code']}"
+
+    # 3. Nothing matched.
+    return ""
+
+
 def cleanup() -> None:
     """
     Synchronise the S3 bucket with the database.
