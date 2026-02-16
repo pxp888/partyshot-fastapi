@@ -403,49 +403,60 @@ async def addPhoto(websocket, data, username):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    # 1️⃣  Validate query‑params
     wssecret = websocket.query_params.get("wssecret")
     username = websocket.query_params.get("username")
 
-    if not wssecret:
-        await websocket.close(code=1008)  # 1008 = policy violation
+    if not wssecret or not username:
+        # Explicitly close – this will surface as 1008 to the client
+        await websocket.close(code=1008)
         return
 
-    if not username:
-        await websocket.close(code=1008)  # 1008 = policy violation
-        return
-
+    # 2️⃣  Verify the secret that was issued to the user
     old = await redis_client.get(f"user:{username}:uuid")
     if old != wssecret:
-        print("not logged in", username)
-        # await websocket.close(code=1008)  # 1008 = policy violation
-        # return
+        # Reject the connection – prevents spoofing
+        await websocket.close(code=1008)
+        return
 
+    # 3️⃣  Accept the socket
     await websocket.accept()
+
+    # 4️⃣  Main receive loop
     try:
         while True:
             data = await websocket.receive_text()
             try:
-                data = json.loads(data)
+                payload = json.loads(data)
             except json.JSONDecodeError:
+                # Bad payload – let the client know and terminate
                 await websocket.send_json({"type": "bad message"})
+                await websocket.close(code=1008)
                 return
 
-            if data["action"] == "createAlbum":
-                await createAlbum(websocket, data, username)
-            if data["action"] == "getAlbums":
-                await getAlbums(websocket, data, username)
-            if data["action"] == "deleteAlbum":
-                await deleteAlbum(websocket, data, username)
-            if data["action"] == "getPhotos":
-                await getPhotos(websocket, data, username)
-            if data["action"] == "addPhoto":
-                await addPhoto(websocket, data, username)
+            # Dispatch on action
+            action = payload.get("action")
+            if action == "createAlbum":
+                await createAlbum(websocket, payload, username)
+            elif action == "getAlbums":
+                await getAlbums(websocket, payload, username)
+            elif action == "deleteAlbum":
+                await deleteAlbum(websocket, payload, username)
+            elif action == "getPhotos":
+                await getPhotos(websocket, payload, username)
+            elif action == "addPhoto":
+                await addPhoto(websocket, payload, username)
+            else:
+                # Unknown action – close to prevent abuse
+                await websocket.send_json({"type": "unknown action"})
+                await websocket.close(code=1008)
+                return
 
     except Exception as e:
-        print(f"Connection closed: {e}")
-    finally:
-        # await manager.unsubscribe(websocket)
-        pass
+        # Log the error – keep the log readable
+        print(f"WebSocket error: {e}")
+        # Ensure we close cleanly
+        await websocket.close(code=1011)  # 1011 = internal error
 
 
 # --------------------------------------------------------------------------- #
