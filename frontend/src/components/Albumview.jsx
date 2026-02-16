@@ -53,7 +53,25 @@ function Albumview(currentUser) {
       setPhotos((prev) => [...prev, payload]);
       console.log("Photo added:", payload);
     }
-  }, [lastJsonMessage]);
+
+    if (action === "deletePhoto") {
+      const deletedId = payload;
+      setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
+      setSelected((prevSelected) =>
+        prevSelected.filter(
+          (idx) => photos[idx] && photos[idx].id !== deletedId,
+        ),
+      );
+    }
+
+    if (action === "deleteAlbum") {
+      if (payload) {
+        window.location.href = `/user/${currentUser.currentUser}`;
+      } else {
+        alert("Album deletion failed");
+      }
+    }
+  }, [lastJsonMessage, currentUser, photos]);
 
   async function handleDeleteAlbum() {
     if (!window.confirm("Are you sure you want to delete this album?")) {
@@ -62,9 +80,8 @@ function Albumview(currentUser) {
 
     sendJsonMessage({
       action: "deleteAlbum",
-      payload: { target: albumcode },
+      payload: { albumcode: albumcode },
     });
-    window.location.href = `/user/${currentUser.currentUser}`;
   }
 
   function downloadAll(e) {

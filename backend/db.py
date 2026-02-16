@@ -232,17 +232,22 @@ def getPhotos(album_code: str) -> dict | None:
     return {"photos": photos}
 
 
-def deleteAlbum(code: str) -> bool:
+def deleteAlbum(username: str, code: str) -> bool:
+    # Verify that the user exists
+    user = getUser(username)
+    if not user:
+        return False
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
             """
             DELETE FROM albums
-            WHERE code = %s
+            WHERE code = %s AND user_id = %s
             RETURNING id;
             """,
-            (code,),
+            (code, user["id"]),
         )
         # If RETURNING returns a row, the album existed and was deleted.
         deleted = cursor.fetchone() is not None
@@ -256,7 +261,7 @@ def deleteAlbum(code: str) -> bool:
     return deleted
 
 
-def addPhoto(data: dict) -> bool:
+def addPhoto(data: dict) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -264,7 +269,7 @@ def addPhoto(data: dict) -> bool:
             """
             INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
             VALUES (%s, %s, %s, %s, %s)
-            RETURNING id;
+            RETURNING id, user_id, album_id, s3_key, thumb_key, filename, created_at;
             """,
             (
                 data.get("user_id"),
@@ -274,38 +279,101 @@ def addPhoto(data: dict) -> bool:
                 data.get("filename"),
             ),
         )
-        inserted = cursor.fetchone() is not None
+        row = cursor.fetchone()
         conn.commit()
     except Exception:
         conn.rollback()
-        inserted = False
+        row = None
     finally:
         cursor.close()
         conn.close()
-    return inserted
+
+    if row is None:
+        return None
+
+    created_at = row[6]
+    if isinstance(created_at, datetime.datetime):
+        created_at = created_at.isoformat()
+
+    return {
+        "id": row[0],
+        "user_id": row[1],
+        "album_id": row[2],
+        "s3_key": aws.create_presigned_url(row[3]),
+        "thumb_key": aws.create_presigned_url(row[4]),
+        "filename": row[5],
+        "created_at": created_at,
+    }
 
 
-def deletePhoto(id: int) -> bool:
+def deletePhoto(id: str, username: str) -> bool:
+    user = getUser(username)
+    if not user:
+        return False
+
+    try:
+        photo_id = int(id)
+    except (ValueError, TypeError):
+        return False
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        # Fetch photo details
+        cursor.execute(
+            """
+            SELECT user_id, album_id
+            FROM photos
+            WHERE id = %s;
+            """,
+            (photo_id,),
+        )
+        photo_row = cursor.fetchone()
+        if not photo_row:
+            return False
+
+        photo_owner_id, album_id = photo_row
+
+        # Fetch album owner
+        cursor.execute(
+            """
+            SELECT user_id
+            FROM albums
+            WHERE id = %s;
+            """,
+            (album_id,),
+        )
+        album_row = cursor.fetchone()
+        if not album_row:
+            return False
+
+        album_owner_id = album_row[0]
+
+        # Only the photo owner or album owner may delete
+        if user["id"] not in (photo_owner_id, album_owner_id):
+            return False
+
+        # Perform the delete
         cursor.execute(
             """
             DELETE FROM photos
-            WHERE id = %s
-            RETURNING id;
+            WHERE id = %s;
             """,
-            (id,),
+            (photo_id,),
         )
-        deleted = cursor.fetchone() is not None
+        # If DELETE affected a row, commit
+        if cursor.rowcount == 0:
+            conn.rollback()
+            return False
+
         conn.commit()
+        return True
     except Exception:
         conn.rollback()
-        deleted = False
+        return False
     finally:
         cursor.close()
         conn.close()
-    return deleted
 
 
 def getAlbums(username: str) -> dict | None:
@@ -387,6 +455,43 @@ def createAlbum(username: str, album_name: str) -> bool:
     finally:
         cursor.close()
         conn.close()
+
+
+def getPhoto(id: int) -> dict | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id, user_id, album_id, s3_key, thumb_key, filename, created_at
+            FROM photos
+            WHERE id = %s;
+            """,
+            (id,),
+        )
+        row = cursor.fetchone()
+    except Exception:
+        row = None
+    finally:
+        cursor.close()
+        conn.close()
+
+    if row is None:
+        return None
+
+    created_at = row[6]
+    if isinstance(created_at, datetime.datetime):
+        created_at = created_at.isoformat()
+
+    return {
+        "id": row[0],
+        "user_id": row[1],
+        "album_id": row[2],
+        "s3_key": aws.create_presigned_url(row[3]),
+        "thumb_key": aws.create_presigned_url(row[4]),
+        "filename": row[5],
+        "created_at": created_at,
+    }
 
 
 # --------------------------------------------------------------------------- #

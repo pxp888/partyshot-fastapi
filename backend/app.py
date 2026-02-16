@@ -11,6 +11,7 @@ import redis.asyncio as redis
 import watcher
 from arq import create_pool
 from arq.connections import RedisSettings
+from botocore.exceptions import ClientError
 from fastapi import (
     Depends,
     FastAPI,
@@ -146,6 +147,71 @@ def protected(Authorize: AuthJWT = Depends()):
 #     return request.app.state.redis
 
 
+@app.post("/api/s3-presigned")
+async def get_presigned(
+    filename: str = Form(...),
+    album_code: str = Form(...),
+    Authorize: AuthJWT = Depends(),
+):
+    Authorize.jwt_required()
+
+    current_user = Authorize.get_jwt_subject()
+    # x = db.openCheck(str(current_user), album_code)
+    if not current_user:
+        return
+    user = db.getUser(str(current_user))
+    album = db.getAlbum_code(album_code)
+    if not album:
+        return
+    if not album["open"]:
+        if album["user_id"] != user["id"]:
+            print("get_presigned - not allowed")
+            raise HTTPException(status_code=403, detail="Not Allowed")
+            return
+
+    file_id = uuid.uuid4().hex
+    s3_key = f"{album_code}/{file_id}"
+
+    s3_client = aws.get_s3_client()
+    try:
+        # **No ACL field** – let S3 keep the object private (the default)
+        response = s3_client.generate_presigned_post(
+            Bucket=aws.BUCKET_NAME,
+            Key=s3_key,
+            ExpiresIn=3600,
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"s3_key": s3_key, "presigned": response}
+
+
+@app.post("/api/add-photo-metadata")
+async def add_photo_metadata(
+    payload: dict,
+    Authorize: AuthJWT = Depends(),
+):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    user_record = db.getUser(str(current_user))
+    if user_record is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    photo_id = db.addPhoto(
+        {
+            "user_id": user_record["id"],
+            "album_id": payload["album_id"],
+            "filename": payload["filename"],
+            "s3_key": payload["s3_key"],
+            "thumb_key": payload.get("thumb_key"),
+        }
+    )
+
+    message = {"action": "addPhoto", "payload": photo_id}
+    await redis_client.publish(f"album-{payload['albumcode']}", json.dumps(message))
+    return {"photo_id": photo_id}
+
+
 # --------------------------------------------------------------------------- #
 # App Logic
 # --------------------------------------------------------------------------- #
@@ -180,9 +246,10 @@ async def getAlbums(websocket, data, username):
 
 
 async def deleteAlbum(websocket, data, username):
-    target = data["payload"]["target"]
-    ok = db.deleteAlbum(username, target)
-    print(f"delete {ok} for {target}")
+    albumcode = data["payload"]["albumcode"]
+    ok = db.deleteAlbum(username, albumcode)
+    message = {"action": "deleteAlbum", "payload": ok}
+    await websocket.send_json(message)
 
     message = {"action": "newAlbum", "payload": {"type": "update"}}
     await redis_client.publish(f"user-{username}", json.dumps(message))
@@ -205,15 +272,17 @@ async def getPhotos(websocket, data, username):
     photos = db.getPhotos(albumcode)
     message = {"action": "getPhotos", "payload": photos}
     await websocket.send_json(message)
-    # await manager.subscribe(websocket, f"album-{albumcode}")
-    # print("subscribed to : ", f"album-{albumcode}")
 
 
-async def addPhoto(websocket, data, username):
-    photo = db.addPhoto(data["payload"], username)
-    album_code = data["payload"]["album_code"]
-    message = {"action": "addPhoto", "payload": photo}
-    await redis_client.publish(f"album-{album_code}", json.dumps(message))
+async def deletePhoto(websocket, data, username):
+    albumcode = data["payload"]["album_code"]
+    photo_id = data["payload"]["photo_id"]
+    ok = db.deletePhoto(photo_id, username)
+    if ok:
+        message = {"action": "deletePhoto", "payload": photo_id}
+        await redis_client.publish(f"album-{albumcode}", json.dumps(message))
+    else:
+        print("not deleted", photo_id)
 
 
 @app.websocket("/ws")
@@ -259,10 +328,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 await deleteAlbum(websocket, payload, username)
             elif action == "getPhotos":
                 await getPhotos(websocket, payload, username)
-            elif action == "addPhoto":
-                await addPhoto(websocket, payload, username)
             elif action == "getAlbum":
                 await getAlbum(websocket, payload, username)
+            elif action == "deletePhoto":
+                await deletePhoto(websocket, payload, username)
             else:
                 # Unknown action – close to prevent abuse
                 await websocket.send_json({"type": "unknown action"})

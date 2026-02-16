@@ -1,16 +1,6 @@
 import { useParams } from "react-router-dom";
-import { receiveJson } from "./helpers";
 import blankImage from "../assets/blank.jpg";
-import { useSocket } from "./WebSocketContext"; // ← NEW
 
-/**
- * Creates a thumbnail `Blob` from an image file.
- *
- * @param {File} file        - The original image file.
- * @param {number} maxWidth  - Desired maximum width of the thumbnail.
- * @param {number} maxHeight - Desired maximum height of the thumbnail.
- * @returns {Promise<Blob>}  - The thumbnail image as a Blob.
- */
 function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -63,7 +53,7 @@ function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
 
 function Uploader({ album, setAlbum }) {
   const { albumcode } = useParams();
-  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
+
   /**
    * Uploads the original file and its thumbnail.
    *
@@ -99,8 +89,6 @@ function Uploader({ album, setAlbum }) {
       const errText = await s3Res.text();
       throw new Error(`S3 upload failed: ${s3Res.status} ${errText}`);
     }
-
-    // console.log(`Uploaded ${file.name} to S3 as ${s3_key}`);
 
     // 3️⃣ (Optional) Create a thumbnail and upload it the same way
     let thumbnailBlob;
@@ -148,15 +136,26 @@ function Uploader({ album, setAlbum }) {
       // console.log(`Uploaded thumbnail to ${thumb_key}`);
     }
 
-    sendJsonMessage({
-      action: "addPhoto",
-      payload: {
-        album_code: album.code,
+    // 4️⃣  Notify backend of metadata via REST instead of websocket
+    const metadataRes = await fetch("/api/add-photo-metadata", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        album_id: album.id,
         filename: file.name,
         s3_key,
         thumb_key: thumb_key || null,
-      },
+        albumcode: albumcode,
+      }),
     });
+
+    if (!metadataRes.ok) {
+      const errText = await metadataRes.text();
+      console.warn(`Metadata upload failed: ${metadataRes.status} ${errText}`);
+    }
   }
 
   return (
