@@ -217,18 +217,13 @@ async def toggle_open(
     payload: ToggleOpenRequest,
     Authorize: AuthJWT = Depends(),
 ):
-
     Authorize.jwt_required()
-
     current_user = Authorize.get_jwt_subject()
-
     updated_album = db.toggleOpen(payload.album_id, current_user)
-
     if not updated_album:
         raise HTTPException(
             status_code=404, detail="Album not found or permission denied"
         )
-
     try:
         await redis_client.publish(
             f"album-{updated_album['code']}",
@@ -236,7 +231,6 @@ async def toggle_open(
         )
     except Exception:
         pass
-
     return updated_album
 
 
