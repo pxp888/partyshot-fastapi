@@ -199,10 +199,12 @@ def getPhotos(album_code: str) -> dict | None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT id, user_id, album_id, s3_key, thumb_key, filename, created_at
-        FROM photos
-        WHERE album_id = %s
-        ORDER BY created_at ASC;
+        SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.filename,
+               p.created_at, u.username
+        FROM photos p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.album_id = %s
+        ORDER BY p.created_at ASC;
         """,
         (album_id,),
     )
@@ -227,6 +229,7 @@ def getPhotos(album_code: str) -> dict | None:
                 "thumb_key": aws.create_presigned_url(row[4]),
                 "filename": row[5],
                 "created_at": created_at,
+                "username": row[7],  # <-- added field
             }
         )
     return {"photos": photos}
@@ -280,10 +283,25 @@ def addPhoto(data: dict) -> dict | None:
             ),
         )
         row = cursor.fetchone()
+        # If we got a row, fetch the username for the user_id we just inserted.
+        if row:
+            cursor.execute(
+                """
+                SELECT username
+                FROM users
+                WHERE id = %s;
+                """,
+                (row[1],),  # row[1] is user_id
+            )
+            user_row = cursor.fetchone()
+            username = user_row[0] if user_row else None
+        else:
+            username = None
         conn.commit()
     except Exception:
         conn.rollback()
         row = None
+        username = None
     finally:
         cursor.close()
         conn.close()
@@ -303,6 +321,7 @@ def addPhoto(data: dict) -> dict | None:
         "thumb_key": aws.create_presigned_url(row[4]),
         "filename": row[5],
         "created_at": created_at,
+        "username": username,  # <-- added field
     }
 
 
@@ -463,9 +482,11 @@ def getPhoto(id: int) -> dict | None:
     try:
         cursor.execute(
             """
-            SELECT id, user_id, album_id, s3_key, thumb_key, filename, created_at
-            FROM photos
-            WHERE id = %s;
+            SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key,
+                   p.filename, p.created_at, u.username
+            FROM photos p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.id = %s;
             """,
             (id,),
         )
@@ -491,7 +512,68 @@ def getPhoto(id: int) -> dict | None:
         "thumb_key": aws.create_presigned_url(row[4]),
         "filename": row[5],
         "created_at": created_at,
+        "username": row[7],  # <-- added field
     }
+
+
+def toggleOpen(id: str, username: str) -> dict | None:
+    user = getUser(username)
+    if user is None:
+        return None
+
+    try:
+        album_id = int(id)
+    except (ValueError, TypeError):
+        return None
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Grab the album's current state and ownership.
+        cursor.execute(
+            """
+            SELECT user_id, code, open
+            FROM albums
+            WHERE id = %s;
+            """,
+            (album_id,),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+
+        album_owner_id, album_code, current_open = row
+
+        # Ensure the requesting user owns the album.
+        if user["id"] != album_owner_id:
+            return None
+
+        # Toggle the `open` flag.
+        new_open = not current_open
+        cursor.execute(
+            """
+            UPDATE albums
+            SET open = %s
+            WHERE id = %s
+            RETURNING id, code, open;
+            """,
+            (new_open, album_id),
+        )
+        updated_row = cursor.fetchone()
+        if updated_row is None:
+            conn.rollback()
+            return None
+
+        conn.commit()
+
+        return getAlbum_code(album_code)
+
+    except Exception:
+        conn.rollback()
+        return None
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # --------------------------------------------------------------------------- #

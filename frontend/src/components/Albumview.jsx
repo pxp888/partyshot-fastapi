@@ -36,42 +36,46 @@ function Albumview(currentUser) {
   // React to messages that come from the WS
   useEffect(() => {
     if (!lastJsonMessage) return;
+
     const { action, payload } = lastJsonMessage;
 
-    if (action === "getAlbum") {
-      setAlbum(payload);
-      return;
-    }
+    switch (action) {
+      case "getAlbum":
+        setAlbum(payload);
+        break;
 
-    if (action === "getPhotos") {
-      const photosArray = payload?.photos ?? [];
-      setPhotos(photosArray);
-      return;
-    }
+      case "getPhotos":
+        setPhotos(payload?.photos ?? []);
+        break;
 
-    if (action === "addPhoto") {
-      setPhotos((prev) => [...prev, payload]);
-      console.log("Photo added:", payload);
-    }
+      case "addPhoto":
+        setPhotos((prev) => [...prev, payload]);
+        console.log("Photo added:", payload);
+        break;
 
-    if (action === "deletePhoto") {
-      const deletedId = payload;
-      setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
-      setSelected((prevSelected) =>
-        prevSelected.filter(
-          (idx) => photos[idx] && photos[idx].id !== deletedId,
-        ),
-      );
-    }
+      case "deletePhoto": {
+        const deletedId = payload;
+        setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
 
-    if (action === "deleteAlbum") {
-      if (payload) {
-        window.location.href = `/user/${currentUser.currentUser}`;
-      } else {
-        alert("Album deletion failed");
+        // Update selection based on the latest photos array
+        setSelected((prev) =>
+          prev.filter((idx) => photos[idx]?.id !== deletedId),
+        );
+        break;
       }
+
+      case "deleteAlbum":
+        if (payload) {
+          window.location.href = `/user/${currentUser.currentUser}`;
+        } else {
+          alert("Album deletion failed");
+        }
+        break;
+
+      default:
+        break;
     }
-  }, [lastJsonMessage, currentUser, photos]);
+  }, [lastJsonMessage, currentUser]); // photos removed
 
   async function handleDeleteAlbum() {
     if (!window.confirm("Are you sure you want to delete this album?")) {
@@ -193,9 +197,9 @@ function Albumview(currentUser) {
     });
   }
 
-  async function toggleLock() {
+  async function toggleOpen() {
     try {
-      await sendJson("/api/togglelock", { album_id: album.id });
+      await sendJson("/api/toggleOpen", { album_id: album.id });
       setAlbum((prev) => ({
         ...prev,
         open: !prev.open,
@@ -231,7 +235,7 @@ function Albumview(currentUser) {
           </div>
           <div className="infoItem">
             <label>Open: </label>
-            <p onClick={toggleLock} className="clickable">
+            <p onClick={toggleOpen} className="clickable">
               {album.open ? "Yes" : "No"}
             </p>
           </div>

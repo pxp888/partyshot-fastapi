@@ -1,5 +1,3 @@
-import asyncio
-import io
 import json
 import os
 import uuid
@@ -55,19 +53,7 @@ class Settings(BaseModel):
     authjwt_secret_key: str = "secretstuffherethis is a long secret key for jwt signing"
 
 
-class AlbumCreateRequest(BaseModel):
-    album_name: str
-
-
-class DeleteAlbumRequest(BaseModel):
-    code: str
-
-
-class DeletePhotoRequest(BaseModel):
-    photo_id: int
-
-
-class ToggleLockRequest(BaseModel):
+class ToggleOpenRequest(BaseModel):
     album_id: int
 
 
@@ -224,6 +210,34 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     wssecret = uuid.uuid4().hex
     await redis_client.set(f"user:{current_user}:uuid", wssecret)
     return {"wssecret": wssecret}
+
+
+@app.post("/api/toggleOpen")
+async def toggle_open(
+    payload: ToggleOpenRequest,
+    Authorize: AuthJWT = Depends(),
+):
+
+    Authorize.jwt_required()
+
+    current_user = Authorize.get_jwt_subject()
+
+    updated_album = db.toggleOpen(payload.album_id, current_user)
+
+    if not updated_album:
+        raise HTTPException(
+            status_code=404, detail="Album not found or permission denied"
+        )
+
+    try:
+        await redis_client.publish(
+            f"album-{updated_album['code']}",
+            json.dumps({"action": "toggleOpen", "payload": updated_album}),
+        )
+    except Exception:
+        pass
+
+    return updated_album
 
 
 async def createAlbum(websocket, data, username):
