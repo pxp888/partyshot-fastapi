@@ -198,6 +198,13 @@ async def add_photo_metadata(
     return {"photo_id": photo_id}
 
 
+@app.post("/api/cleanup")
+def cleanup_endpoint(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    db.cleanup()
+    return {"status": "cleanup performed"}
+
+
 # --------------------------------------------------------------------------- #
 # App Logic
 # --------------------------------------------------------------------------- #

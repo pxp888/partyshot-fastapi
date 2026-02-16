@@ -624,6 +624,60 @@ def toggleOpen(id: str, username: str) -> dict | None:
         conn.close()
 
 
+def cleanup() -> None:
+    """
+    Synchronise the S3 bucket with the database.
+
+    The function performs the following steps:
+
+    1. Retrieve all :pycode:`s3_key` and :pycode:`thumb_key` values stored in
+       the :pycode:`photos` table.
+    2. Enumerate every object currently present in the S3 bucket.
+    3. For any object that does **not** appear in the set of database keys,
+       the object is deleted from S3.
+
+    This operation is useful during maintenance or after a bulk delete of
+    database records that may leave orphaned objects in S3.
+    """
+
+    # --- Step 1: Collect all known keys from the database -----------------
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT s3_key, thumb_key FROM photos")
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    known_keys: set[str] = set()
+    for s3_key, thumb_key in rows:
+        if s3_key:
+            known_keys.add(s3_key)
+        if thumb_key:
+            known_keys.add(thumb_key)
+
+    # --- Step 2: List objects in the S3 bucket ----------------------------
+
+    pagenum = 0
+    s3 = aws.get_s3_client()
+    paginator = s3.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=aws.BUCKET_NAME):
+        print("considering page : ", pagenum)
+        pagenum += 1
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            # --- Step 3: Delete orphaned objects ----------------------------
+            if key not in known_keys:
+                try:
+                    aws.delete_file_from_s3(key)
+                    print(f"[cleanup] Deleted orphaned object: {key}")
+                except Exception as exc:  # pragma: no cover - S3 side effect
+                    print(f"[cleanup] Failed to delete {key} – {exc!r}")
+
+    print("completed")
+
+
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #

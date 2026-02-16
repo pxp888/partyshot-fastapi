@@ -5,6 +5,7 @@ import Topbar from "./components/Topbar";
 import WelcomePage from "./components/WelcomePage";
 import Userview from "./components/Userview";
 import Albumview from "./components/Albumview";
+import Adminpage from "./components/Adminpage";
 import { WebSocketProvider } from "./components/WebSocketContext";
 
 function Home() {
@@ -25,10 +26,6 @@ export default function App() {
   return (
     <WebSocketProvider>
       <Router>
-        {/* <nav style={{ marginBottom: "1rem" }}>
-        <Link to="/">Home</Link>
-        <Link to="/about">About</Link>
-      </nav>*/}
         <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
         <Routes>
@@ -41,6 +38,10 @@ export default function App() {
           <Route
             path="/album/:albumcode"
             element={<Albumview currentUser={currentUser} />}
+          />
+          <Route
+            path="/admin"
+            element={<Adminpage currentUser={currentUser} />}
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
