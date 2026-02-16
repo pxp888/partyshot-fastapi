@@ -236,7 +236,6 @@ def getPhotos(album_code: str) -> dict | None:
 
 
 def deleteAlbum(username: str, code: str) -> bool:
-    # Verify that the user exists
     user = getUser(username)
     if not user:
         return False
@@ -244,24 +243,67 @@ def deleteAlbum(username: str, code: str) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        # 2. Get album id and thumbnail key
         cursor.execute(
             """
-            DELETE FROM albums
+            SELECT id, thumb_key FROM albums
             WHERE code = %s AND user_id = %s
-            RETURNING id;
             """,
             (code, user["id"]),
         )
-        # If RETURNING returns a row, the album existed and was deleted.
-        deleted = cursor.fetchone() is not None
+        album_row = cursor.fetchone()
+        if album_row is None:
+            return False
+        album_id, album_thumb_key = album_row
+
+        # 3. Get all photos for the album
+        cursor.execute(
+            """
+            SELECT s3_key, thumb_key FROM photos
+            WHERE album_id = %s
+            """,
+            (album_id,),
+        )
+        photo_rows = cursor.fetchall()
+
+        # 4. Delete S3 objects for each photo
+        for s3_key, thumb_key in photo_rows:
+            if s3_key:
+                aws.delete_file_from_s3(s3_key)
+            if thumb_key:
+                aws.delete_file_from_s3(thumb_key)
+
+        # 5. Delete photo records
+        cursor.execute(
+            """
+            DELETE FROM photos
+            WHERE album_id = %s
+            """,
+            (album_id,),
+        )
+
+        # 6. Delete album thumbnail if present
+        if album_thumb_key:
+            aws.delete_file_from_s3(album_thumb_key)
+
+        # 7. Delete the album record itself
+        cursor.execute(
+            """
+            DELETE FROM albums
+            WHERE id = %s
+            """,
+            (album_id,),
+        )
+
         conn.commit()
-    except Exception:
+        return True
+    except Exception as e:
         conn.rollback()
-        deleted = False
+        print(f"Error deleting album: {e}")
+        return False
     finally:
         cursor.close()
         conn.close()
-    return deleted
 
 
 def addPhoto(data: dict) -> dict | None:
@@ -338,10 +380,10 @@ def deletePhoto(id: str, username: str) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        # Fetch photo details
+        # Fetch photo details including S3 keys
         cursor.execute(
             """
-            SELECT user_id, album_id
+            SELECT user_id, album_id, s3_key, thumb_key
             FROM photos
             WHERE id = %s;
             """,
@@ -351,7 +393,7 @@ def deletePhoto(id: str, username: str) -> bool:
         if not photo_row:
             return False
 
-        photo_owner_id, album_id = photo_row
+        photo_owner_id, album_id, s3_key, thumb_key = photo_row
 
         # Fetch album owner
         cursor.execute(
@@ -372,7 +414,13 @@ def deletePhoto(id: str, username: str) -> bool:
         if user["id"] not in (photo_owner_id, album_owner_id):
             return False
 
-        # Perform the delete
+        # Delete S3 objects if they exist
+        if s3_key:
+            aws.delete_file_from_s3(s3_key)
+        if thumb_key:
+            aws.delete_file_from_s3(thumb_key)
+
+        # Perform the delete from DB
         cursor.execute(
             """
             DELETE FROM photos

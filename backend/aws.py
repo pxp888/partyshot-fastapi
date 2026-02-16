@@ -62,6 +62,8 @@ def create_presigned_post(object_name, expiration=3600):
 
 
 def delete_file_from_s3(object_name):
+    if object_name is None:
+        return False
     s3_client = get_s3_client()
     try:
         s3_client.delete_object(Bucket=BUCKET_NAME, Key=object_name)
