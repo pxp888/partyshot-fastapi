@@ -74,12 +74,12 @@ def init_db() -> None:
             filename TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         -- Add thumb_photo_id column to albums after photos table exists
         DO $$
         BEGIN
             IF NOT EXISTS (
-                SELECT 1 FROM information_schema.columns 
+                SELECT 1 FROM information_schema.columns
                 WHERE table_name = 'albums' AND column_name = 'thumb_photo_id'
             ) THEN
                 ALTER TABLE albums ADD COLUMN thumb_photo_id INTEGER REFERENCES photos(id) ON DELETE SET NULL;
@@ -177,7 +177,7 @@ def getAlbum_code(code: str) -> dict | None:
         (code,),
     )
     row = cursor.fetchone()
-    
+
     # Get thumbnail from referenced photo if it exists
     thumb_key = None
     if row and row[6]:  # thumb_photo_id
@@ -190,7 +190,7 @@ def getAlbum_code(code: str) -> dict | None:
         thumb_row = cursor.fetchone()
         if thumb_row:
             thumb_key = thumb_row[0]
-    
+
     cursor.close()
     conn.close()
 
@@ -496,7 +496,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         album_id = row[0]
         thumb_photo_id = row[6]
         thumb_key = None
-        
+
         # If album has no thumbnail reference, try to find one from photos
         if not thumb_photo_id:
             conn = get_connection()
@@ -550,7 +550,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
             finally:
                 cursor.close()
                 conn.close()
-        
+
         created_at = row[7]
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
@@ -780,8 +780,6 @@ def search(term: str) -> str:
     return ""
 
 
-
-
 def cleanup() -> None:
     """
     Synchronise the S3 bucket with the database.
@@ -836,10 +834,6 @@ def cleanup() -> None:
     print("completed")
 
 
-
-
-
-
 def cleanup2() -> None:
     """
     Synchronise the S3 bucket with the database.
@@ -883,26 +877,21 @@ def cleanup2() -> None:
     for page in paginator.paginate(Bucket=aws.BUCKET_NAME):
         for obj in page.get("Contents", []):
             key = obj["Key"]
-            
+
             if key not in known_keys:
-                delete_buffer.append({'Key': key})
-                
+                delete_buffer.append({"Key": key})
+
             # Once we hit 1,000 keys, perform a bulk delete
             if len(delete_buffer) >= 1000:
                 print(f"Deleting batch of {len(delete_buffer)} objects...")
                 s3.delete_objects(
-                    Bucket=aws.BUCKET_NAME,
-                    Delete={'Objects': delete_buffer}
+                    Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer}
                 )
-                delete_buffer = [] # Reset the buffer
+                delete_buffer = []  # Reset the buffer
 
     # Clean up any remaining keys in the buffer
     if delete_buffer:
         print(f"Deleting final batch of {len(delete_buffer)} objects...")
-        s3.delete_objects(
-            Bucket=aws.BUCKET_NAME,
-            Delete={'Objects': delete_buffer}
-        )
+        s3.delete_objects(Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer})
 
     print("Cleanup completed.")
-

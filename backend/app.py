@@ -331,6 +331,9 @@ async def search(websocket, data, username):
     await websocket.send_json(message)
 
 
+secret_users = {}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -350,6 +353,17 @@ async def websocket_endpoint(websocket: WebSocket):
             wssecret = payload.get("wssecret")
             if wssecret:
                 username = await redis_client.get(f"wssecret:{wssecret}")
+
+            # username = None
+            # wssecret = payload.get("wssecrett")
+            # if wssecret:
+            #     try:
+            #         username = user_secrets[wssecret]
+            #     except KeyError:
+            #         username = None
+            # if username is None:
+            #     username = await redis_client.get(f"wssecret:{wssecret}")
+            #     user_secrets[wssecret] = username
 
             print(username, payload)
 
