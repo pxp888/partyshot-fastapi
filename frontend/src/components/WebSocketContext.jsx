@@ -1,32 +1,47 @@
-import React, { createContext, useContext } from "react";
-// import { useMemo } from "react";
+import React, { createContext, useContext, useState } from "react";
+import { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
 const WebSocketContext = createContext(null);
+// const socketUrl = `ws://localhost:8000/ws?wssecret=${wssecret}&username=${encodeURIComponent(username)}`;
+// const socketUrl = `ws://localhost:8000/ws`;
 
 export const WebSocketProvider = ({ children }) => {
-  const wssecret = localStorage.getItem("wssecret");
-  const username = localStorage.getItem("username");
-  const socketUrl = `ws://localhost:8000/ws?wssecret=${wssecret}&username=${encodeURIComponent(username)}`;
-  // const socketUrl = `ws://localhost:8000/ws`;
+  // Use state to make credentials reactive
+  const [credentials, setCredentials] = useState({
+    wssecret: localStorage.getItem("wssecret"),
+    username: localStorage.getItem("username"),
+  });
 
-  // const socketUrl = useMemo(() => {
-  //   if (!wssecret || !username) return null;
-  //   return `ws://localhost:8000/ws?wssecret=${wssecret}&username=${encodeURIComponent(
-  //     username,
-  //   )}`;
-  // }, [wssecret, username]);
+  // Only create socketUrl if both credentials are present
+  const socketUrl = useMemo(() => {
+    if (!credentials.wssecret || !credentials.username) return null;
+    return `ws://localhost:8000/ws?wssecret=${credentials.wssecret}&username=${encodeURIComponent(credentials.username)}`;
+  }, [credentials.wssecret, credentials.username]);
 
-  // The hook lives here in the Provider
-  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    socketUrl,
+  const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = useWebSocket(
+    socketUrl, // Will be null if credentials are missing
     {
       share: true,
       shouldReconnect: () => true,
-    },
+    }
   );
 
-  const value = { sendJsonMessage, lastJsonMessage, readyState };
+  const reconnect = () => {
+    // Re-read credentials from localStorage
+    setCredentials({
+      wssecret: localStorage.getItem("wssecret"),
+      username: localStorage.getItem("username"),
+    });
+
+    // Close existing connection if any
+    const ws = getWebSocket();
+    if (ws) {
+      ws.close(); // This will trigger shouldReconnect with new URL
+    }
+  };
+
+  const value = { sendJsonMessage, lastJsonMessage, readyState, reconnect };
 
   return (
     <WebSocketContext.Provider value={value}>
@@ -34,6 +49,5 @@ export const WebSocketProvider = ({ children }) => {
     </WebSocketContext.Provider>
   );
 };
-
 // Custom hook for easy access in other components
 export const useSocket = () => useContext(WebSocketContext);

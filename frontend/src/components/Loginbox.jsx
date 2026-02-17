@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./style/Loginbox.css";
 import { sendJson } from "./helpers";
+import { useSocket } from "./WebSocketContext"; // ← NEW
 
 function Loginbox({ setCurrentUser, setShowLogin }) {
   const [credentials, setCredentials] = useState({
@@ -11,6 +12,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const { reconnect } = useSocket(); // ← NEW
 
   const handleChange = (e) => {
     setCredentials({
@@ -18,6 +20,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
       [e.target.name]: e.target.value,
     });
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +35,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
       const uuidData = await sendJson("/api/generate-wssecret", {});
       localStorage.setItem("wssecret", uuidData.wssecret);
       localStorage.setItem("username", data.user);
+      reconnect();
       if (location.pathname === "/") {
         navigate(`/user/${data.user}`);
       }

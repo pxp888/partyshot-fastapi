@@ -1,14 +1,18 @@
-import React, { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { receiveJson } from "./helpers";
-import Searchbar from "./Searchbar";
+import { useSocket } from "./WebSocketContext"; // ← NEW
+import { useNavigate } from "react-router-dom";
 
+import Searchbar from "./Searchbar";
 import "./style/Topbar.css";
 
 function Topbar({ currentUser, setCurrentUser }) {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const { reconnect } = useSocket(); // ← NEW
+  const navigate = useNavigate();
 
   useEffect(() => {
     receiveJson("/api/protected")
@@ -20,6 +24,8 @@ function Topbar({ currentUser, setCurrentUser }) {
       })
       .catch((err) => {
         console.error("Logged out:", err);
+        setCurrentUser(null);
+        reconnect();
       });
   }, [setCurrentUser]); // Test protected route on mount
 
@@ -64,6 +70,8 @@ function Topbar({ currentUser, setCurrentUser }) {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("wssecret");
     localStorage.removeItem("username");
+    reconnect();
+    // navigate("/");
   }
 
   return (
