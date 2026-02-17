@@ -70,7 +70,8 @@
     transition: opacity 0.3s ease;
 }
 
-.title {
+.info .title,
+.info > .title {
     color: salmon;
 }
 

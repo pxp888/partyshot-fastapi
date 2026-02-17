@@ -1,56 +1,86 @@
+/* ------------------------------------
+ * Albumview – streamlined, themed
+ * ------------------------------------ */
+
+:root {
+    --gap-sm: 0.5rem;
+    --gap-md: 1rem;
+    --gap-lg: 2rem;
+    --action-bg: var(--form-color, #f9f9f9);
+    --primary-color: var(--primary-color, #3b82f6);
+    --text-muted: var(--text-muted, #666);
+}
+
+/* ----- File list ----------------------------------------------------- */
 .fileList {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 4px;
-    /*padding: 20px;*/
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--gap-sm);
+    padding: var(--gap-sm) 0;
+    margin: 0 var(--gap-md);
+    box-sizing: border-box;
 }
 
+/* ----- Album details ----------------------------------------------- */
 .albumDetails {
-    background-color: var(--form-color);
-
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-md);
+    background: var(--action-bg);
+    padding: var(--gap-sm);
 }
 
+/* ----- Info items (label/value) ----------------------------------- */
 .infoItem {
     display: grid;
     grid-template-columns: 1fr 4fr;
     align-items: baseline;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: var(--gap-sm);
 }
 
 .infoItem label {
     text-align: right;
     color: gray;
+    font-weight: 600;
 }
 
 .infoItem p {
     text-align: left;
-    margin: 8px 1rem;
+    margin: 0 1rem;
+    color: black;
 }
 
+/* ----- Action bar --------------------------------------------------- */
 .albumActions {
-    background-color: var(--form-color);
-    margin: 2px 0;
-    padding: 2px 1rem;
+    background: var(--action-bg);
+    margin: var(--gap-sm) 0;
+    padding: var(--gap-sm) var(--gap-md);
     display: flex;
     justify-content: flex-start;
-    gap: 4px;
-
-    position: sticky; /* ← make it stick */
-    top: 0; /* ← stick to the top of its scrolling container */
-    z-index: 10; /* ← sit above the photo list */
+    gap: var(--gap-sm);
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.clickable {
+/* ----- Clickable elements ------------------------------------------ */
+.clickable,
+.albumActions button {
     cursor: pointer;
 }
 
+.clickable:focus-visible,
+.albumActions button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* ----- Responsive tweaks ------------------------------------------- */
 @media (max-width: 700px) {
     .fileList {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 4px;
-        /*padding: 20px;*/
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     }
 }

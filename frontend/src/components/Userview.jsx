@@ -62,7 +62,7 @@ function Userview({ currentUser }) {
   return (
     <div className="userview">
       {username === currentUser && (
-        <div className="albumActions">
+        <div className="userActions">
           <form onSubmit={handleCreateAlbum}>
             {/* <label htmlFor="albumName">New Album Name : </label>*/}
             <input
