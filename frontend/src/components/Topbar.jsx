@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
-import { receiveJson } from "./helpers";
+import { sendJson, receiveJson } from "./helpers";
 // import { useSocket } from "./WebSocketContext"; // ← NEW
 // import { useNavigate } from "react-router-dom";
 
@@ -51,13 +51,16 @@ function Topbar({ currentUser, setCurrentUser }) {
           const data = await resp.json();
           localStorage.setItem("access_token", data.access_token);
           console.log("Refreshed access token");
+
+          const uuidData = await sendJson("/api/generate-wssecret", {}); // socket secret
+          localStorage.setItem("wssecret", uuidData.wssecret); // socket secret
         } catch (e) {
           console.warn("Keep‑alive failed, logging out", e);
           // Token chain is broken – log the user out
           handleLogout();
         }
       },
-      1 * 60 * 1000,
+      5 * 60 * 1000,
     );
 
     // Clean up when component unmounts

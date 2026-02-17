@@ -139,7 +139,7 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     wssecret = uuid.uuid4().hex
     # await redis_client.set(f"user:{current_user}:uuid", wssecret)
     await redis_client.set(f"wssecret:{wssecret}", current_user, ex=1200)
-    print("secrets for : ", current_user)
+    print("------------------------secrets for : ", current_user)
     return {"wssecret": wssecret}
 
 
