@@ -3,7 +3,7 @@ import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { receiveJson } from "./helpers";
 import { useSocket } from "./WebSocketContext"; // ← NEW
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 import Searchbar from "./Searchbar";
 import "./style/Topbar.css";
@@ -12,7 +12,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const { reconnect } = useSocket(); // ← NEW
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     receiveJson("/api/protected")
@@ -23,7 +23,7 @@ function Topbar({ currentUser, setCurrentUser }) {
         }
       })
       .catch((err) => {
-        console.error("Logged out:", err);
+        // console.error("Logged out:", err);
         setCurrentUser(null);
         reconnect();
       });

@@ -142,6 +142,11 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     return {"wssecret": wssecret}
 
 
+# --------------------------------------------------------------------------- #
+# App Logic
+# --------------------------------------------------------------------------- #
+
+
 @app.post("/api/s3-presigned")
 async def get_presigned(
     filename: str = Form(...),
@@ -212,11 +217,6 @@ def cleanup_endpoint(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
     db.cleanup()
     return {"status": "cleanup performed"}
-
-
-# --------------------------------------------------------------------------- #
-# App Logic
-# --------------------------------------------------------------------------- #
 
 
 @app.post("/api/toggleOpen")

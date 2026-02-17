@@ -19,7 +19,7 @@ export const WebSocketProvider = ({ children }) => {
     return `ws://localhost:8000/ws?wssecret=${credentials.wssecret}&username=${encodeURIComponent(credentials.username)}`;
   }, [credentials.wssecret, credentials.username]);
 
-  const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = useWebSocket(
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     socketUrl, // Will be null if credentials are missing
     {
       share: true,
@@ -28,17 +28,12 @@ export const WebSocketProvider = ({ children }) => {
   );
 
   const reconnect = () => {
-    // Re-read credentials from localStorage
+    // Re-read credentials from localStorage and update state
+    // This will trigger a reconnection automatically when socketUrl changes
     setCredentials({
       wssecret: localStorage.getItem("wssecret"),
       username: localStorage.getItem("username"),
     });
-
-    // Close existing connection if any
-    const ws = getWebSocket();
-    if (ws) {
-      ws.close(); // This will trigger shouldReconnect with new URL
-    }
   };
 
   const value = { sendJsonMessage, lastJsonMessage, readyState, reconnect };
