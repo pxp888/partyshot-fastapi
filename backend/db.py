@@ -453,10 +453,11 @@ def getAlbums(username: str) -> dict | None:
     try:
         cursor.execute(
             """
-            SELECT id, code, name, user_id, open, public, thumb_key, created_at
-            FROM albums
-            WHERE user_id = %s
-            ORDER BY created_at DESC;
+            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.thumb_key, a.created_at, u.username
+            FROM albums a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.user_id = %s
+            ORDER BY a.created_at DESC;
             """,
             (user["id"],),
         )
@@ -517,7 +518,7 @@ def getAlbums(username: str) -> dict | None:
                 "id": row[0],
                 "code": row[1],
                 "name": row[2],
-                "user_id": row[3],
+                "username": row[8],
                 "open": bool(row[4]),
                 "public": bool(row[5]),
                 "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
