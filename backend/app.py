@@ -35,7 +35,6 @@ redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
 manager = watcher.Watcher()
 
-secret_users = {}  # websocket: username
 
 app = FastAPI()
 
@@ -283,6 +282,7 @@ async def getAlbums(websocket, data, username):
     message = {"action": "getAlbums", "payload": result}
     await websocket.send_json(message)
     await manager.subscribe(websocket, f"user-{target}")
+    # print("subscribed to : ", f"user-{target}")
 
 
 async def deleteAlbum(websocket, data, username):
@@ -304,7 +304,7 @@ async def getAlbum(websocket, data, username):
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
     await manager.subscribe(websocket, f"album-{albumcode}")
-    print("subscribed to : ", f"album-{albumcode}")
+    # print("subscribed to : ", f"album-{albumcode}")
 
 
 async def getPhotos(websocket, data, username):
@@ -333,18 +333,6 @@ async def search(websocket, data, username):
     await websocket.send_json(message)
 
 
-async def secrets(websocket, data):
-    secret = data["payload"]["secret"]
-    user = await redis_client.get(f"wssecret:{secret}")
-    if not user:
-        print("secrets - no user found")
-        return
-    # message = {"action": "secrets", "user": user}
-    secret_users[websocket] = user
-    print("Auth ok: ", user)
-    # await websocket.send_json(message)
-
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -357,19 +345,18 @@ async def websocket_endpoint(websocket: WebSocket):
             except json.JSONDecodeError:
                 # Bad payload – let the client know and terminate
                 print("websocket - bad message")
-                if websocket in secret_users:
-                    del secret_users[websocket]
                 await websocket.close(code=1008)
                 return
 
             username = None
-            if websocket in secret_users:
-                username = secret_users[websocket]
+            wssecret = payload.get("wssecret")
+            if wssecret:
+                username = await redis_client.get(f"wssecret:{wssecret}")
+
+            print(username, payload)
 
             action = payload.get("action")
-            if action == "secrets":
-                await secrets(websocket, payload)
-            elif action == "createAlbum":
+            if action == "createAlbum":
                 await createAlbum(websocket, payload, username)
             elif action == "getAlbums":
                 await getAlbums(websocket, payload, username)
@@ -384,10 +371,7 @@ async def websocket_endpoint(websocket: WebSocket):
             elif action == "search":
                 await search(websocket, payload, username)
             else:
-                # Unknown action – close to prevent abuse
                 print("websocket - unknown action")
-                if websocket in secret_users:
-                    del secret_users[websocket]
                 await websocket.close(code=1008)
                 return
 
@@ -395,20 +379,14 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect as e:
         # WebSocketDisconnect is expected when the client closes the connection
         print(f"WebSocket disconnected: {e.code}")
-        if websocket in secret_users:
-            del secret_users[websocket]
         return
     except Exception as e:
         # Log the error – keep the log readable
         print(f"WebSocket error: {e}")
         # Ensure we close cleanly only if the socket is still open
         try:
-            if websocket in secret_users:
-                del secret_users[websocket]
             await websocket.close(code=1011)  # 1011 = internal error
         except Exception as close_err:
-            if websocket in secret_users:
-                del secret_users[websocket]
             print(f"Failed to close websocket cleanly: {close_err}")
 
 

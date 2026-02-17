@@ -33,10 +33,6 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
 
       const uuidData = await sendJson("/api/generate-wssecret", {});
       localStorage.setItem("wssecret", uuidData.wssecret);
-      sendJsonMessage({
-        action: "secrets",
-        payload: { secret: uuidData.wssecret },
-      });
 
       if (location.pathname === "/") {
         navigate(`/user/${data.user}`);

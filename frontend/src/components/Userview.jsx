@@ -18,7 +18,7 @@ function Userview({ currentUser }) {
       action: "getAlbums",
       payload: { target: username },
     });
-  }, [sendJsonMessage, username]);
+  }, [username]);
 
   // --------------------------------------------------------
   // 2️⃣  React to messages that come from the WS
