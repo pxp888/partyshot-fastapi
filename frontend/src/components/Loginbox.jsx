@@ -21,7 +21,6 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
     });
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -33,6 +32,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
       setShowLogin(false);
 
       const uuidData = await sendJson("/api/generate-wssecret", {});
+      localStorage.setItem("wssecret", uuidData.wssecret);
       sendJsonMessage({
         action: "secrets",
         payload: { secret: uuidData.wssecret },

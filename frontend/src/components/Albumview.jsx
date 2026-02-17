@@ -24,14 +24,14 @@ function Albumview(currentUser) {
       action: "getAlbum",
       payload: { albumcode: albumcode },
     });
-  }, [sendJsonMessage, albumcode]);
+  }, [albumcode]);
 
   useEffect(() => {
     sendJsonMessage({
       action: "getPhotos",
       payload: { albumcode: albumcode },
     });
-  }, [sendJsonMessage, albumcode]);
+  }, [albumcode]);
 
   // React to messages that come from the WS
   useEffect(() => {

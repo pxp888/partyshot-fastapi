@@ -407,6 +407,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 del secret_users[websocket]
             await websocket.close(code=1011)  # 1011 = internal error
         except Exception as close_err:
+            if websocket in secret_users:
+                del secret_users[websocket]
             print(f"Failed to close websocket cleanly: {close_err}")
 
 
