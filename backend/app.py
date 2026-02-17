@@ -411,4 +411,4 @@ async def serve_spa(request: Request, full_path: str):
 async def startup():
     db.init_db()
     # create pool for arq workers
-    app.state.redis = await create_pool(RedisSettings(host="localhost", port=6379))
+    app.state.redis = await create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
