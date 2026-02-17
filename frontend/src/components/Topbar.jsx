@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { receiveJson } from "./helpers";
-import { useSocket } from "./WebSocketContext"; // ← NEW
+// import { useSocket } from "./WebSocketContext"; // ← NEW
 // import { useNavigate } from "react-router-dom";
 
 import Searchbar from "./Searchbar";
@@ -11,9 +11,11 @@ import "./style/Topbar.css";
 function Topbar({ currentUser, setCurrentUser }) {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  // const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← websocket
   // const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("topbar protect test");
     receiveJson("/api/protected")
       .then((data) => {
         console.log("Logged in:", data);
@@ -33,7 +35,7 @@ function Topbar({ currentUser, setCurrentUser }) {
     const refreshToken = localStorage.getItem("refresh_token");
     if (!refreshToken) return;
 
-    // Call /api/refresh every 12 minutes (less than the default 15 min expiry)
+    // Call /api/refresh every 9 minutes (less than the default 15 min expiry)
     const intervalId = setInterval(
       async () => {
         try {
@@ -55,7 +57,7 @@ function Topbar({ currentUser, setCurrentUser }) {
           handleLogout();
         }
       },
-      10 * 60 * 1000,
+      1 * 60 * 1000,
     );
 
     // Clean up when component unmounts
