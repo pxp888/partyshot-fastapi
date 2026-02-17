@@ -35,7 +35,7 @@ redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
 manager = watcher.Watcher()
 
-secret_users = {}  # websocket: username 
+secret_users = {}  # websocket: username
 
 app = FastAPI()
 
@@ -141,7 +141,7 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     current_user = Authorize.get_jwt_subject()
     wssecret = uuid.uuid4().hex
     await redis_client.set(f"user:{current_user}:uuid", wssecret)
-    await redis_client.set(f"wssecret:{wssecret}", current_user )
+    await redis_client.set(f"wssecret:{wssecret}", current_user)
     return {"wssecret": wssecret}
 
 
@@ -339,30 +339,14 @@ async def secrets(websocket, data):
     if not user:
         print("secrets - no user found")
         return
-    message = {"action": "secrets", "user": user}
+    # message = {"action": "secrets", "user": user}
     secret_users[websocket] = user
     print("Auth ok: ", user)
-    await websocket.send_json(message)
+    # await websocket.send_json(message)
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    # wssecret = websocket.query_params.get("wssecret")
-    # username = websocket.query_params.get("username")
-
-    # if not wssecret or not username:
-    #     # Explicitly close – this will surface as 1008 to the client
-    #     await websocket.close(code=1008)
-    #     return
-
-    # # 2️⃣  Verify the secret that was issued to the user
-    # old = await redis_client.get(f"user:{username}:uuid")
-    # if old != wssecret:
-    #     # Reject the connection – prevents spoofing
-    #     await websocket.close(code=1008)
-    #     return
-    
-    
     await websocket.accept()
 
     try:
@@ -373,15 +357,19 @@ async def websocket_endpoint(websocket: WebSocket):
             except json.JSONDecodeError:
                 # Bad payload – let the client know and terminate
                 print("websocket - bad message")
+                if websocket in secret_users:
+                    del secret_users[websocket]
                 await websocket.close(code=1008)
                 return
-            
+
             username = None
             if websocket in secret_users:
                 username = secret_users[websocket]
-            
+
             action = payload.get("action")
-            if action == "createAlbum":
+            if action == "secrets":
+                await secrets(websocket, payload)
+            elif action == "createAlbum":
                 await createAlbum(websocket, payload, username)
             elif action == "getAlbums":
                 await getAlbums(websocket, payload, username)
@@ -395,11 +383,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 await deletePhoto(websocket, payload, username)
             elif action == "search":
                 await search(websocket, payload, username)
-            elif action == "secrets":
-                await secrets(websocket, payload)
             else:
                 # Unknown action – close to prevent abuse
                 print("websocket - unknown action")
+                if websocket in secret_users:
+                    del secret_users[websocket]
                 await websocket.close(code=1008)
                 return
 
@@ -407,12 +395,16 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect as e:
         # WebSocketDisconnect is expected when the client closes the connection
         print(f"WebSocket disconnected: {e.code}")
+        if websocket in secret_users:
+            del secret_users[websocket]
         return
     except Exception as e:
         # Log the error – keep the log readable
         print(f"WebSocket error: {e}")
         # Ensure we close cleanly only if the socket is still open
         try:
+            if websocket in secret_users:
+                del secret_users[websocket]
             await websocket.close(code=1011)  # 1011 = internal error
         except Exception as close_err:
             print(f"Failed to close websocket cleanly: {close_err}")
