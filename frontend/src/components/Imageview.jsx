@@ -15,6 +15,9 @@ function Imageview({ files, focus, setFocus }) {
         case "ArrowRight":
           if (focus + 1 < files.length) setFocus(focus + 1);
           break;
+        case " ":
+          if (focus + 1 < files.length) setFocus(focus + 1);
+          break;
         case "ArrowLeft":
           if (focus > 0) setFocus(focus - 1);
           break;
