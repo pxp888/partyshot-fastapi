@@ -1,26 +1,82 @@
+/* ------------------------------------------------------------------
+ * 1️⃣  Layout – make the grid a little more fluid on small screens
+ * ------------------------------------------------------------------ */
 .album-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 10px;
-    /*padding: 4px;*/
+    /* Show 1 column on mobile, grow to 2‑3 columns on larger viewports */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
     margin: 0 2rem;
+    padding: 0.5rem 0; /* added a little vertical padding */
+    /* Prevent items from bleeding outside the container */
+    box-sizing: border-box;
 }
 
+/* ------------------------------------------------------------------
+ * 2️⃣  Form styling – use the same variables for consistency
+ * ------------------------------------------------------------------ */
 .userview form {
-    background-color: var(--form-color);
-    padding: 2px;
+    background-color: var(--form-color, #f9f9f9); /* fallback colour */
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    display: flex;
+    flex-wrap: wrap; /* wrap on tiny screens */
+    gap: 0.5rem;
 }
 
+/* ------------------------------------------------------------------
+ * 3️⃣  Action bar – better spacing & alignment
+ * ------------------------------------------------------------------ */
 .albumActions {
-    background-color: var(--form-color);
-    margin: 2px 0;
-    padding: 2px 1rem;
+    background-color: var(--form-color, #f9f9f9);
+    margin: 0.5rem 0;
+    padding: 0.5rem 1rem;
     display: flex;
     justify-content: flex-start;
-    gap: 4px;
+    gap: 0.5rem;
+    align-items: center; /* vertical centering */
 }
 
-#albumName {
-    height: 1.5rem;
+/* ------------------------------------------------------------------
+ * 4️⃣  Input styling – focus/placeholder and size
+ * ------------------------------------------------------------------ */
+#albumName,
+.userview input[name="albumName"] {
+    /* fall back to attribute selector for safety */
+    height: 2rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--border-color, #ccc);
     border-radius: 4px;
+    background: var(--input-bg, #fff);
+    color: var(--text-color, #111);
+    font: inherit;
+    transition: border-color 0.2s;
+    flex: 1 1 200px; /* grow/shrink, but never get too small */
+}
+
+#albumName:focus,
+.userview input[name="albumName"]:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* placeholder colour (needs vendor prefixes for older browsers) */
+#albumName::placeholder,
+.userview input[name="albumName"]::placeholder {
+    color: var(--placeholder-color, #888);
+    opacity: 1; /* override Firefox’s default opacity */
+}
+
+/* ------------------------------------------------------------------
+ * 5️⃣  Button – subtle hover/focus effect
+ * ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * 6️⃣  No‑albums message – centre and style
+ * ------------------------------------------------------------------ */
+
+.userview p {
+    text-align: center;
+    color: var(--text-muted, #666);
+    font-style: italic;
 }

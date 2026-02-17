@@ -49,15 +49,16 @@ body {
 }
 
 .btn {
-    /*margin: 0.25rem 0.25rem;*/
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    border: 1px solid rgb(65, 65, 65);
     background-color: rgb(36, 36, 36);
     color: white;
-    grid-column-start: 2;
-    transition: background-color 0.5s;
+    /*grid-column-start: 2;*/
+    transition: background-color 0.25s;
+
+    border: none;
+    border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
 .btn:hover {

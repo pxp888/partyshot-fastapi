@@ -33,7 +33,7 @@ function Welcomepage() {
             site.
           </p>
           <p>
-            This site is intended to help people collaborate, not for personal
+            This site is intended to help people collaborate, not for private
             storage.
           </p>
         </div>
