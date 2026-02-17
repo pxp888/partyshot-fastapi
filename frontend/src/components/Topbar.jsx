@@ -69,7 +69,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   return (
     <div className="topbar">
       <div className="topLeft">
-        <a href="/">Logo here</a>
+        <a href="/">partyShots</a>
       </div>
 
       <Searchbar />
