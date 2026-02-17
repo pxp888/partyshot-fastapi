@@ -718,6 +718,8 @@ def search(term: str) -> str:
     return ""
 
 
+
+
 def cleanup() -> None:
     """
     Synchronise the S3 bucket with the database.
@@ -772,8 +774,73 @@ def cleanup() -> None:
     print("completed")
 
 
-# --------------------------------------------------------------------------- #
-# Public API
-# --------------------------------------------------------------------------- #
 
-__all__ = ["init_db", "get_connection", "setUser", "getUser", "check_password"]
+
+
+
+def cleanup2() -> None:
+    """
+    Synchronise the S3 bucket with the database.
+
+    The function performs the following steps:
+
+    1. Retrieve all :pycode:`s3_key` and :pycode:`thumb_key` values stored in
+       the :pycode:`photos` table.
+    2. Enumerate every object currently present in the S3 bucket.
+    3. For any object that does **not** appear in the set of database keys,
+       the object is deleted from S3.
+
+    This operation is useful during maintenance or after a bulk delete of
+    database records that may leave orphaned objects in S3.
+    """
+
+    # --- Step 1: Collect all known keys from the database -----------------
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT s3_key, thumb_key FROM photos")
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    known_keys: set[str] = set()
+    for s3_key, thumb_key in rows:
+        if s3_key:
+            known_keys.add(s3_key)
+        if thumb_key:
+            known_keys.add(thumb_key)
+
+    # --- Step 2: List objects in the S3 bucket ----------------------------
+
+    s3 = aws.get_s3_client()
+    paginator = s3.get_paginator("list_objects_v2")
+
+    delete_buffer = []
+
+    for page in paginator.paginate(Bucket=aws.BUCKET_NAME):
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            
+            if key not in known_keys:
+                delete_buffer.append({'Key': key})
+                
+            # Once we hit 1,000 keys, perform a bulk delete
+            if len(delete_buffer) >= 1000:
+                print(f"Deleting batch of {len(delete_buffer)} objects...")
+                s3.delete_objects(
+                    Bucket=aws.BUCKET_NAME,
+                    Delete={'Objects': delete_buffer}
+                )
+                delete_buffer = [] # Reset the buffer
+
+    # Clean up any remaining keys in the buffer
+    if delete_buffer:
+        print(f"Deleting final batch of {len(delete_buffer)} objects...")
+        s3.delete_objects(
+            Bucket=aws.BUCKET_NAME,
+            Delete={'Objects': delete_buffer}
+        )
+
+    print("Cleanup completed.")
+

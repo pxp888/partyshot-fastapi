@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import "./style/Imageview.css";
+import blankImage from '../assets/blank.jpg';
 
 function Imageview({ files, focus, setFocus }) {
   useEffect(() => {
@@ -30,7 +31,11 @@ function Imageview({ files, focus, setFocus }) {
       <div className="primo">
         {/* <h2>{files[focus].filename}</h2>*/}
         {/* <p>{focus}</p>*/}
-        <img src={files[focus].s3_key} alt={`${files[focus].filename}`} />
+        <img
+          src={files[focus].s3_key || blankImage}
+          alt={`${files[focus].filename}`}
+          onError={(e) => { e.target.src = blankImage; }}
+        />
       </div>
     </div>
   );

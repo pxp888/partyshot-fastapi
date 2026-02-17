@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "./style/AlbumItem.css";
+import blankImage from '../assets/blank.jpg';
 
 function AlbumItem({ album }) {
   const navigate = useNavigate();
@@ -15,7 +16,11 @@ function AlbumItem({ album }) {
       onClick={handleClick}
       style={{ cursor: "pointer" }}
     >
-      <img src={album.thumb_key} alt={album.name} />
+      <img
+        src={album.thumb_key || blankImage}
+        alt={album.name}
+        onError={(e) => { e.target.src = blankImage; }}
+      />
       <h3>{album.name}</h3>
       <p>Owner: {album.username} </p>
       <p>Open: {album.open ? "Yes" : "No"}</p>

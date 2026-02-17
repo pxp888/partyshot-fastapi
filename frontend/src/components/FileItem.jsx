@@ -1,4 +1,5 @@
 import "./style/FileItem.css";
+import blankImage from '../assets/blank.jpg';
 
 function FileItem({
   index,
@@ -31,7 +32,11 @@ function FileItem({
       onClick={handleClick}
     >
       <div className="thumbnail">
-        <img src={file.thumb_key} alt={`${file.filename}`} />
+        <img
+          src={file.thumb_key || blankImage}
+          alt={`${file.filename}`}
+          onError={(e) => { e.target.src = blankImage; }}
+        />
       </div>
       {isSelected && <div className="selectscreen" />}
       <div className="fileInfo">
