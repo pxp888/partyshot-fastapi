@@ -268,7 +268,7 @@ function Albumview(currentUser) {
         </div>
       </div>
 
-      {selectMode ? (
+      {selectMode && currentUser.currentUser && (
         <div className="albumActions">
           <button onClick={cancelSelect} className="btn">
             Cancel Selection
@@ -286,7 +286,9 @@ function Albumview(currentUser) {
             Delete Selected
           </button>
         </div>
-      ) : (
+      )}
+
+      {!selectMode && currentUser.currentUser && (
         <div className="albumActions">
           <button onClick={() => setSelectMode(true)} className="btn">
             Selection Mode

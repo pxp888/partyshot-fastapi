@@ -24,6 +24,7 @@
 .selected {
     border-color: salmon;
     background-color: salmon;
+    box-shadow: 0 4px 8px salmon;
 }
 
 .selectscreen {
