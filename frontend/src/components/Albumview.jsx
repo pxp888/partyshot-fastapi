@@ -209,6 +209,18 @@ function Albumview(currentUser) {
     }
   }
 
+  async function togglePublic() {
+    try {
+      await sendJson("/api/togglePublic", { album_id: album.id });
+      setAlbum((prev) => ({
+        ...prev,
+        public: !prev.public,
+      }));
+    } catch (error) {
+      console.error("Toggle public failed : ", error);
+    }
+  }
+
   if (!album) {
     return (
       <div className="albumview">
@@ -241,7 +253,9 @@ function Albumview(currentUser) {
           </div>
           <div className="infoItem">
             <label>Public: </label>
-            <p>{album.public ? "Yes" : "No"}</p>
+            <p onClick={togglePublic} className="clickable">
+              {album.public ? "Yes" : "No"}
+            </p>
           </div>
           <div className="infoItem">
             <label>Created on: </label>

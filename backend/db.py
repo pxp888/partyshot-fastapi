@@ -463,7 +463,7 @@ def deletePhoto(id: str, username: str) -> bool:
         conn.close()
 
 
-def getAlbums(username: str) -> dict | None:
+def getAlbums(username: str, authuser: str) -> dict | None:
     user = getUser(username)
     if not user:
         return None
@@ -554,6 +554,8 @@ def getAlbums(username: str) -> dict | None:
         created_at = row[7]
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
+        if authuser != username and not row[5]:
+            continue
         albums.append(
             {
                 "id": row[0],
@@ -685,6 +687,66 @@ def toggleOpen(id: str, username: str) -> dict | None:
             RETURNING id, code, open;
             """,
             (new_open, album_id),
+        )
+        updated_row = cursor.fetchone()
+        if updated_row is None:
+            conn.rollback()
+            return None
+
+        conn.commit()
+
+        return getAlbum_code(album_code)
+
+    except Exception:
+        conn.rollback()
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def togglePublic(id: str, username: str) -> dict | None:
+    user = getUser(username)
+    if user is None:
+        return None
+
+    try:
+        album_id = int(id)
+    except (ValueError, TypeError):
+        return None
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Grab the album's current state and ownership.
+        cursor.execute(
+            """
+            SELECT user_id, code, public
+            FROM albums
+            WHERE id = %s;
+            """,
+            (album_id,),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+
+        album_owner_id, album_code, current_public = row
+
+        # Ensure the requesting user owns the album.
+        if user["id"] != album_owner_id:
+            return None
+
+        # Toggle the `public` flag.
+        new_public = not current_public
+        cursor.execute(
+            """
+            UPDATE albums
+            SET public = %s
+            WHERE id = %s
+            RETURNING id, code, public;
+            """,
+            (new_public, album_id),
         )
         updated_row = cursor.fetchone()
         if updated_row is None:
