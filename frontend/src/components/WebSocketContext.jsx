@@ -17,18 +17,6 @@ export const WebSocketProvider = ({ children }) => {
     shouldReconnect: () => true,
   });
 
-  /**
-   * Wrapper that injects a `context` property into the JSON payload.
-   * It has **exactly** the same name (`sendJsonMessage`) as the original
-   * function, so callers don’t need to change anything.
-   *
-   * @param {Object} message  – Original message payload.
-   * @param {any}    ctx      – Context you want to attach.
-   */
-  // const sendJsonMessage = (message, ctx) => {
-  //   const wrappedMessage = { ...message, context: ctx };
-  //   _sendJsonMessage(wrappedMessage);
-
   const sendJsonMessage = (message) => {
     const wrappedMessage = {
       ...message,

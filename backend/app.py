@@ -13,16 +13,14 @@ from botocore.exceptions import ClientError
 from fastapi import (
     Depends,
     FastAPI,
-    File,
     Form,
     HTTPException,
     Request,
-    UploadFile,
     WebSocket,
 )
 
 # from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_jwt_auth2 import AuthJWT
 from fastapi_jwt_auth2.exceptions import AuthJWTException
