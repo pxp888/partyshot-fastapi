@@ -53,6 +53,9 @@ function Userview({ currentUser }) {
   function handleCreateAlbum(event) {
     event.preventDefault();
     const albumName = event.target.elements.albumName.value;
+    if (!albumName || albumName.trim() === "") {
+      return;
+    }
     sendJsonMessage({
       action: "createAlbum",
       payload: { album_name: albumName, owner: currentUser },
