@@ -349,21 +349,17 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.close(code=1008)
                 return
 
-            username = None
-            wssecret = payload.get("wssecret")
-            if wssecret:
-                username = await redis_client.get(f"wssecret:{wssecret}")
-
             # username = None
-            # wssecret = payload.get("wssecrett")
+            # wssecret = payload.get("wssecret")
             # if wssecret:
-            #     try:
-            #         username = user_secrets[wssecret]
-            #     except KeyError:
-            #         username = None
-            # if username is None:
             #     username = await redis_client.get(f"wssecret:{wssecret}")
-            #     user_secrets[wssecret] = username
+
+            wssecret = payload.get("wssecret")
+            if wssecret in secret_users:
+                username = secret_users[wssecret]
+            else:
+                username = await redis_client.get(f"wssecret:{wssecret}")
+                secret_users[wssecret] = username
 
             print(username, payload)
 
