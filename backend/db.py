@@ -472,6 +472,43 @@ def getAlbums(username: str) -> dict | None:
 
     albums = []
     for row in rows:
+        album_id = row[0]
+        thumb_key = row[6]
+        
+        # If album has no thumbnail, try to find one from photos
+        if not thumb_key:
+            conn = get_connection()
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    """
+                    SELECT thumb_key
+                    FROM photos
+                    WHERE album_id = %s AND thumb_key IS NOT NULL
+                    ORDER BY created_at ASC
+                    LIMIT 1;
+                    """,
+                    (album_id,),
+                )
+                photo_row = cursor.fetchone()
+                if photo_row and photo_row[0]:
+                    thumb_key = photo_row[0]
+                    # Update the album with the photo's thumbnail
+                    cursor.execute(
+                        """
+                        UPDATE albums
+                        SET thumb_key = %s
+                        WHERE id = %s;
+                        """,
+                        (thumb_key, album_id),
+                    )
+                    conn.commit()
+            except Exception:
+                conn.rollback()
+            finally:
+                cursor.close()
+                conn.close()
+        
         created_at = row[7]
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
@@ -483,7 +520,7 @@ def getAlbums(username: str) -> dict | None:
                 "user_id": row[3],
                 "open": bool(row[4]),
                 "public": bool(row[5]),
-                "thumb_key": aws.create_presigned_url(row[6]) if row[6] else None,
+                "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
                 "created_at": created_at,
             }
         )
