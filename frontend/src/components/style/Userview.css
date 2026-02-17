@@ -1,11 +1,26 @@
 .album-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    gap: 10px;
     /*padding: 4px;*/
+    margin: 0 2rem;
 }
 
 .userview form {
     background-color: var(--form-color);
     padding: 2px;
+}
+
+.albumActions {
+    background-color: var(--form-color);
+    margin: 2px 0;
+    padding: 2px 1rem;
+    display: flex;
+    justify-content: flex-start;
+    gap: 4px;
+}
+
+#albumName {
+    height: 1.5rem;
+    border-radius: 4px;
 }

@@ -13,10 +13,49 @@
     transition:
         transform 0.3s ease,
         box-shadow 0.3s ease;
+
+    /*position: relative;*/
+}
+
+.album-item img {
+    /*position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;*/
+
+    /*height: 100%;*/
+    /*border-radius: 4px;*/
+    /*margin-bottom: 10px;*/
+    object-fit: cover;
+    width: 100%;
 }
 
 .album-item:hover {
-    /*transform: scale(1.05);*/
+    transform: scale(1.05);
     transition: transform 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.album-item h3 {
+    color: salmon;
+    grid-column: span 2;
+    margin: 0.5rem;
+}
+
+.album-item .info {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+}
+
+.info p {
+    align-items: baseline;
+    text-align: left;
+    margin: 0.5rem 0.5rem;
+}
+
+.info label {
+    align-items: baseline;
+    text-align: right;
+    margin: 0.5rem 0.5rem;
 }

@@ -49,6 +49,7 @@ function Userview({ currentUser }) {
   // --------------------------------------------------------
   // 3️⃣  Create a new album – send via WS
   // --------------------------------------------------------
+
   function handleCreateAlbum(event) {
     event.preventDefault();
     const albumName = event.target.elements.albumName.value;
@@ -61,13 +62,20 @@ function Userview({ currentUser }) {
   return (
     <div className="userview">
       {username === currentUser && (
-        <form onSubmit={handleCreateAlbum}>
-          <label htmlFor="albumName">New Album Name : </label>
-          <input type="text" id="albumName" name="albumName" />
-          <button className="btn" type="submit">
-            Create Album
-          </button>
-        </form>
+        <div className="albumActions">
+          <form onSubmit={handleCreateAlbum}>
+            {/* <label htmlFor="albumName">New Album Name : </label>*/}
+            <input
+              type="text"
+              id="albumName"
+              name="albumName"
+              placeholder="New Album Name"
+            />
+            <button className="btn" type="submit">
+              Create Album
+            </button>
+          </form>
+        </div>
       )}
       <div className="album-list">
         {albums.length > 0 ? (
