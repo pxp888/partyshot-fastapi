@@ -59,6 +59,7 @@ body {
     padding: 0.4rem 0.8rem;
     cursor: pointer;
     transition: background 0.2s;
+    margin: 0 8px;
 }
 
 .btn:hover {
