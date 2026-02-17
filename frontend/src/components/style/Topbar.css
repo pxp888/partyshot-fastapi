@@ -22,3 +22,35 @@
     margin-left: 1rem;
     font-size: 22px;
 }
+
+.topbar input {
+    margin: 2px;
+}
+
+@media (max-width: 550px) {
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .topLeft a {
+        font-size: 14px;
+    }
+
+    .search {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        /* <‑‑ order for small screens: place it last */
+        order: 2;
+    }
+    .search input {
+        flex: 1;
+    }
+
+    /* Put navigation/login elements before the search bar */
+    .nav,
+    .userInfo {
+        order: 1;
+    }
+}

@@ -30,7 +30,11 @@ export default function Searchbar() {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
+    <form
+      className="search"
+      onSubmit={handleSubmit}
+      style={{ display: "flex", gap: "8px" }}
+    >
       <input
         type="text"
         value={query}

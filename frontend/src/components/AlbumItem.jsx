@@ -25,7 +25,7 @@ function AlbumItem({ album }) {
       />
       <div className="info">
         <h3>{album.name}</h3>
-        <label>owner</label>
+        <label>user</label>
         <p>{album.username} </p>
         <label>open</label>
         <p>{album.open ? "Yes" : "No"}</p>

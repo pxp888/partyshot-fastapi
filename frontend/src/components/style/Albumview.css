@@ -9,7 +9,8 @@
     background-color: var(--form-color);
 
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    overflow: hidden;
 }
 
 .infoItem {
@@ -35,6 +36,10 @@
     display: flex;
     justify-content: flex-start;
     gap: 4px;
+
+    position: sticky; /* ← make it stick */
+    top: 0; /* ← stick to the top of its scrolling container */
+    z-index: 10; /* ← sit above the photo list */
 }
 
 .clickable {

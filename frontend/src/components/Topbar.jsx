@@ -82,7 +82,7 @@ function Topbar({ currentUser, setCurrentUser }) {
         <a href="/">partyShots</a>
       </div>
 
-      <Searchbar />
+      <Searchbar className="search" />
       {currentUser ? (
         <div className="userInfo">
           <button

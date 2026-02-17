@@ -238,28 +238,28 @@ function Albumview(currentUser) {
       <div className="albumview">
         <div className="albumDetails">
           <div className="infoItem">
-            <label>Album Name: </label>
+            <label>name </label>
             <p>{album.name}</p>
           </div>
           <div className="infoItem">
-            <label> Owner: </label>
+            <label> user </label>
             <p>{album.username} </p>
           </div>
           <div className="infoItem">
-            <label>Open: </label>
+            <label>open </label>
             <p onClick={toggleOpen} className="clickable">
               {album.open ? "Yes" : "No"}
             </p>
           </div>
           <div className="infoItem">
-            <label>Public: </label>
+            <label>public </label>
             <p onClick={togglePublic} className="clickable">
               {album.public ? "Yes" : "No"}
             </p>
           </div>
           <div className="infoItem">
-            <label>Created on: </label>
-            <p>{new Date(album.created_at).toLocaleDateString()}</p>
+            <label>created </label>
+            <p>{new Date(album.created_at).toLocaleString()}</p>
           </div>
           <div className="infoItem">
             <label>Code: </label>
