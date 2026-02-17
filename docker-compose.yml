@@ -1,0 +1,26 @@
+services:
+  fast1:
+    image: localhost/fast1
+    container_name: fast1_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/env.py:/code/backend/env.py:Z
+    depends_on:
+      - redis-db
+    networks:
+      - backend-network
+
+  # The Redis Instance
+  redis-db:
+    image: redis:7-alpine
+    container_name: redis_server
+    # We don't necessarily need to expose 6379 to the host on EC2
+    # because the app talks to it over the internal network.
+    networks:
+      - backend-network
+    restart: always
+
+networks:
+  backend-network:
+    driver: bridge
