@@ -45,3 +45,12 @@
 .clickable {
     cursor: pointer;
 }
+
+@media (max-width: 700px) {
+    .fileList {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 4px;
+        /*padding: 20px;*/
+    }
+}
