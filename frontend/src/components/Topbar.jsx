@@ -11,7 +11,6 @@ import "./style/Topbar.css";
 function Topbar({ currentUser, setCurrentUser }) {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const { reconnect } = useSocket(); // ← NEW
   // const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,7 +24,6 @@ function Topbar({ currentUser, setCurrentUser }) {
       .catch((err) => {
         // console.error("Logged out:", err);
         setCurrentUser(null);
-        reconnect();
       });
   }, [setCurrentUser]); // Test protected route on mount
 
@@ -70,7 +68,6 @@ function Topbar({ currentUser, setCurrentUser }) {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("wssecret");
     localStorage.removeItem("username");
-    reconnect();
     // navigate("/");
   }
 

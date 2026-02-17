@@ -35,6 +35,8 @@ redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
 manager = watcher.Watcher()
 
+secret_users = {}  # websocket: username 
+
 app = FastAPI()
 
 
@@ -139,6 +141,7 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     current_user = Authorize.get_jwt_subject()
     wssecret = uuid.uuid4().hex
     await redis_client.set(f"user:{current_user}:uuid", wssecret)
+    await redis_client.set(f"wssecret:{wssecret}", current_user )
     return {"wssecret": wssecret}
 
 
@@ -330,23 +333,36 @@ async def search(websocket, data, username):
     await websocket.send_json(message)
 
 
+async def secrets(websocket, data):
+    secret = data["payload"]["secret"]
+    user = await redis_client.get(f"wssecret:{secret}")
+    if not user:
+        print("secrets - no user found")
+        return
+    message = {"action": "secrets", "user": user}
+    secret_users[websocket] = user
+    print("Auth ok: ", user)
+    await websocket.send_json(message)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    wssecret = websocket.query_params.get("wssecret")
-    username = websocket.query_params.get("username")
+    # wssecret = websocket.query_params.get("wssecret")
+    # username = websocket.query_params.get("username")
 
-    if not wssecret or not username:
-        # Explicitly close – this will surface as 1008 to the client
-        await websocket.close(code=1008)
-        return
+    # if not wssecret or not username:
+    #     # Explicitly close – this will surface as 1008 to the client
+    #     await websocket.close(code=1008)
+    #     return
 
-    # 2️⃣  Verify the secret that was issued to the user
-    old = await redis_client.get(f"user:{username}:uuid")
-    if old != wssecret:
-        # Reject the connection – prevents spoofing
-        await websocket.close(code=1008)
-        return
-
+    # # 2️⃣  Verify the secret that was issued to the user
+    # old = await redis_client.get(f"user:{username}:uuid")
+    # if old != wssecret:
+    #     # Reject the connection – prevents spoofing
+    #     await websocket.close(code=1008)
+    #     return
+    
+    
     await websocket.accept()
 
     try:
@@ -359,7 +375,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 print("websocket - bad message")
                 await websocket.close(code=1008)
                 return
-
+            
+            username = None
+            if websocket in secret_users:
+                username = secret_users[websocket]
+            
             action = payload.get("action")
             if action == "createAlbum":
                 await createAlbum(websocket, payload, username)
@@ -375,6 +395,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await deletePhoto(websocket, payload, username)
             elif action == "search":
                 await search(websocket, payload, username)
+            elif action == "secrets":
+                await secrets(websocket, payload)
             else:
                 # Unknown action – close to prevent abuse
                 print("websocket - unknown action")

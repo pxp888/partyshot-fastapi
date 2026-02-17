@@ -12,7 +12,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const { reconnect } = useSocket(); // ← NEW
+  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
 
   const handleChange = (e) => {
     setCredentials({
@@ -33,9 +33,11 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
       setShowLogin(false);
 
       const uuidData = await sendJson("/api/generate-wssecret", {});
-      localStorage.setItem("wssecret", uuidData.wssecret);
-      localStorage.setItem("username", data.user);
-      reconnect();
+      sendJsonMessage({
+        action: "secrets",
+        payload: { secret: uuidData.wssecret },
+      });
+
       if (location.pathname === "/") {
         navigate(`/user/${data.user}`);
       }
