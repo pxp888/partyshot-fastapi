@@ -48,14 +48,16 @@
     grid-template-columns: 1fr 4fr;
 }
 
-.info p {
+.info > p {
     align-items: baseline;
     text-align: left;
     margin: 0.5rem 0.5rem;
+    color: white;
 }
 
 .info label {
     align-items: baseline;
     text-align: right;
     margin: 0.5rem 0.5rem;
+    color: gray;
 }

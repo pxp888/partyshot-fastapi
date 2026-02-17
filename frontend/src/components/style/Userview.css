@@ -75,8 +75,8 @@
  * 6️⃣  No‑albums message – centre and style
  * ------------------------------------------------------------------ */
 
-.userview p {
+/*.userview p {
     text-align: center;
     color: var(--text-muted, #666);
     font-style: italic;
-}
+}*/
