@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./style/Loginbox.css";
 import { sendJson } from "./helpers";
-import { useSocket } from "./WebSocketContext"; // ← NEW
+// import { useSocket } from "./WebSocketContext"; // ← socket
 
 function Loginbox({ setCurrentUser, setShowLogin }) {
   const [credentials, setCredentials] = useState({
@@ -12,7 +12,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
+  // const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← socket
 
   const handleChange = (e) => {
     setCredentials({
@@ -27,7 +27,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
 
     try {
       const data = await sendJson("/api/login", credentials);
-      console.log("Login successful:", data);
+      console.log("Login successful:");
       setCurrentUser(data.user);
       setShowLogin(false);
 

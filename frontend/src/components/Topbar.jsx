@@ -22,7 +22,7 @@ function Topbar({ currentUser, setCurrentUser }) {
         }
       })
       .catch((err) => {
-        // console.error("Logged out:", err);
+        console.error("Logged out:", err);
         setCurrentUser(null);
       });
   }, [setCurrentUser]); // Test protected route on mount

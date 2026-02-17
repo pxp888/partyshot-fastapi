@@ -137,8 +137,9 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
     wssecret = uuid.uuid4().hex
-    await redis_client.set(f"user:{current_user}:uuid", wssecret)
-    await redis_client.set(f"wssecret:{wssecret}", current_user)
+    # await redis_client.set(f"user:{current_user}:uuid", wssecret)
+    await redis_client.set(f"wssecret:{wssecret}", current_user, ex=1200)
+    print("secrets for : ", current_user)
     return {"wssecret": wssecret}
 
 
@@ -331,9 +332,6 @@ async def search(websocket, data, username):
     await websocket.send_json(message)
 
 
-secret_users = {}
-
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -349,17 +347,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.close(code=1008)
                 return
 
-            # username = None
-            # wssecret = payload.get("wssecret")
-            # if wssecret:
-            #     username = await redis_client.get(f"wssecret:{wssecret}")
-
+            username = None
             wssecret = payload.get("wssecret")
-            if wssecret in secret_users:
-                username = secret_users[wssecret]
-            else:
+            if wssecret:
                 username = await redis_client.get(f"wssecret:{wssecret}")
-                secret_users[wssecret] = username
 
             print(username, payload)
 

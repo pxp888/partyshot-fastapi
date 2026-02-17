@@ -100,6 +100,8 @@ async function refreshToken() {
       localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token);
       return true;
     }
+    const uuidData = await sendJson("/api/generate-wssecret", {}); // socket secret
+    localStorage.setItem("wssecret", uuidData.wssecret); // socket secret
   } catch {
     return false;
   }
