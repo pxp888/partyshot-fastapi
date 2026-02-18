@@ -6,11 +6,8 @@ import WelcomePage from "./components/WelcomePage";
 import Userview from "./components/Userview";
 import Albumview from "./components/Albumview";
 import Adminpage from "./components/Adminpage";
+import Contactpage from "./components/Contactpage";
 import { WebSocketProvider } from "./components/WebSocketContext";
-
-function Home() {
-  return <h2>Welcome to the Home page</h2>;
-}
 
 function About() {
   return <h2>About this app</h2>;
@@ -39,6 +36,7 @@ export default function App() {
             path="/album/:albumcode"
             element={<Albumview currentUser={currentUser} />}
           />
+          <Route path="/contact" element={<Contactpage />} />
           <Route
             path="/admin"
             element={<Adminpage currentUser={currentUser} />}

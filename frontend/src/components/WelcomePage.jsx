@@ -1,10 +1,13 @@
 // import React from "react";
+// import { useNavigate } from "react-router-dom";
+
 import "./style/WelcomePage.css";
 import cover1 from "../assets/cover1.webp";
 import cover2 from "../assets/cover2.webp";
 import cover3 from "../assets/cover3.webp";
 
 function Welcomepage() {
+  // const navigate = useNavigate();
   return (
     <section className="welcomepage">
       <div id="landing">
@@ -79,14 +82,15 @@ function Welcomepage() {
         <div className="footer">
           <ul>
             <li>
-              <a href="https://github.com/pxp888/partyshots" target="_blank">
+              <a
+                href="https://github.com/pxp888/partyshot-fastapi"
+                target="_blank"
+              >
                 about
               </a>
             </li>
             <li>
-              <a href="https://github.com/pxp888/partyshots" target="_blank">
-                contact
-              </a>
+              <a href="/contact/">contact</a>
             </li>
           </ul>
         </div>
