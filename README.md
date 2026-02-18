@@ -12,9 +12,10 @@ live site:
 * contact page
 * backend improvements
 * nginx static setup
+* Cloudfront & S3 setup
 
 
 ## deploy notes 
 
-* set websocket port in WebSocketContext.jsx to elastic IP:80
-* build front end before container - need to add build step
+* Don't forget websocket port in WebSocketContext.jsx to elastic IP:80
+* build front end before image,
