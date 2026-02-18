@@ -13,7 +13,7 @@ function Welcomepage() {
 
         <div className="landing1">
           <div className="hbox">
-            <h3>Get the party started</h3>
+            {/* <h3>Get the party started</h3>*/}
             <p>
               partyShots is a photo sharing app that allows you to share photos
               with your friends and family. Create an album and invite your
