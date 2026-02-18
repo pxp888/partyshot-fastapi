@@ -1,12 +1,17 @@
 # partyShots
 
+live site: 
+[http://51.20.201.88/]
+
+
+
 
 ## todo list
 
 * upload progress indicator
 * contact page
 * backend improvements
-* deployment
+* nginx static setup
 
 
 ## deploy notes 
