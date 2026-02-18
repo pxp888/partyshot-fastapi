@@ -8,6 +8,7 @@ import FileItem from "./FileItem";
 import Imageview from "./Imageview";
 import Uploader from "./Uploader";
 import AlbumRenamer from "./AlbumRenamer";
+import { useNavigate } from "react-router-dom";
 
 import "./style/Albumview.css";
 
@@ -20,6 +21,7 @@ function Albumview(currentUser) {
   const [focus, setFocus] = useState(-1);
   const [isRenaming, setIsRenaming] = useState(false);
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
+  const navigate = useNavigate();
 
   useEffect(() => {
     sendJsonMessage({
@@ -276,7 +278,7 @@ function Albumview(currentUser) {
           </div>
           <div className="infoItem">
             <label> user </label>
-            <p>{album.username} </p>
+            <p onClick={() => navigate(`/user/${album.username}`)} className="clickable" >{album.username} </p>
           </div>
           <div className="infoItem">
             <label>open </label>
