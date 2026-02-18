@@ -16,21 +16,30 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     useEffect(() => {
         if (lastJsonMessage && lastJsonMessage.action === "setUserData") {
             setLoading(false);
-            const { username } = lastJsonMessage.payload;
+            const { username, message } = lastJsonMessage.payload;
 
-            setStatus({ type: "success", message: "Account settings updated successfully!" });
+            if (message === "success") {
+                setStatus({ type: "success", message: "Account settings updated successfully!" });
+                setFormData({
+                    newusername: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                });
+            } else if (message === "username taken") {
+                setStatus({ type: "error", message: "That username is already taken. Please choose another." });
+            } else if (message === "no changes") {
+                setStatus({ type: "info", message: "No changes were detected." });
+            } else if (message === "error") {
+                setStatus({ type: "error", message: "An error occurred while updating your settings." });
+            } else {
+                setStatus({ type: "error", message: message || "Unexpected response from server." });
+            }
 
             if (username && username !== currentUser) {
                 setCurrentUser(username);
                 localStorage.setItem("username", username);
             }
-
-            setFormData({
-                newusername: "",
-                email: "",
-                password: "",
-                confirmPassword: "",
-            });
         }
     }, [lastJsonMessage, currentUser, setCurrentUser]);
 

@@ -346,19 +346,23 @@ async def setAlbumName(websocket, data, username):
 
 
 async def setUserData(websocket, data, username):
-    newusername = data["payload"]["newusername"]
-    email = data["payload"]["email"]
-    password = data["payload"]["password"]
-    wssecret = data["wssecret"]
+    newusername = data["payload"].get("newusername")
+    email = data["payload"].get("email")
+    password = data["payload"].get("password")
+    wssecret = data.get("wssecret")
     ok = db.setUserData(username, newusername, email, password)
-    if ok:
+    
+    if ok == "success":
         # Determine what the effective username is now
         effective_username = newusername if (newusername and len(newusername) >= 3) else username
-        message = {"action": "setUserData", "payload": {"email": email, "username": effective_username}}
+        message = {"action": "setUserData", "payload": {"email": email, "username": effective_username, "message": ok}}
         await websocket.send_json(message)
-        await redis_client.set(f"wssecret:{wssecret}", effective_username, ex=1200)
+        if wssecret:
+            await redis_client.set(f"wssecret:{wssecret}", effective_username, ex=1200)
     else:
-        print("not set user data", username)
+        message = {"action": "setUserData", "payload": {"email": email, "username": username, "message": ok}}
+        await websocket.send_json(message)
+        print(f"setUserData status/error: {ok} for user {username}")
 
 
 @app.websocket("/ws")

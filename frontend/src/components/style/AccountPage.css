@@ -138,6 +138,12 @@
     color: #991b1b;
 }
 
+.message.info {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #1e40af;
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;
