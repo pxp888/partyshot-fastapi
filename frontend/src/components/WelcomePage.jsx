@@ -10,6 +10,21 @@ function Welcomepage() {
   // const navigate = useNavigate();
   return (
     <section className="welcomepage">
+      <div className="footer">
+        <ul>
+          <li>
+            <a
+              href="https://github.com/pxp888/partyshot-fastapi"
+              target="_blank"
+            >
+              about
+            </a>
+          </li>
+          <li>
+            <a href="/contact/">contact</a>
+          </li>
+        </ul>
+      </div>
       <div id="landing">
         <h1 className="title">partyShots</h1>
         <h2>because we don't all have to take the picture.</h2>
