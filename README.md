@@ -55,10 +55,6 @@ A photo can be deleted by the album owner, or the photo owner.
 ## todo list
 
 * Cloudfront & S3 setup
-* upload progress indicator
-* contact page
-* album renaming
-* drop album-thumb column
 * add editors table
 * track item size
 
