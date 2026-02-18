@@ -1,0 +1,151 @@
+.account-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    padding: 2rem;
+    background-color: rgb(32, 32, 32);
+    color: #333;
+}
+
+.account-card {
+    width: 100%;
+    max-width: 600px;
+    background-color: gainsboro;
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.6s ease-out;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.account-card h2 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+    color: #e57373;
+    text-align: center;
+}
+
+.current-user-info {
+    color: #555;
+    text-align: center;
+    margin-bottom: 2.5rem;
+    font-size: 1.1rem;
+}
+
+.account-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
+    margin-left: 0.5rem;
+}
+
+.form-group input {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    color: #333;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: salmon;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(250, 128, 114, 0.2);
+    transform: translateY(-2px);
+}
+
+.account-btn {
+    margin-top: 1rem;
+    background-color: #444;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.account-btn:hover {
+    background-color: salmon;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(250, 128, 114, 0.3);
+}
+
+.account-btn:active {
+    transform: translateY(0);
+}
+
+.account-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    background-color: #999;
+}
+
+.message {
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 1.5rem;
+    font-weight: 500;
+    animation: slideUp 0.4s ease-out;
+}
+
+.message.success {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #166534;
+}
+
+.message.error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -9,6 +9,8 @@ import Adminpage from "./components/Adminpage";
 import Contactpage from "./components/Contactpage";
 import { WebSocketProvider } from "./components/WebSocketContext";
 
+import AccountPage from "./components/AccountPage";
+
 function About() {
   return <h2>About this app</h2>;
 }
@@ -40,6 +42,15 @@ export default function App() {
           <Route
             path="/admin"
             element={<Adminpage currentUser={currentUser} />}
+          />
+          <Route
+            path="/account"
+            element={
+              <AccountPage
+                currentUser={currentUser}
+                setCurrentUser={setCurrentUser}
+              />
+            }
           />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -859,3 +859,60 @@ def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
     finally:
         cursor.close()
         conn.close()
+
+
+def setUserData(username: str, newusername: str = None, email: str = None, password: str = None) -> bool:
+    """Update user information (username, email, or password) conditionally."""
+    user = getUser(username)
+    if not user:
+        return False
+
+    update_fields = []
+    params = []
+
+    # Helper to check if a value is valid for update (not None and length >= 3)
+    def is_valid(val):
+        return val is not None and len(str(val)) >= 3
+
+    # Check newusername
+    if is_valid(newusername) and newusername != user["username"]:
+        # Check if new username is already taken
+        if getUser(newusername) is not None:
+            return False
+        update_fields.append("username = %s")
+        params.append(newusername)
+
+    # Check email
+    if is_valid(email) and email != user["email"]:
+        update_fields.append("email = %s")
+        params.append(email)
+
+    # Check password
+    if is_valid(password):
+        salt = random.randbytes(16).hex()
+        passhash = hashlib.sha256((password + salt).encode()).hexdigest()
+        update_fields.append("passhash = %s")
+        params.append(passhash)
+        update_fields.append("salt = %s")
+        params.append(salt)
+
+    if not update_fields:
+        return True  # Nothing to update, but not an error
+
+    params.append(user["id"])
+    query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(query, tuple(params))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating user data: {e}")
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
