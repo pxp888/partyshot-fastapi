@@ -916,3 +916,18 @@ def setUserData(username: str, newusername: str = None, email: str = None, passw
         cursor.close()
         conn.close()
 
+
+def getEmail(username: str) -> str:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT email FROM users WHERE username = %s", (username,))
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        return row[0]
+    except Exception:
+        return None
+    finally:
+        cursor.close()
+        conn.close()    

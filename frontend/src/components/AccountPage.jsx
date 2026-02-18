@@ -12,36 +12,49 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     });
     const [status, setStatus] = useState({ type: "", message: "" });
     const [loading, setLoading] = useState(false);
+    const [emailPlaceholder, setEmailPlaceholder] = useState("Loading current email...");
 
     useEffect(() => {
-        if (lastJsonMessage && lastJsonMessage.action === "setUserData") {
-            setLoading(false);
-            const { username, message } = lastJsonMessage.payload;
+        if (currentUser) {
+            sendJsonMessage({ action: "getEmail" });
+        }
+    }, [currentUser, sendJsonMessage]);
 
-            if (message === "success") {
-                setStatus({ type: "success", message: "Account settings updated successfully!" });
-                setFormData({
-                    newusername: "",
-                    email: "",
-                    password: "",
-                    confirmPassword: "",
-                });
-            } else if (message === "username taken") {
-                setStatus({ type: "error", message: "That username is already taken. Please choose another." });
-            } else if (message === "no changes") {
-                setStatus({ type: "info", message: "No changes were detected." });
-            } else if (message === "error") {
-                setStatus({ type: "error", message: "An error occurred while updating your settings." });
-            } else {
-                setStatus({ type: "error", message: message || "Unexpected response from server." });
-            }
+    useEffect(() => {
+        if (lastJsonMessage) {
+            if (lastJsonMessage.action === "setUserData") {
+                setLoading(false);
+                const { username, message } = lastJsonMessage.payload;
 
-            if (username && username !== currentUser) {
-                setCurrentUser(username);
-                localStorage.setItem("username", username);
+                if (message === "success") {
+                    setStatus({ type: "success", message: "Account settings updated successfully!" });
+                    setFormData({
+                        newusername: "",
+                        email: "",
+                        password: "",
+                        confirmPassword: "",
+                    });
+                    // Refresh email placeholder after update
+                    sendJsonMessage({ action: "getEmail" });
+                } else if (message === "username taken") {
+                    setStatus({ type: "error", message: "That username is already taken. Please choose another." });
+                } else if (message === "no changes") {
+                    setStatus({ type: "info", message: "No changes were detected." });
+                } else if (message === "error") {
+                    setStatus({ type: "error", message: "An error occurred while updating your settings." });
+                } else {
+                    setStatus({ type: "error", message: message || "Unexpected response from server." });
+                }
+
+                if (username && username !== currentUser) {
+                    setCurrentUser(username);
+                    localStorage.setItem("username", username);
+                }
+            } else if (lastJsonMessage.action === "getEmail") {
+                setEmailPlaceholder(lastJsonMessage.payload || "No email set");
             }
         }
-    }, [lastJsonMessage, currentUser, setCurrentUser]);
+    }, [lastJsonMessage, currentUser, setCurrentUser, sendJsonMessage]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -109,7 +122,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            placeholder="Leave blank to keep current"
+                            placeholder={emailPlaceholder}
                         />
                     </div>
 

@@ -1,58 +1,150 @@
-.topbar {
-    background-color: rgb(60, 60, 60);
-    color: gainsboro;
-
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px;
+:root {
+    --bg-glass: rgba(60, 60, 60, 0.85);
+    /* Reverted to old color with slight transparency for glass effect */
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --accent: salmon;
+    /* Original accent */
+    --text-primary: gainsboro;
+    /* Original text color */
+    --text-secondary: #aaaaaa;
+    --btn-bg: rgb(36, 36, 36);
+    /* Original button color */
 }
 
-.topbar .nav {
+.topbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-primary);
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    padding: 0.75rem 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease;
 }
 
 .topLeft a {
     text-decoration: none;
-    color: salmon;
-    margin-left: 1rem;
-    font-size: 22px;
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: var(--accent);
+    /* Reverted to solid salmon */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: inline-block;
 }
 
-.topbar input {
-    margin: 2px;
+.topLeft a:hover {
+    transform: scale(1.05);
 }
 
-@media (max-width: 550px) {
-    .topbar {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+.topbar .nav,
+.topbar .userInfo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Inputs within Searchbar */
+.topbar .search input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: white;
+    outline: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    min-width: 250px;
+}
+
+.topbar .search input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent);
+    min-width: 300px;
+}
+
+/* Button styles matching old colors but keeping new spacing/feel */
+.topbar .btn {
+    margin: 0 4px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    background: var(--btn-bg);
+    border: none;
+    color: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.topbar .btn:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+}
+
+.topbar .btn:active {
+    transform: translateY(0);
+}
+
+/* User Info specific styles */
+.userInfo .btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.userInfo .btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+@media (max-width: 850px) {
+    .topbar .search input {
+        min-width: 180px;
     }
 
-    .topLeft a {
-        font-size: 14px;
+    .topbar .search input:focus {
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 750px) {
+    .topbar {
+        padding: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .topLeft {
+        width: 100%;
+        text-align: center;
     }
 
     .search {
-        grid-column: span 2;
-
-        display: flex;
-        gap: 8px;
+        order: 3;
         width: 100%;
-        order: 2;
-    }
-    .search input {
-        flex: 1;
+        justify-content: center;
     }
 
-    .userinfo {
-        order: 1;
-        display: flex;
-        flex-direction: row;
+    .topbar .search input {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .userInfo,
+    .nav {
+        order: 2;
+        width: 100%;
+        justify-content: center;
     }
 }

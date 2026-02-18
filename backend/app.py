@@ -365,6 +365,13 @@ async def setUserData(websocket, data, username):
         print(f"setUserData status/error: {ok} for user {username}")
 
 
+async def getEmail(websocket, data, username):
+    email = db.getEmail(username)
+    message = {"action": "getEmail", "payload": email}
+    await websocket.send_json(message)
+    
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -406,6 +413,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await setAlbumName(websocket, payload, username)
             elif action == "setUserData":
                 await setUserData(websocket, payload, username)
+            elif action == "getEmail":
+                await getEmail(websocket, payload, username)
             else:
                 print("websocket - unknown action")
                 await websocket.close(code=1008)

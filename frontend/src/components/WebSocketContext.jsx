@@ -9,29 +9,29 @@ export const WebSocketProvider = ({ children }) => {
   // const socketUrl = "ws://192.168.0.225:8000/ws";
   const socketUrl = import.meta.env.VITE_WS_URL;
 
-  // Hook that gives us the raw sendJsonMessage
+
   const {
     sendJsonMessage: _sendJsonMessage,
     lastJsonMessage,
     readyState,
   } = useWebSocket(socketUrl, {
-    share: true, // allows multiple components to share the same socket
+    share: true,
     shouldReconnect: () => true,
   });
 
-  const sendJsonMessage = (message) => {
+  const sendJsonMessage = React.useCallback((message) => {
     const wrappedMessage = {
       ...message,
       wssecret: localStorage.getItem("wssecret"),
     };
     _sendJsonMessage(wrappedMessage);
-  };
+  }, [_sendJsonMessage]);
 
-  const value = {
-    sendJsonMessage, // <- exposed wrapper (same API as before)
+  const value = React.useMemo(() => ({
+    sendJsonMessage,
     lastJsonMessage,
     readyState,
-  };
+  }), [sendJsonMessage, lastJsonMessage, readyState]);
 
   return (
     <WebSocketContext.Provider value={value}>
@@ -40,5 +40,5 @@ export const WebSocketProvider = ({ children }) => {
   );
 };
 
-// Custom hook for easy access in other components
+
 export const useSocket = () => useContext(WebSocketContext);
