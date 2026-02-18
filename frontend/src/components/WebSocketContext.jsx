@@ -5,7 +5,11 @@ import useWebSocket from "react-use-websocket";
 const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
-  const socketUrl = "ws://51.20.201.88/ws";
+  // const socketUrl = "ws://51.20.201.88/ws";
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const socketUrl = new WebSocket(
+    `${protocol}//${window.location.hostname}:8000`,
+  );
 
   // Hook that gives us the raw sendJsonMessage
   const {
