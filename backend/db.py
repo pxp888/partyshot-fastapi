@@ -74,17 +74,6 @@ def init_db() -> None:
             filename TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-
-        -- Add thumb_photo_id column to albums after photos table exists
-        DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1 FROM information_schema.columns
-                WHERE table_name = 'albums' AND column_name = 'thumb_photo_id'
-            ) THEN
-                ALTER TABLE albums ADD COLUMN thumb_photo_id INTEGER REFERENCES photos(id) ON DELETE SET NULL;
-            END IF;
-        END $$;
         """
     )
     conn.commit()
@@ -169,7 +158,8 @@ def getAlbum_code(code: str) -> dict | None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.thumb_photo_id, a.created_at, u.username
+        SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+               (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
         FROM albums a
         JOIN users u ON a.user_id = u.id
         WHERE a.code = %s;
@@ -177,27 +167,14 @@ def getAlbum_code(code: str) -> dict | None:
         (code,),
     )
     row = cursor.fetchone()
-
-    # Get thumbnail from referenced photo if it exists
-    thumb_key = None
-    if row and row[6]:  # thumb_photo_id
-        cursor.execute(
-            """
-            SELECT thumb_key FROM photos WHERE id = %s;
-            """,
-            (row[6],),
-        )
-        thumb_row = cursor.fetchone()
-        if thumb_row:
-            thumb_key = thumb_row[0]
-
     cursor.close()
     conn.close()
 
     if row:
-        created_at = row[7]
+        created_at = row[6]
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
+        thumb_key = row[8]
         return {
             "id": row[0],
             "code": row[1],
@@ -207,7 +184,7 @@ def getAlbum_code(code: str) -> dict | None:
             "public": bool(row[5]),
             "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
             "created_at": created_at,
-            "username": row[8],  # <‑‑ new field
+            "username": row[7],
         }
     else:
         return None
@@ -306,7 +283,7 @@ def deleteAlbum(username: str, code: str) -> bool:
             (album_id,),
         )
 
-        # 6. Delete the album record itself (thumb_photo_id will be set to NULL automatically)
+        # 6. Delete the album record itself
         cursor.execute(
             """
             DELETE FROM albums
@@ -473,7 +450,8 @@ def getAlbums(username: str, authuser: str) -> dict | None:
     try:
         cursor.execute(
             """
-            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.thumb_photo_id, a.created_at, u.username
+            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+                   (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
             FROM albums a
             JOIN users u ON a.user_id = u.id
             WHERE a.user_id = %s
@@ -482,7 +460,8 @@ def getAlbums(username: str, authuser: str) -> dict | None:
             (user["id"],),
         )
         rows = cursor.fetchall()
-    except Exception:
+    except Exception as e:
+        print(f"Error fetching albums: {e}")
         rows = []
     finally:
         cursor.close()
@@ -493,75 +472,22 @@ def getAlbums(username: str, authuser: str) -> dict | None:
 
     albums = []
     for row in rows:
-        album_id = row[0]
-        thumb_photo_id = row[6]
-        thumb_key = None
-
-        # If album has no thumbnail reference, try to find one from photos
-        if not thumb_photo_id:
-            conn = get_connection()
-            cursor = conn.cursor()
-            try:
-                cursor.execute(
-                    """
-                    SELECT id, thumb_key
-                    FROM photos
-                    WHERE album_id = %s AND thumb_key IS NOT NULL
-                    ORDER BY created_at ASC
-                    LIMIT 1;
-                    """,
-                    (album_id,),
-                )
-                photo_row = cursor.fetchone()
-                if photo_row:
-                    thumb_photo_id = photo_row[0]
-                    thumb_key = photo_row[1]
-                    # Update the album to reference this photo
-                    cursor.execute(
-                        """
-                        UPDATE albums
-                        SET thumb_photo_id = %s
-                        WHERE id = %s;
-                        """,
-                        (thumb_photo_id, album_id),
-                    )
-                    conn.commit()
-            except Exception:
-                conn.rollback()
-            finally:
-                cursor.close()
-                conn.close()
-        else:
-            # Get the thumbnail key from the referenced photo
-            conn = get_connection()
-            cursor = conn.cursor()
-            try:
-                cursor.execute(
-                    """
-                    SELECT thumb_key FROM photos WHERE id = %s;
-                    """,
-                    (thumb_photo_id,),
-                )
-                photo_row = cursor.fetchone()
-                if photo_row:
-                    thumb_key = photo_row[0]
-            except Exception:
-                pass
-            finally:
-                cursor.close()
-                conn.close()
-
-        created_at = row[7]
-        if isinstance(created_at, datetime.datetime):
-            created_at = created_at.isoformat()
+        # Check permissions: if not admin or owner, only show public albums
         if authuser != username and not row[5]:
             continue
+
+        created_at = row[6]
+        if isinstance(created_at, datetime.datetime):
+            created_at = created_at.isoformat()
+
+        thumb_key = row[8]
+
         albums.append(
             {
                 "id": row[0],
                 "code": row[1],
                 "name": row[2],
-                "username": row[8],
+                "username": row[7],
                 "open": bool(row[4]),
                 "public": bool(row[5]),
                 "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
