@@ -311,17 +311,15 @@ def deleteAlbum(username: str, code: str) -> bool:
 def addPhoto(data: dict) -> dict | None:
     s3_key = data.get("s3_key")
     thumb_key = data.get("thumb_key")
-    size = aws.s3size(s3_key)
-    thumb_size = aws.s3size(thumb_key)
 
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
             """
-            INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename, size, thumb_size)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, user_id, album_id, s3_key, thumb_key, filename, created_at, size, thumb_size;
+            INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id, user_id, album_id, s3_key, thumb_key, filename, created_at;
             """,
             (
                 data.get("user_id"),
@@ -329,8 +327,6 @@ def addPhoto(data: dict) -> dict | None:
                 s3_key,
                 thumb_key,
                 data.get("filename"),
-                size,
-                thumb_size,
             ),
         )
         row = cursor.fetchone()
@@ -372,9 +368,9 @@ def addPhoto(data: dict) -> dict | None:
         "thumb_key": aws.create_presigned_url(row[4]),
         "filename": row[5],
         "created_at": created_at,
-        "size": row[7],
-        "thumb_size": row[8],
-        "username": username,  # <-- added field
+        "size": None,
+        "thumb_size": None,
+        "username": username,
     }
 
 
@@ -952,3 +948,22 @@ def cleanup2() -> None:
 
     print("Cleanup completed.")
 
+
+def spaceUsed() -> dict:
+    result = {
+        "total": 0,
+        "thumbs": 0,
+    }
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT SUM(size) FROM photos")
+        result["total"] = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT SUM(thumb_size) FROM photos")
+        result["thumbs"] = cursor.fetchone()[0] or 0
+    finally:
+        cursor.close()
+        conn.close()
+    return result
+
+    

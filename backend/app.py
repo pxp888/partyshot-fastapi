@@ -222,6 +222,15 @@ def cleanup_endpoint(Authorize: AuthJWT = Depends()):
     return {"status": "cleanup performed"}
 
 
+@app.get("/api/space-used")
+def space_used(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    if current_user != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    return db.spaceUsed()
+
+
 @app.post("/api/toggleOpen")
 async def toggle_open(
     payload: ToggleOpenRequest,
@@ -372,6 +381,7 @@ async def getEmail(websocket, data, username):
     message = {"action": "getEmail", "payload": email}
     await websocket.send_json(message)
     
+
 
 
 @app.websocket("/ws")
