@@ -72,6 +72,11 @@
     cursor: pointer;
 }
 
+.clickable:hover {
+    text-underline-offset: 4px;
+    text-decoration: underline;
+}
+
 .clickable:focus-visible,
 .albumActions button:focus-visible {
     outline: 2px solid var(--primary-color);

@@ -821,3 +821,41 @@ def cleanup2() -> None:
         s3.delete_objects(Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer})
 
     print("Cleanup completed.")
+
+
+def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
+    user = getUser(username)
+    if user is None:
+        return False
+    
+    album = getAlbum_code(albumcode)
+    if album is None:
+        return False
+    
+    if album["user_id"] != user["id"]:
+        return False
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            UPDATE albums
+            SET name = %s
+            WHERE code = %s
+            RETURNING id;
+            """,
+            (albumname, albumcode),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return False
+
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()

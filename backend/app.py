@@ -332,6 +332,19 @@ async def search(websocket, data, username):
     await websocket.send_json(message)
 
 
+async def setAlbumName(websocket, data, username):
+    albumcode = data["payload"]["albumcode"]
+    name = data["payload"]["name"]
+    ok = db.setAlbumName(albumcode, name, username)
+    if ok:
+        message = {"action": "setAlbumName", "payload": {"albumcode": albumcode, "name": name}}
+        await redis_client.publish(f"album-{albumcode}", json.dumps(message))
+        message = {"action": "newAlbum", "payload": {"type": "update"}}
+        await redis_client.publish(f"user-{username}", json.dumps(message))
+    else:
+        print("not set album name", albumcode)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -369,6 +382,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await deletePhoto(websocket, payload, username)
             elif action == "search":
                 await search(websocket, payload, username)
+            elif action == "setAlbumName":
+                await setAlbumName(websocket, payload, username)
             else:
                 print("websocket - unknown action")
                 await websocket.close(code=1008)

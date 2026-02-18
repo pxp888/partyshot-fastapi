@@ -7,6 +7,7 @@ import { saveAs } from "file-saver";
 import FileItem from "./FileItem";
 import Imageview from "./Imageview";
 import Uploader from "./Uploader";
+import AlbumRenamer from "./AlbumRenamer";
 
 import "./style/Albumview.css";
 
@@ -17,6 +18,7 @@ function Albumview(currentUser) {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
   const [focus, setFocus] = useState(-1);
+  const [isRenaming, setIsRenaming] = useState(false);
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
 
   useEffect(() => {
@@ -69,6 +71,13 @@ function Albumview(currentUser) {
           window.location.href = `/user/${currentUser.currentUser}`;
         } else {
           alert("Album deletion failed");
+        }
+        break;
+
+      case "setAlbumName":
+        if (payload && payload.albumcode === albumcode) {
+          setAlbum((prev) => ({ ...prev, name: payload.name }));
+          setIsRenaming(false);
         }
         break;
 
@@ -221,6 +230,13 @@ function Albumview(currentUser) {
     }
   }
 
+  function handleRename(newName) {
+    sendJsonMessage({
+      action: "setAlbumName",
+      payload: { albumcode: albumcode, name: newName },
+    });
+  }
+
   if (!album) {
     return (
       <div className="albumview">
@@ -239,7 +255,24 @@ function Albumview(currentUser) {
         <div className="albumDetails">
           <div className="infoItem">
             <label>name </label>
-            <p>{album.name}</p>
+            {isRenaming ? (
+              <AlbumRenamer
+                album={album}
+                onRename={handleRename}
+                onCancel={() => setIsRenaming(false)}
+              />
+            ) : (
+              <p
+                onClick={() => {
+                  if (album.username === currentUser.currentUser) {
+                    setIsRenaming(true);
+                  }
+                }}
+                className={album.username === currentUser.currentUser ? "clickable" : ""}
+              >
+                {album.name}
+              </p>
+            )}
           </div>
           <div className="infoItem">
             <label> user </label>
