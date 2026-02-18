@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import blankImage from "../assets/blank.jpg";
+import "./Uploader.css";
 
 function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
   return new Promise((resolve, reject) => {
@@ -53,6 +55,8 @@ function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
 
 function Uploader({ album, setAlbum }) {
   const { albumcode } = useParams();
+  const [totalFiles, setTotalFiles] = useState(0);
+  const [completedFiles, setCompletedFiles] = useState(0);
 
   /**
    * Uploads the original file and its thumbnail.
@@ -168,18 +172,54 @@ function Uploader({ album, setAlbum }) {
         style={{ display: "none" }}
         onChange={async (e) => {
           const files = e.target.files;
+          if (!files || files.length === 0) return;
+
+          setTotalFiles(files.length);
+          setCompletedFiles(0);
+
           for (let i = 0; i < files.length; i++) {
-            await uploadFile(files[i]);
+            try {
+              await uploadFile(files[i]);
+            } catch (err) {
+              console.error("Upload failed for file:", files[i].name, err);
+            }
+            setCompletedFiles((prev) => prev + 1);
           }
+
+          // Reset progress after a delay
+          setTimeout(() => {
+            setTotalFiles(0);
+            setCompletedFiles(0);
+          }, 3000);
+
           e.target.value = "";
         }}
       />
       <button
         onClick={() => document.getElementById("hiddenFileInput").click()}
         className="btn"
+        disabled={totalFiles > 0}
       >
-        Upload Files
+        {totalFiles > 0 ? "Uploading..." : "Upload Files"}
       </button>
+
+      {totalFiles > 0 && (
+        <div className="uploader-progress-container">
+          <div className="uploader-status-text">
+            {completedFiles === totalFiles
+              ? "All files uploaded!"
+              : `Uploading ${completedFiles + 1} of ${totalFiles}...`}
+          </div>
+          <div className="uploader-progress-track">
+            <div
+              className="uploader-progress-bar"
+              style={{
+                width: `${(completedFiles / totalFiles) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -54,16 +54,21 @@
 
 /* ----- Action bar --------------------------------------------------- */
 .albumActions {
-    background: var(--action-bg);
-    margin: var(--gap-sm) 0;
-    padding: var(--gap-sm) var(--gap-md);
+    background: var(--bg-glass, rgba(40, 40, 40, 0.9));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    margin: 0;
+    padding: 0.75rem 2rem;
     display: flex;
     justify-content: flex-start;
-    gap: var(--gap-sm);
+    gap: var(--gap-md);
     align-items: center;
     position: sticky;
-    top: 0;
-    z-index: 10;
+    top: 3.8rem;
+    /* Enough to clear the Topbar */
+    z-index: 100;
+    border-bottom: 1px solid var(--border-glass, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ----- Clickable elements ------------------------------------------ */
