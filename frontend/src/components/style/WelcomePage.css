@@ -29,7 +29,8 @@
 .hero-title {
     font-size: clamp(3.5rem, 10vw, 6rem);
     font-weight: 100;
-    margin: 0;
+    font-style: italic;
+    font-family: Arial, Helvetica, sans-serif margin: 0;
     background: linear-gradient(135deg, #fff 0%, var(--welcome-accent) 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -129,6 +130,27 @@
     margin-bottom: 0;
     font-size: 1rem;
     color: var(--welcome-text-dim);
+}
+
+/* Screenshot Section */
+.screenshot-section {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+    text-align: center;
+}
+
+.screenshot-image {
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform var(--transition-speed);
+}
+
+.screenshot-image:hover {
+    transform: scale(1.02);
 }
 
 /* Guide Section */

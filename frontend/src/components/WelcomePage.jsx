@@ -1,4 +1,6 @@
 import "./style/WelcomePage.css";
+import screen1 from "../assets/screen1.webp";
+
 
 function Welcomepage() {
   return (
@@ -56,7 +58,12 @@ function Welcomepage() {
         </div>
       </section>
 
+      <section className="screenshot-section">
+        <img src={screen1} alt="Application Screenshot" className="screenshot-image" />
+      </section>
+
       {/* Features Section */}
+
       <section className="features-grid">
         <div className="feature-card">
           <div className="feature-icon">📸</div>
