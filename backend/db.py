@@ -309,6 +309,11 @@ def deleteAlbum(username: str, code: str) -> bool:
 
 
 def addPhoto(data: dict) -> dict | None:
+    s3_key = data.get("s3_key")
+    thumb_key = data.get("thumb_key")
+    size = aws.s3size(s3_key)
+    thumb_size = aws.s3size(thumb_key)
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -321,11 +326,11 @@ def addPhoto(data: dict) -> dict | None:
             (
                 data.get("user_id"),
                 data.get("album_id"),
-                data.get("s3_key"),
-                data.get("thumb_key"),
+                s3_key,
+                thumb_key,
                 data.get("filename"),
-                data.get("size"),
-                data.get("thumb_size"),
+                size,
+                thumb_size,
             ),
         )
         row = cursor.fetchone()

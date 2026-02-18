@@ -72,3 +72,15 @@ def delete_file_from_s3(object_name):
         print(f"Error deleting file: {e}")
         return False
     return True
+
+
+def s3size(key):
+    if key is None:
+        return 0
+    s3_client = get_s3_client()
+    try:
+        response = s3_client.head_object(Bucket=BUCKET_NAME, Key=key)
+        return response.get("ContentLength", 0)
+    except ClientError as e:
+        print(f"Error getting s3 size for {key}: {e}")
+        return 0
