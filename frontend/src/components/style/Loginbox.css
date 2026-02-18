@@ -1,38 +1,146 @@
 .loginback {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 9999;
+    animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .loginbox {
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    width: 300px;
+    background-color: gainsboro;
+    /* Match Contactpage container */
+    padding: 3rem;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 400px;
+    color: #333;
+    animation: slideUpBox 0.4s ease-out;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
 
-    color: black;
+@keyframes slideUpBox {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.loginbox h2 {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    color: #e57373;
+    /* Match Contactpage salmon */
+    text-align: center;
+    margin-top: 0;
 }
 
 .field {
-    display: grid;
-    grid-template-columns: 7rem 1fr;
-    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .field label {
-    margin-right: 10px;
-    text-align: right;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
+    margin-left: 0.5rem;
+    text-align: left;
+    /* Changed from right to match contact form */
+}
+
+.field input {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    color: #333;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.field input:focus {
+    border-color: salmon;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(250, 128, 114, 0.2);
+    transform: translateY(-2px);
+}
+
+.loginbox .btn {
+    width: 100%;
+    margin: 1rem 0 0 0;
+    background-color: #444;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loginbox .btn:hover {
+    background-color: salmon;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(250, 128, 114, 0.3);
 }
 
 .error-message {
-    margin: 10px 0;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+    padding: 0.8rem;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 1.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
 }
