@@ -19,6 +19,8 @@ venv/
 pipenv/           # pipenv's lock file is tracked
 env.py
 backend/env.py
+.env
+
 
 # Django
 # (Keep migrations – they are part of the repo – but ignore local media & static)

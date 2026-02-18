@@ -1,18 +1,17 @@
-# 1. Use an official Python base image
 FROM python:3.12-slim
-# Use the root as the context
 WORKDIR /code
 
-# Copy requirements from the backend folder
+# Install dependencies
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the backend code (which includes your static/ folder)
-COPY ./backend /code/backend
-RUN touch /code/backend/__init__.py
+# Copy everything from your local 'backend' folder
+# directly into the current WORKDIR (/code)
+COPY ./backend /code/
+RUN touch /code/__init__.py
 
-# Set the working directory to where your main.py is
-WORKDIR /code/backend
+# Now 'main.py' and the 'static' folder are both directly in /code
+# No need to change WORKDIR again
 
-# Start FastAPI (telling it where to find the app)
-CMD ["uvicorn", "main:app", "--host", "192.168.0.225", "--port", "8000"]
+# Use 0.0.0.0 so EC2 can route traffic to the container
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
