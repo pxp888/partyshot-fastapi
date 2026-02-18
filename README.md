@@ -54,15 +54,20 @@ A photo can be deleted by the album owner, or the photo owner.
 
 ## todo list
 
+* Cloudfront & S3 setup
 * upload progress indicator
 * contact page
-* backend improvements
-* Cloudfront & S3 setup
 * album renaming
+* drop album-thumb column
+* add editors table
+* track item size
 
 
 
 ## deploy notes 
 
-* Don't forget websocket port in WebSocketContext.jsx to elastic IP:80
-* build front end before image,
+* build front end before image, it is not part of the Dockerfile
+* there are three environment files to create.  
+  * **.env** - database location for docker-compose
+  * **backend/env.py** - aws, everything else for the server
+  * **frontend/.env**  - websocket url

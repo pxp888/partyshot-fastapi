@@ -6,7 +6,8 @@ const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
   // const socketUrl = "ws://51.20.201.88/ws";
-  const socketUrl = "ws://192.168.0.225:8000/ws";
+  // const socketUrl = "ws://192.168.0.225:8000/ws";
+  const socketUrl = import.meta.env.VITE_WS_URL;
 
   // Hook that gives us the raw sendJsonMessage
   const {
