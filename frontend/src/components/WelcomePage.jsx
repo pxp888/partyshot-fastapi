@@ -1,116 +1,95 @@
-// import React from "react";
-// import { useNavigate } from "react-router-dom";
-
 import "./style/WelcomePage.css";
-import cover1 from "../assets/cover1.webp";
-import cover2 from "../assets/cover2.webp";
-import cover3 from "../assets/cover3.webp";
 
 function Welcomepage() {
-  // const navigate = useNavigate();
   return (
-    <section className="welcomepage">
-      <div className="footer">
-        <ul>
-          <li>
-            <a
-              href="https://github.com/pxp888/partyshot-fastapi"
-              target="_blank"
-            >
-              about
-            </a>
-          </li>
-          <li>
-            <a href="/contact/">contact</a>
-          </li>
-        </ul>
-      </div>
-      <div id="landing">
-        <h1 className="title">partyShots</h1>
-        <h2>because we don't all have to take the picture.</h2>
-
-        <div className="landing1">
-          <div className="hbox">
-            {/* <h3>Get the party started</h3>*/}
+    <div className="welcome-container">
+      {/* Hero Section */}
+      <section className="hero">
+        <div className="hero-content">
+          <h1 className="hero-title">partyShots</h1>
+          <p className="hero-subtitle">Capture the moment, together.</p>
+          <p className="hero-snarky">(because we don't all have to take the picture.)</p>
+          <div className="hero-description">
             <p>
-              partyShots is a photo sharing app that allows you to share photos
-              with your friends and family. Create an album and invite your
-              friends to join. Everyone can share their photos and videos in one
-              place.
+              A minimal photo sharing platform designed for events, parties, and
+              collaborative collections. Create shared albums where everyone can
+              contribute in real-time.
             </p>
           </div>
-          <div className="imdiv1">
-            <img src={cover1} alt="landingshot" />
+          <div className="hero-cta">
+            <p className="cta-note">Join or create an album to get started.</p>
           </div>
         </div>
+      </section>
 
-        <div className="warning">
-          <h1>btw, Nothing is private on this site</h1>
+      {/* How it Works */}
+      <section className="guide-section">
+        <h2 className="section-title">How it works</h2>
+        <div className="guide-steps">
+          <div className="step">
+            <span className="step-number">01</span>
+            <h4>Create</h4>
+            <p>Start a new album for your event in seconds.</p>
+          </div>
+          <div className="step">
+            <span className="step-number">02</span>
+            <h4>Invite</h4>
+            <p>Share the album code or your link with guests.</p>
+          </div>
+          <div className="step">
+            <span className="step-number">03</span>
+            <h4>Collect</h4>
+            <p>Everyone uploads and downloads the full collection.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Info/Warning Section */}
+      <section className="info-banner">
+        <div className="info-content">
+          <h3>Community Focused</h3>
           <p>
-            Anyone with an album code or username can find files shared on this
-            site.
-          </p>
-          <p>
-            This site is intended to help people collaborate, not for private
-            storage.
+            partyShots is built for open collaboration. Please note that albums are
+            accessible via codes or usernames—it's designed for sharing, not
+            private storage.
           </p>
         </div>
+      </section>
 
-        <p className="title2">How it works</p>
-
-        <div className="landing2">
-          <div className="imdiv2">
-            <img src={cover2} alt="landingshot" />
-          </div>
-          <div className="vbox">
-            <h3>Create an album</h3>
-            <p>Just type the album name and click create.</p>
-            <h3>maybe add some photos,</h3>
-            <p>(it is a photo sharing site.)</p>
-            <h3>share the album code, or your username</h3>
-            <p>
-              Anyone with either the album code or your username can view the
-              album.
-            </p>
-            <p>Anyone logged in can see, and add files to an album.</p>
-            <p>They can also download the album.</p>
-          </div>
+      {/* Features Section */}
+      <section className="features-grid">
+        <div className="feature-card">
+          <div className="feature-icon">📸</div>
+          <h3>Easy Sharing</h3>
+          <p>Upload your photos and videos instantly to shared albums.</p>
         </div>
-
-        <p className="title2">albums and photos</p>
-
-        <div className="landing3">
-          <div className="hbox">
-            <h3>Uploads</h3>
-            <p>Each album and file has an owner.</p>
-            <p>Users can upload files to any album. </p>
-            <p>Users can subscribe to any album.</p>
-            <h3>deletions</h3>
-            <p>An album can only be deleted by its owner.</p>
-            <p>a file can only be removed by the owner, or the album owner.</p>
-          </div>
-          <div className="imdiv1">
-            <img src={cover3} alt="landingshot" />
-          </div>
+        <div className="feature-card">
+          <div className="feature-icon">🤝</div>
+          <h3>Collaborative</h3>
+          <p>Invite friends to join and build a collective memory of your events.</p>
         </div>
-
-        <div className="footer">
-          <ul>
-            <li>
-              <a
-                href="https://github.com/pxp888/partyshot-fastapi"
-                target="_blank"
-              >
-                about
-              </a>
-            </li>
-            <li>
-              <a href="/contact/">contact</a>
-            </li>
-          </ul>
+        <div className="feature-card">
+          <div className="feature-icon">⚡</div>
+          <h3>Live Updates</h3>
+          <p>See new photos as they are uploaded by others in the album.</p>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Footer */}
+      <footer className="welcome-footer">
+        <nav className="footer-nav">
+          <a
+            href="https://github.com/pxp888/partyshot-fastapi"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            About
+          </a>
+          <a href="/contact">Contact</a>
+        </nav>
+        <p className="footer-copy">&copy; {new Date().getFullYear()} partyShots</p>
+      </footer>
+    </div>
   );
 }
 
