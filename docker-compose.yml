@@ -4,7 +4,7 @@ services:
     container_name: fast1_app
     restart: always
     ports:
-      - "8000:8000"
+      - "80:8000"
     volumes:
       - ./backend/env.py:/code/env.py:Z
     depends_on:
