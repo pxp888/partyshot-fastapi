@@ -1,10 +1,15 @@
 :root {
-    --welcome-bg: #121212;
-    --welcome-accent: #ff7f50;
-    /* Salmon-like but more vibrant */
-    --welcome-text: #e0e0e0;
-    --welcome-text-dim: #a0a0a0;
-    --card-bg: #1e1e1e;
+    --welcome-bg: #1c1c1e;
+    /* Lighter, more neutral grey-black */
+    --welcome-accent: #f0a08e;
+    /* More muted, sophisticated greyish-salmon */
+    --welcome-text: #f2f2f7;
+    /* Brighter, cleaner white */
+    --welcome-text-dim: #a1a1a6;
+    /* Softer, slightly cooler grey */
+    --card-bg: #2c2c2e;
+    /* --card-bg: #212229; */
+    /* Distinctly more grey card background */
     --transition-speed: 0.3s;
 }
 
@@ -22,8 +27,8 @@
 .hero {
     padding: 8rem 2rem 6rem;
     text-align: center;
-    background: radial-gradient(circle at top right, rgba(255, 127, 80, 0.05), transparent 40%),
-        radial-gradient(circle at bottom left, rgba(255, 127, 80, 0.03), transparent 30%);
+    /* background: radial-gradient(circle at top right, rgba(240, 160, 142, 0.05), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(240, 160, 142, 0.03), transparent 30%); */
 }
 
 .hero-title {
@@ -31,7 +36,7 @@
     font-weight: 100;
     font-style: italic;
     font-family: Arial, Helvetica, sans-serif margin: 0;
-    background: linear-gradient(135deg, #fff 0%, var(--welcome-accent) 100%);
+    background: linear-gradient(135deg, salmon 0%, var(--welcome-accent) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -48,7 +53,8 @@
 .hero-snarky {
     font-size: 1.35rem;
     font-style: italic;
-    color: var(--welcome-text-dim);
+    /* color: var(--welcome-text-dim); */
+    color: #a389aa;
     margin: 1rem 0 3rem;
     font-weight: 300;
 }
@@ -90,7 +96,7 @@
 .feature-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 127, 80, 0.2);
+    border-color: rgba(240, 160, 142, 0.2);
 }
 
 .feature-icon {
@@ -178,12 +184,14 @@
     flex: 1;
     min-width: 250px;
     position: relative;
+    /* background-color: #212229; */
+    background: var(--card-bg);
 }
 
 .step-number {
     font-size: 4rem;
     font-weight: 900;
-    color: rgba(255, 127, 80, 0.1);
+    color: rgba(240, 160, 142, 0.08);
     position: absolute;
     top: -2.5rem;
     left: -1rem;
