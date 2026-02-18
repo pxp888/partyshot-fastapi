@@ -330,9 +330,11 @@ function Albumview(currentUser) {
           <button onClick={downloadAll} className="btn">
             Download All
           </button>
-          <button onClick={handleDeleteAlbum} className="btn">
-            Delete Album
-          </button>
+          {album.username === currentUser.currentUser && (
+            <button onClick={handleDeleteAlbum} className="btn">
+              Delete Album
+            </button>
+          )}
         </div>
       )}
 
