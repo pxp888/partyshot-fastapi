@@ -153,6 +153,8 @@ function Uploader({ album, setAlbum }) {
         s3_key,
         thumb_key: thumb_key || null,
         albumcode: albumcode,
+        size: file.size,
+        thumb_size: thumbnailBlob ? thumbnailBlob.size : null,
       }),
     });
 

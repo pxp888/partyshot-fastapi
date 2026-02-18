@@ -205,6 +205,8 @@ async def add_photo_metadata(
             "filename": payload["filename"],
             "s3_key": payload["s3_key"],
             "thumb_key": payload.get("thumb_key"),
+            "size": payload.get("size"),
+            "thumb_size": payload.get("thumb_size"),
         }
     )
 

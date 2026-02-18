@@ -72,8 +72,13 @@ def init_db() -> None:
             s3_key TEXT,
             thumb_key TEXT,
             filename TEXT NOT NULL,
+            size INTEGER,
+            thumb_size INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        -- Add columns if they don't exist (primitive migration)
+        ALTER TABLE photos ADD COLUMN IF NOT EXISTS size INTEGER;
+        ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
         """
     )
     conn.commit()
@@ -309,9 +314,9 @@ def addPhoto(data: dict) -> dict | None:
     try:
         cursor.execute(
             """
-            INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING id, user_id, album_id, s3_key, thumb_key, filename, created_at;
+            INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename, size, thumb_size)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, user_id, album_id, s3_key, thumb_key, filename, created_at, size, thumb_size;
             """,
             (
                 data.get("user_id"),
@@ -319,6 +324,8 @@ def addPhoto(data: dict) -> dict | None:
                 data.get("s3_key"),
                 data.get("thumb_key"),
                 data.get("filename"),
+                data.get("size"),
+                data.get("thumb_size"),
             ),
         )
         row = cursor.fetchone()
@@ -360,6 +367,8 @@ def addPhoto(data: dict) -> dict | None:
         "thumb_key": aws.create_presigned_url(row[4]),
         "filename": row[5],
         "created_at": created_at,
+        "size": row[7],
+        "thumb_size": row[8],
         "username": username,  # <-- added field
     }
 
@@ -706,6 +715,122 @@ def search(term: str) -> str:
     return ""
 
 
+def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
+    user = getUser(username)
+    if user is None:
+        return False
+    
+    album = getAlbum_code(albumcode)
+    if album is None:
+        return False
+    
+    if album["user_id"] != user["id"]:
+        return False
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            UPDATE albums
+            SET name = %s
+            WHERE code = %s
+            RETURNING id;
+            """,
+            (albumname, albumcode),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return False
+
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def setUserData(username: str, newusername: str = None, email: str = None, password: str = None) -> str:
+    """Update user information (username, email, or password) conditionally."""
+    user = getUser(username)
+    if not user:
+        return False
+
+    update_fields = []
+    params = []
+
+    # Helper to check if a value is valid for update (not None and length >= 3)
+    def is_valid(val):
+        return val is not None and len(str(val)) >= 3
+
+    # Check newusername
+    if is_valid(newusername) and newusername != user["username"]:
+        # Check if new username is already taken
+        if getUser(newusername) is not None:
+            return "username taken"
+        update_fields.append("username = %s")
+        params.append(newusername)
+
+    # Check email
+    if is_valid(email) and email != user["email"]:
+        update_fields.append("email = %s")
+        params.append(email)
+
+    # Check password
+    if is_valid(password):
+        salt = random.randbytes(16).hex()
+        passhash = hashlib.sha256((password + salt).encode()).hexdigest()
+        update_fields.append("passhash = %s")
+        params.append(passhash)
+        update_fields.append("salt = %s")
+        params.append(salt)
+
+    if not update_fields:
+        return "no changes"  # Nothing to update, but not an error
+
+    params.append(user["id"])
+    query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(query, tuple(params))
+        conn.commit()
+        return "success"
+    except Exception as e:
+        print(f"Error updating user data: {e}")
+        conn.rollback()
+        return "error"
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def getEmail(username: str) -> str:
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT email FROM users WHERE username = %s", (username,))
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        return row[0]
+    except Exception:
+        return None
+    finally:
+        cursor.close()
+        conn.close()    
+
+
+# --------------------------------------------------------------------------- #
+# Admin functions
+# --------------------------------------------------------------------------- #
+
+
 def cleanup() -> None:
     """
     Synchronise the S3 bucket with the database.
@@ -822,112 +947,3 @@ def cleanup2() -> None:
 
     print("Cleanup completed.")
 
-
-def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
-    user = getUser(username)
-    if user is None:
-        return False
-    
-    album = getAlbum_code(albumcode)
-    if album is None:
-        return False
-    
-    if album["user_id"] != user["id"]:
-        return False
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            """
-            UPDATE albums
-            SET name = %s
-            WHERE code = %s
-            RETURNING id;
-            """,
-            (albumname, albumcode),
-        )
-        row = cursor.fetchone()
-        if row is None:
-            return False
-
-        conn.commit()
-        return True
-    except Exception:
-        conn.rollback()
-        return False
-    finally:
-        cursor.close()
-        conn.close()
-
-
-def setUserData(username: str, newusername: str = None, email: str = None, password: str = None) -> str:
-    """Update user information (username, email, or password) conditionally."""
-    user = getUser(username)
-    if not user:
-        return False
-
-    update_fields = []
-    params = []
-
-    # Helper to check if a value is valid for update (not None and length >= 3)
-    def is_valid(val):
-        return val is not None and len(str(val)) >= 3
-
-    # Check newusername
-    if is_valid(newusername) and newusername != user["username"]:
-        # Check if new username is already taken
-        if getUser(newusername) is not None:
-            return "username taken"
-        update_fields.append("username = %s")
-        params.append(newusername)
-
-    # Check email
-    if is_valid(email) and email != user["email"]:
-        update_fields.append("email = %s")
-        params.append(email)
-
-    # Check password
-    if is_valid(password):
-        salt = random.randbytes(16).hex()
-        passhash = hashlib.sha256((password + salt).encode()).hexdigest()
-        update_fields.append("passhash = %s")
-        params.append(passhash)
-        update_fields.append("salt = %s")
-        params.append(salt)
-
-    if not update_fields:
-        return "no changes"  # Nothing to update, but not an error
-
-    params.append(user["id"])
-    query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(query, tuple(params))
-        conn.commit()
-        return "success"
-    except Exception as e:
-        print(f"Error updating user data: {e}")
-        conn.rollback()
-        return "error"
-    finally:
-        cursor.close()
-        conn.close()
-
-
-def getEmail(username: str) -> str:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT email FROM users WHERE username = %s", (username,))
-        row = cursor.fetchone()
-        if row is None:
-            return None
-        return row[0]
-    except Exception:
-        return None
-    finally:
-        cursor.close()
-        conn.close()    
