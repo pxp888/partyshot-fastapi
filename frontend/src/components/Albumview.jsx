@@ -20,6 +20,8 @@ function Albumview(currentUser) {
   const [selected, setSelected] = useState([]);
   const [focus, setFocus] = useState(-1);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [sortField, setSortField] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
   const navigate = useNavigate();
 
@@ -60,11 +62,7 @@ function Albumview(currentUser) {
       case "deletePhoto": {
         const deletedId = payload;
         setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
-
-        // Update selection based on the latest photos array
-        setSelected((prev) =>
-          prev.filter((idx) => photos[idx]?.id !== deletedId),
-        );
+        setSelected((prev) => prev.filter((id) => id !== deletedId));
         break;
       }
 
@@ -137,7 +135,7 @@ function Albumview(currentUser) {
   }
 
   function selectAll() {
-    const allIds = photos.map((_, index) => index);
+    const allIds = photos.map((p) => p.id);
     setSelected(allIds);
   }
 
@@ -165,9 +163,9 @@ function Albumview(currentUser) {
 
     (async () => {
       try {
-        for (const index of selected) {
-          const photo = photos[index];
-          if (!photo.s3_key) continue;
+        for (const id of selected) {
+          const photo = photos.find((p) => p.id === id);
+          if (!photo || !photo.s3_key) continue;
           const blob = await fetchBlob(photo.s3_key, photo.filename);
           zip.file(photo.filename, blob);
         }
@@ -192,9 +190,8 @@ function Albumview(currentUser) {
     ) {
       return;
     }
+    const idsToDelete = [...selected];
     setSelected([]);
-
-    const idsToDelete = selected.map((index) => photos[index].id);
 
     idsToDelete.forEach(async (id) => {
       try {
@@ -239,6 +236,23 @@ function Albumview(currentUser) {
     });
   }
 
+  const sortedPhotos = [...photos].sort((a, b) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
+
+    if (sortField === "created_at") {
+      valA = new Date(valA);
+      valB = new Date(valB);
+    } else {
+      valA = (valA || "").toString().toLowerCase();
+      valB = (valB || "").toString().toLowerCase();
+    }
+
+    if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+    if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+
   if (!album) {
     return (
       <div className="albumview">
@@ -251,7 +265,7 @@ function Albumview(currentUser) {
   return (
     <section>
       {focus > -1 && (
-        <Imageview files={photos} focus={focus} setFocus={setFocus} />
+        <Imageview files={sortedPhotos} focus={focus} setFocus={setFocus} />
       )}
       <div className="albumview">
         <div className="albumDetails">
@@ -320,6 +334,26 @@ function Albumview(currentUser) {
           <button onClick={deleteSelected} className="btn">
             Delete Selected
           </button>
+
+          <div className="sortControls">
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value)}
+            >
+              <option value="created_at">Date</option>
+              <option value="filename">Name</option>
+              <option value="username">User</option>
+            </select>
+            <button
+              className="sortOrderBtn"
+              onClick={() =>
+                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+              }
+              title={sortOrder === "asc" ? "Ascending" : "Descending"}
+            >
+              {sortOrder === "asc" ? "↑" : "↓"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -337,6 +371,26 @@ function Albumview(currentUser) {
               Delete Album
             </button>
           )}
+
+          <div className="sortControls">
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value)}
+            >
+              <option value="created_at">Date</option>
+              <option value="filename">Name</option>
+              <option value="username">User</option>
+            </select>
+            <button
+              className="sortOrderBtn"
+              onClick={() =>
+                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+              }
+              title={sortOrder === "asc" ? "Ascending" : "Descending"}
+            >
+              {sortOrder === "asc" ? "↑" : "↓"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -345,7 +399,7 @@ function Albumview(currentUser) {
           <p>No files in this album.</p>
         ) : (
           <div className="fileList">
-            {photos.map((file, index) => (
+            {sortedPhotos.map((file, index) => (
               <FileItem
                 index={index}
                 key={file.id}

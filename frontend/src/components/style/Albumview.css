@@ -71,6 +71,43 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.sortControls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+}
+
+.sortControls select {
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+}
+
+.sortControls select option {
+    background: #333;
+    color: white;
+}
+
+.sortOrderBtn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sortOrderBtn:hover, .sortControls select:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 /* ----- Clickable elements ------------------------------------------ */
 .clickable,
 .albumActions button {
