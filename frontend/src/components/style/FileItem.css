@@ -37,6 +37,15 @@
     background-color: rgba(255, 192, 203, 0.5);
 }
 
+.thumbnail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+}
+
 .thumbnail img {
     position: absolute;
     top: 0;
@@ -78,7 +87,7 @@
 }
 
 .info .title,
-.info > .title {
+.info>.title {
     color: salmon;
 }
 
