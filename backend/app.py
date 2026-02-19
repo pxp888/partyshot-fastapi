@@ -326,6 +326,8 @@ async def deleteAlbum(websocket, data, username):
     message = {"action": "newAlbum", "payload": {"type": "update"}}
     await redis_client.publish(f"user-{username}", json.dumps(message))
 
+    message = {"action": "deleteAlbum", "payload": albumcode}
+    await redis_client.publish(f"album-{albumcode}", json.dumps(message))
 
 async def getAlbum(websocket, data, username):
     albumcode = data["payload"]["albumcode"]

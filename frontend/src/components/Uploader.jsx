@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import "./style/Uploader.css";
 
-function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
+function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
   return new Promise((resolve, reject) => {
     const img = new Image();
 
