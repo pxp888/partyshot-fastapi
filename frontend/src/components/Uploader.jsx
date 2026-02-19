@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import blankImage from "../assets/blank.jpg";
-import "./Uploader.css";
+import "./style/Uploader.css";
 
 function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
   return new Promise((resolve, reject) => {
@@ -95,49 +94,44 @@ function Uploader({ album, setAlbum }) {
     }
 
     // 3️⃣ (Optional) Create a thumbnail and upload it the same way
-    let thumbnailBlob;
+    let thumbnailBlob = null;
+    let thumb_key = null;
     try {
       thumbnailBlob = await createThumbnail(file);
-    } catch (err) {
-      console.warn(
-        "Thumbnail creation failed, using blank image instead.",
-        err,
+
+      const thumbPresignRes = await fetch("/api/s3-presigned", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          filename: `${file.name}_thumb.png`,
+          album_code: album.code,
+        }),
+      });
+
+      const { s3_key: t_key, presigned: thumbPresign } =
+        await thumbPresignRes.json();
+      thumb_key = t_key;
+
+      const thumbForm = new FormData();
+      Object.entries(thumbPresign.fields).forEach(([k, v]) =>
+        thumbForm.append(k, v),
       );
-      // Fetch the placeholder image and convert to a Blob
-      const res = await fetch(blankImage);
-      thumbnailBlob = await res.blob();
-    }
+      thumbForm.append("file", thumbnailBlob);
 
-    const thumbPresignRes = await fetch("/api/s3-presigned", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        filename: `${file.name}_thumb.png`,
-        album_code: album.code,
-      }),
-    });
+      const thumbS3Res = await fetch(thumbPresign.url, {
+        method: "POST",
+        body: thumbForm,
+      });
 
-    const { s3_key: thumb_key, presigned: thumbPresign } =
-      await thumbPresignRes.json();
-
-    const thumbForm = new FormData();
-    Object.entries(thumbPresign.fields).forEach(([k, v]) =>
-      thumbForm.append(k, v),
-    );
-    thumbForm.append("file", thumbnailBlob);
-
-    const thumbS3Res = await fetch(thumbPresign.url, {
-      method: "POST",
-      body: thumbForm,
-    });
-
-    if (!thumbS3Res.ok) {
-      console.warn("Thumbnail upload failed, continuing without thumb");
-    } else {
-      // console.log(`Uploaded thumbnail to ${thumb_key}`);
+      if (!thumbS3Res.ok) {
+        console.warn("Thumbnail upload failed, continuing without thumb");
+        thumb_key = null;
+      }
+    } catch (err) {
+      console.warn("Thumbnail creation or upload failed:", err);
     }
 
     // 4️⃣  Notify backend of metadata via REST instead of websocket

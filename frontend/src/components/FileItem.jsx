@@ -1,5 +1,6 @@
 import "./style/FileItem.css";
 import blankImage from '../assets/blank.jpg';
+import videoImage from '../assets/video.webp';
 
 function FileItem({
   index,
@@ -11,7 +12,9 @@ function FileItem({
 }) {
   const isSelected = selected.includes(file.id);
 
-  // console.log(file);
+  const videoExtensions = /\.(mp4|webm|ogg|mov|avi|wmv|mkv|flv)$/i;
+  const isVideo = videoExtensions.test(file.filename);
+  const placeholder = isVideo ? videoImage : blankImage;
 
   function handleClick(e) {
     e.preventDefault();
@@ -33,9 +36,9 @@ function FileItem({
     >
       <div className="thumbnail">
         <img
-          src={file.thumb_key || blankImage}
+          src={file.thumb_key || placeholder}
           alt={`${file.filename}`}
-          onError={(e) => { e.target.src = blankImage; }}
+          onError={(e) => { e.target.src = placeholder; }}
         />
       </div>
       {isSelected && <div className="selectscreen" />}
