@@ -120,7 +120,7 @@
 
 @media (max-width: 768px) {
     .topbar {
-        position: static;
+        position: relative;
         padding: 1rem;
         flex-wrap: wrap;
         justify-content: center;
