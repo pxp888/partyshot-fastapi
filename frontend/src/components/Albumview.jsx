@@ -26,6 +26,7 @@ function Albumview(currentUser) {
   const [sortField, setSortField] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
   const [limit] = useState(50);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const observer = useRef();
   const lastPhotoElementRef = useCallback(
     (node) => {
@@ -57,14 +58,14 @@ function Albumview(currentUser) {
     fetchPhotos(0);
   }, [albumcode, sortField, sortOrder]);
 
-  const fetchPhotos = (offset) => {
+  const fetchPhotos = (offset, customLimit) => {
     if (!albumcode) return;
     setIsFetching(true);
     sendJsonMessage({
       action: "getPhotos",
       payload: {
         albumcode: albumcode,
-        limit: limit,
+        limit: customLimit || limit,
         offset: offset,
         sortField: sortField,
         sortOrder: sortOrder,
@@ -90,7 +91,15 @@ function Albumview(currentUser) {
 
       case "getPhotos": {
         const batch = payload?.photos ?? [];
-        setPhotos((prev) => (payload.offset === 0 ? batch : [...prev, ...batch]));
+        setPhotos((prev) => {
+          const newPhotos = payload.offset === 0 ? batch : [...prev, ...batch];
+          if (isDownloadingAll) {
+            // Trigger ZIP after photos are updated
+            setTimeout(() => startZipProcess(newPhotos), 100);
+            setIsDownloadingAll(false);
+          }
+          return newPhotos;
+        });
         setTotalPhotos(payload.total ?? 0);
         setHasMore(payload.offset + batch.length < payload.total);
         setIsFetching(false);
@@ -159,50 +168,47 @@ function Albumview(currentUser) {
     });
   }
 
-  async function downloadAll(e) {
-    e.preventDefault();
-    if (!album) return;
+  const startZipProcess = async (photosToZip) => {
+    if (!photosToZip || photosToZip.length === 0) {
+      alert("No photos available to download.");
+      return;
+    }
+
+    const zip = new JSZip();
+
+    const fetchBlob = async (url, filename) => {
+      const res = await fetch(url, { mode: "cors", cache: "no-cache" });
+      if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
+      return await res.blob();
+    };
 
     try {
-      const data = await sendJson("/api/get-download-list", {
-        albumcode: albumcode,
-      });
-      const allPhotos = data?.photos ?? [];
-
-      if (allPhotos.length === 0) {
-        alert("No photos available to download.");
-        return;
-      }
-
-      // Load all photos into state to replicate "pre-pagination" behavior
-      setPhotos(allPhotos);
-      setHasMore(false);
-
-      const zip = new JSZip();
-
-      const fetchBlob = async (url, filename) => {
-        // use cache: "no-cache" to bypass potential CORS/Cache browser quirks
-        const res = await fetch(url, { mode: "cors", cache: "no-cache" });
-        if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
-        return await res.blob();
-      };
-
       setSelectMode(true);
-
-      for (const photo of allPhotos) {
+      for (const photo of photosToZip) {
         if (!photo.s3_key) continue;
         const blob = await fetchBlob(photo.s3_key, photo.filename);
         zip.file(photo.filename, blob);
       }
 
       const zipBlob = await zip.generateAsync({ type: "blob" });
-      const zipName = `${album.name || "album"}_${allPhotos.length}.zip`;
+      const zipName = `${album.name || "album"}_${photosToZip.length}.zip`;
       saveAs(zipBlob, zipName);
     } catch (err) {
       console.error("Error while creating ZIP:", err);
       alert("An error occurred while preparing the ZIP file.");
     } finally {
       setSelectMode(false);
+    }
+  };
+
+  function downloadAll(e) {
+    e.preventDefault();
+    if (photos.length >= totalPhotos && totalPhotos > 0) {
+      // Already have all photos, just ZIP them
+      startZipProcess(photos);
+    } else {
+      setIsDownloadingAll(true);
+      fetchPhotos(0, 5000);
     }
   }
 

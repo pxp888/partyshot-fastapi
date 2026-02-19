@@ -295,15 +295,6 @@ async def toggle_public(
     return updated_album
 
 
-@app.post("/api/get-download-list")
-async def get_download_list(payload: dict):
-    album_code = payload.get("albumcode")
-    photos = db.getDownloadList(album_code)
-    if photos:
-        photos_data = await attach_presigned_urls({"photos": photos})
-        return photos_data
-    return {"photos": []}
-
 
 async def createAlbum(websocket, data, username):
     album_name = data["payload"]["album_name"]

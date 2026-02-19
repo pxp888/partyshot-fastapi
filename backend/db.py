@@ -323,48 +323,6 @@ def getPhotos(
     }
 
 
-def getDownloadList(album_code: str) -> list | None:
-    album = getAlbum(album_code)
-    if album is None:
-        return None
-    album_id = album["id"]
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        query = """
-            SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.filename,
-                   p.created_at, u.username, p.size
-            FROM photos p
-            JOIN users u ON p.user_id = u.id
-            WHERE p.album_id = %s
-            ORDER BY p.created_at ASC;
-        """
-        cursor.execute(query, (album_id,))
-        rows = cursor.fetchall()
-    finally:
-        cursor.close()
-        conn.close()
-
-    photos = []
-    for row in rows:
-        import datetime
-        created_at = row[6]
-        if isinstance(created_at, datetime.datetime):
-            created_at = created_at.isoformat()
-        photos.append({
-            "id": row[0],
-            "user_id": row[1],
-            "album_id": row[2],
-            "s3_key": row[3],
-            "thumb_key": row[4],
-            "filename": row[5],
-            "created_at": created_at,
-            "username": row[7],
-            "size": row[8],
-        })
-    return photos
-
 
 async def deleteAlbum(username: str, code: str) -> bool:
     user = getUser(username)
