@@ -50,6 +50,26 @@ _(if the EC2 VM is running)_
 
 ---
 
+## Performance Optimizations
+
+- **Client‑side thumbnail generation** – Thumbnails are created in the browser before upload, eliminating server‑side image processing.  
+- **Direct S3 uploads** – Images are sent straight to S3 via presigned URLs, bypassing the application server.  
+- **Background size sync** – A worker polls S3 for photo and thumbnail dimensions and updates the database with this metadata.  
+
+### Browsing Experience
+
+- The front‑end fetches presigned URLs for thumbnails and full‑size images, then caches them in **Redis** to avoid repeated S3 look‑ups.  
+- Album items that are off‑screen are not rendered (lazy loading).  
+- Thumbnails are paginated; the client requests presigned URLs only for thumbnails currently in view.  
+
+### Downloads & Deletions
+
+- Files are downloaded directly from S3 via presigned URLs.  
+- Background workers also handle deletion of items from S3, keeping storage in sync with the database.
+
+---
+
+
 ## ⚙️ Getting Started
 
 ### Prerequisites
