@@ -48,6 +48,9 @@ _(if the EC2 VM is running)_
 - **Vite**: Lightning-fast build tool and development server.
 - **Vanilla CSS**: Premium, custom-crafted styles with a focus on aesthetics.
 
+The included docker-compose.yml file is configured to run the full required stack, including the database, redis, arq worker, nginx reverse proxy, and FastAPI with gunicorn and uvicorn workers.  
+
+
 ---
 
 ## Performance Optimizations
@@ -58,7 +61,7 @@ _(if the EC2 VM is running)_
 
 ### Browsing Experience
 
-- The front‑end fetches presigned URLs for thumbnails and full‑size images, then caches them in **Redis** to avoid repeated S3 look‑ups.  
+- The front‑end fetches presigned URLs for thumbnails and full‑size images, while the backend caches them in **Redis** to avoid repeated S3 look‑ups.  
 - Album items that are off‑screen are not rendered (lazy loading).  
 - Thumbnails are paginated; the client requests presigned URLs only for thumbnails currently in view.  
 
@@ -66,6 +69,15 @@ _(if the EC2 VM is running)_
 
 - Files are downloaded directly from S3 via presigned URLs.  
 - Background workers also handle deletion of items from S3, keeping storage in sync with the database.
+
+### Deployment
+- **Docker**: Containerization for easy deployment.
+- **AWS**: S3 for storage and EC2 for hosting.
+- **NGINX**: Reverse proxy for static file serving.
+- **docker compose**: Orchestration of the stack.
+
+
+
 
 ---
 
