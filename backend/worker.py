@@ -14,11 +14,6 @@ async def say_hello(ctx, name: str):
     return f"Said hello to {name}"
 
 
-async def upload_to_s3(ctx, file_path: str, object_name: str):
-    s3_up = aws.upload_file_to_s3(file_path, object_name)
-    return s3_up
-
-
 async def check_photo_sizes(ctx, photo_id: int, s3_key: str, thumb_key: str = None):
     print(f"Checking sizes for photo {photo_id}: {s3_key}, {thumb_key}")
     size = aws.s3size(s3_key)

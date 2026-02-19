@@ -29,6 +29,19 @@ services:
     networks:
       - backend-network
 
+  worker:
+    image: fast1
+    container_name: fast1_worker
+    restart: always
+    command: arq worker.WorkerSettings
+    volumes:
+      - ./backend/env.py:/code/env.py:Z
+    depends_on:
+      - redis-db
+      - db-server
+    networks:
+      - backend-network
+
   redis-db:
     image: redis:7-alpine
     container_name: redis_server
