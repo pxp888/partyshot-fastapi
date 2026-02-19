@@ -323,6 +323,30 @@ def getPhotos(
     }
 
 
+def getDownloadList(album_code: str) -> list | None:
+    album = getAlbum(album_code)
+    if album is None:
+        return None
+    album_id = album["id"]
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        query = """
+            SELECT s3_key, filename
+            FROM photos
+            WHERE album_id = %s
+            ORDER BY created_at ASC;
+        """
+        cursor.execute(query, (album_id,))
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return [{"s3_key": row[0], "filename": row[1]} for row in rows]
+
+
 async def deleteAlbum(username: str, code: str) -> bool:
     user = getUser(username)
     if not user:

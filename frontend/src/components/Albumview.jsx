@@ -159,41 +159,46 @@ function Albumview(currentUser) {
     });
   }
 
-  function downloadAll(e) {
+  async function downloadAll(e) {
     e.preventDefault();
-    if (!photos || photos.length === 0) {
-      alert("No photos available to download.");
-      return;
-    }
+    if (!album) return;
 
-    const zip = new JSZip();
+    try {
+      const data = await sendJson("/api/get-download-list", {
+        albumcode: albumcode,
+      });
+      const allPhotos = data?.photos ?? [];
 
-    const fetchBlob = async (url, filename) => {
-      const res = await fetch(url, { mode: "cors" });
-      if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
-      return await res.blob();
-    };
-
-    setSelectMode(true);
-
-    (async () => {
-      try {
-        for (const photo of photos) {
-          if (!photo.s3_key) continue;
-          const blob = await fetchBlob(photo.s3_key, photo.filename);
-          zip.file(photo.filename, blob);
-        }
-
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        const zipName = `${album.name || "album"}_${photos.length}.zip`;
-        saveAs(zipBlob, zipName);
-      } catch (err) {
-        console.error("Error while creating ZIP:", err);
-        alert("An error occurred while preparing the ZIP file.");
-      } finally {
-        setSelectMode(false);
+      if (allPhotos.length === 0) {
+        alert("No photos available to download.");
+        return;
       }
-    })();
+
+      const zip = new JSZip();
+
+      const fetchBlob = async (url, filename) => {
+        const res = await fetch(url, { mode: "cors" });
+        if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
+        return await res.blob();
+      };
+
+      setSelectMode(true);
+
+      for (const photo of allPhotos) {
+        if (!photo.s3_key) continue;
+        const blob = await fetchBlob(photo.s3_key, photo.filename);
+        zip.file(photo.filename, blob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const zipName = `${album.name || "album"}_${allPhotos.length}.zip`;
+      saveAs(zipBlob, zipName);
+    } catch (err) {
+      console.error("Error while creating ZIP:", err);
+      alert("An error occurred while preparing the ZIP file.");
+    } finally {
+      setSelectMode(false);
+    }
   }
 
   function selectAll() {

@@ -57,7 +57,7 @@ The included docker-compose.yml file is configured to run the full required stac
 
 - **Client‑side thumbnail generation** – Thumbnails are created in the browser before upload, eliminating server‑side image processing.  
 - **Direct S3 uploads** – Images are sent straight to S3 via presigned URLs, bypassing the application server.  
-- **Background size sync** – A worker polls S3 for photo and thumbnail dimensions and updates the database with this metadata.  
+- **Background size sync** – A worker polls S3 for photo and thumbnail sizes and updates the database with this metadata.  
 
 ### Browsing Experience
 
