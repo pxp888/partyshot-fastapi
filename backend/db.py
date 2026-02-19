@@ -76,6 +76,14 @@ def init_db() -> None:
             thumb_size INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS subscription (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            album_id INTEGER REFERENCES albums(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, album_id)
+        );
         -- Add columns if they don't exist (primitive migration)
         ALTER TABLE photos ADD COLUMN IF NOT EXISTS size INTEGER;
         ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
@@ -158,19 +166,36 @@ def check_password(username: str, password: str) -> bool:
     return provided_hash == expected_hash
 
 
-def getAlbum_code(code: str) -> dict | None:
+def getAlbum_code(code: str, authuser: str | None = None) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
-               (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
-        FROM albums a
-        JOIN users u ON a.user_id = u.id
-        WHERE a.code = %s;
-        """,
-        (code,),
-    )
+    if authuser:
+        cursor.execute(
+            """
+            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+                   (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1),
+                   EXISTS(
+                       SELECT 1 FROM subscription s 
+                       JOIN users su ON s.user_id = su.id 
+                       WHERE s.album_id = a.id AND su.username = %s
+                   )
+            FROM albums a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.code = %s;
+            """,
+            (authuser, code),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+                   (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
+            FROM albums a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.code = %s;
+            """,
+            (code,),
+        )
     row = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -180,7 +205,7 @@ def getAlbum_code(code: str) -> dict | None:
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
         thumb_key = row[8]
-        return {
+        album_dict = {
             "id": row[0],
             "code": row[1],
             "name": row[2],
@@ -191,6 +216,9 @@ def getAlbum_code(code: str) -> dict | None:
             "created_at": created_at,
             "username": row[7],
         }
+        if authuser:
+            album_dict["subscribed"] = bool(row[9])
+        return album_dict
     else:
         return None
 
@@ -458,17 +486,33 @@ def getAlbums(username: str, authuser: str) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            """
-            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
-                   (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
-            FROM albums a
-            JOIN users u ON a.user_id = u.id
-            WHERE a.user_id = %s
-            ORDER BY a.created_at DESC;
-            """,
-            (user["id"],),
-        )
+        if authuser == username:
+            # If viewing own profile, include subscribed albums
+            cursor.execute(
+                """
+                SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+                       (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
+                FROM albums a
+                JOIN users u ON a.user_id = u.id
+                LEFT JOIN subscription s ON a.id = s.album_id
+                WHERE a.user_id = %s OR s.user_id = %s
+                ORDER BY a.created_at DESC;
+                """,
+                (user["id"], user["id"]),
+            )
+        else:
+            # Viewing someone else's profile, only show their albums
+            cursor.execute(
+                """
+                SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+                       (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
+                FROM albums a
+                JOIN users u ON a.user_id = u.id
+                WHERE a.user_id = %s
+                ORDER BY a.created_at DESC;
+                """,
+                (user["id"],),
+            )
         rows = cursor.fetchall()
     except Exception as e:
         print(f"Error fetching albums: {e}")
@@ -539,6 +583,65 @@ def createAlbum(username: str, album_name: str) -> str | None:
     finally:
         cursor.close()
         conn.close()
+
+
+def subscribe(username: str, albumcode: str) -> bool:
+    user = getUser(username)
+    album = getAlbum_code(albumcode)
+    if not user or not album:
+        return False
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO subscription (user_id, album_id)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id, album_id) DO NOTHING;
+            """,
+            (user["id"], album["id"]),
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error subscribing user {username} to album {albumcode}: {e}")
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def unsubscribe(username: str, albumcode: str) -> bool:
+    user = getUser(username)
+    album = getAlbum_code(albumcode)
+    if not user or not album:
+        return False
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            DELETE FROM subscription
+            WHERE user_id = %s AND album_id = %s;
+            """,
+            (user["id"], album["id"]),
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error unsubscribing user {username} from album {albumcode}: {e}")
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
 
 
 def getPhoto(id: int) -> dict | None:
@@ -888,6 +991,9 @@ def getUsage(username: str) -> dict | None:
     finally:
         cursor.close()
         conn.close()
+
+
+
 
 
 # --------------------------------------------------------------------------- #

@@ -81,6 +81,18 @@ function Albumview(currentUser) {
         }
         break;
 
+      case "subscribe":
+        if (payload) {
+          setAlbum((prev) => ({ ...prev, subscribed: true }));
+        }
+        break;
+
+      case "unsubscribe":
+        if (payload) {
+          setAlbum((prev) => ({ ...prev, subscribed: false }));
+        }
+        break;
+
       default:
         break;
     }
@@ -236,6 +248,14 @@ function Albumview(currentUser) {
     });
   }
 
+  function toggleSubscription() {
+    const action = album.subscribed ? "unsubscribe" : "subscribe";
+    sendJsonMessage({
+      action: action,
+      payload: { albumcode: albumcode },
+    });
+  }
+
   const sortedPhotos = [...photos].sort((a, b) => {
     let valA = a[sortField];
     let valB = b[sortField];
@@ -369,6 +389,12 @@ function Albumview(currentUser) {
           {album.username === currentUser.currentUser && (
             <button onClick={handleDeleteAlbum} className="btn">
               Delete Album
+            </button>
+          )}
+
+          {album.username !== currentUser.currentUser && (
+            <button onClick={toggleSubscription} className="btn">
+              {album.subscribed ? "Unsubscribe" : "Subscribe"}
             </button>
           )}
 

@@ -329,7 +329,7 @@ async def deleteAlbum(websocket, data, username):
 
 async def getAlbum(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
-    album = db.getAlbum_code(albumcode)
+    album = db.getAlbum_code(albumcode, username)
     if not album:
         print("getAlbum - no album found")
         return
@@ -408,7 +408,20 @@ async def getUsage(websocket, data, username):
     usage = db.getUsage(username)
     message = {"action": "getUsage", "payload": usage}
     await websocket.send_json(message)
-    
+
+
+async def subscribe(websocket, data, username):
+    albumcode = data["payload"]["albumcode"]
+    ok = db.subscribe(username, albumcode)
+    message = {"action": "subscribe", "payload": ok}
+    await websocket.send_json(message)
+
+
+async def unsubscribe(websocket, data, username):
+    albumcode = data["payload"]["albumcode"]
+    ok = db.unsubscribe(username, albumcode)
+    message = {"action": "unsubscribe", "payload": ok}
+    await websocket.send_json(message)
 
 
 
@@ -457,6 +470,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 await getEmail(websocket, payload, username)
             elif action == "getUsage":
                 await getUsage(websocket, payload, username)
+            elif action == "subscribe":
+                await subscribe(websocket, payload, username)
+            elif action == "unsubscribe":
+                await unsubscribe(websocket, payload, username)
             else:
                 print("websocket - unknown action")
                 await websocket.close(code=1008)
