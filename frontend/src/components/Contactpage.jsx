@@ -21,17 +21,22 @@ function Contactpage() {
     e.preventDefault();
     setStatus("sending");
 
-    // Simulate API call
     try {
-      console.log("Submitting contact form:", formData);
-      // In a real app, you would use fetch() or axios here
-      // const response = await fetch('/api/contact', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
+      console.log("Submitting contact form to ntfy:", formData);
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch("http://51.20.201.88:8000/partyShotsContact", {
+        method: "POST",
+        body: `From: ${formData.email}\nSubject: ${formData.subject}\n\n${formData.body}`,
+        headers: {
+          "Title": `Contact Form: ${formData.subject}`,
+          "Tags": "email,mailbox_with_mail",
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       setStatus("success");
       setFormData({ email: "", subject: "", body: "" });
 
