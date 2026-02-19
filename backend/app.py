@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+import time 
 
 import aws
 import db
@@ -339,7 +340,62 @@ async def getAlbum(websocket, data, username):
     await manager.subscribe(websocket, f"album-{albumcode}")
 
 
+async def attach_presigned_urls(photos_data: dict):
+    if not photos_data or "photos" not in photos_data or not photos_data["photos"]:
+        return photos_data
+
+    photos = photos_data["photos"]
+    
+    # Collect all unique S3 keys that need presigning
+    keys_to_check = []
+    for p in photos:
+        if p.get("s3_key"):
+            keys_to_check.append(p["s3_key"])
+        if p.get("thumb_key"):
+            keys_to_check.append(p["thumb_key"])
+    
+    if not keys_to_check:
+        return photos_data
+
+    # deduplicate
+    unique_s3_keys = list(set(keys_to_check))
+    
+    # Construct redis keys
+    redis_keys = [f"presigned:{k}" for k in unique_s3_keys]
+    
+    # MGET from redis
+    cached_urls = await redis_client.mget(*redis_keys)
+    url_map = dict(zip(unique_s3_keys, cached_urls))
+    
+    new_presigned_urls = {}
+    
+    for p in photos:
+        for key_type in ["s3_key", "thumb_key"]:
+            s3_key = p.get(key_type)
+            if not s3_key:
+                continue
+            
+            presigned_url = url_map.get(s3_key)
+            if not presigned_url:
+                # Generate new presigned URL (12 hour expiration)
+                presigned_url = aws.create_presigned_url(s3_key, expiration=43200)
+                if presigned_url:
+                    new_presigned_urls[f"presigned:{s3_key}"] = presigned_url
+            
+            p[key_type] = presigned_url
+
+    # Cache new URLs if any
+    if new_presigned_urls:
+        async with redis_client.pipeline(transaction=False) as pipe:
+            for r_key, url in new_presigned_urls.items():
+                pipe.set(r_key, url, ex=43200)
+            await pipe.execute()
+            
+    return photos_data
+
+
 async def getPhotos(websocket, data, username):
+    start = time.time()
     albumcode = data["payload"]["albumcode"]
     limit = data["payload"].get("limit", 100)
     offset = data["payload"].get("offset", 0)
@@ -353,9 +409,14 @@ async def getPhotos(websocket, data, username):
         sort_field=sort_field,
         sort_order=sort_order,
     )
+    
+    if photos_data:
+        photos_data = await attach_presigned_urls(photos_data)
+        
     message = {"action": "getPhotos", "payload": photos_data}
     await websocket.send_json(message)
-
+    end = time.time()
+    print(f"getPhotos: {end - start}")
 
 async def deletePhoto(websocket, data, username):
     albumcode = data["payload"]["album_code"]

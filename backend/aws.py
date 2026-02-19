@@ -25,7 +25,7 @@ def upload_bytes_to_s3(bytes_data, object_name):
     return True
 
 
-def create_presigned_url(object_name, expiration=3600):
+def create_presigned_url(object_name, expiration=86400):
     """
     Generate a presigned URL to SHARE/VIEW an object.
     :param expiration: Time in seconds (default 1 hour)
