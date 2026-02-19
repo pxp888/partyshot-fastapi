@@ -166,11 +166,19 @@
     .albumActions {
         position: sticky;
         top: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         padding: 0.6rem 0.75rem;
         gap: var(--gap-sm);
+        white-space: normal;
+        overflow-x: visible;
     }
 
     .sortControls {
         margin-left: 0;
+        grid-column: 1 / -1;
+        justify-content: center;
     }
+
+
 }
