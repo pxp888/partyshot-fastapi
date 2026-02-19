@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import "./style/FileItem.css";
 import blankImage from '../assets/blank.jpg';
 import videoImage from '../assets/video.webp';
@@ -10,11 +11,37 @@ function FileItem({
   setSelected,
   setFocus,
 }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const domRef = useRef();
+
   const isSelected = selected.includes(file.id);
 
   const videoExtensions = /\.(mp4|webm|ogg|mov|avi|wmv|mkv|flv)$/i;
   const isVideo = videoExtensions.test(file.filename);
   const placeholder = isVideo ? videoImage : blankImage;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(domRef.current);
+        }
+      });
+    }, {
+      rootMargin: '100px', // Load slightly before it comes into view
+    });
+
+    if (domRef.current) {
+      observer.observe(domRef.current);
+    }
+
+    return () => {
+      if (domRef.current) {
+        observer.unobserve(domRef.current);
+      }
+    };
+  }, []);
 
   function handleClick(e) {
     e.preventDefault();
@@ -31,15 +58,24 @@ function FileItem({
 
   return (
     <div
+      ref={domRef}
       className={`fileItem ${isSelected ? "selected" : ""}`}
       onClick={handleClick}
     >
       <div className="thumbnail">
-        <img
-          src={file.thumb_key || placeholder}
-          alt={`${file.filename}`}
-          onError={(e) => { e.target.src = placeholder; }}
-        />
+        {isVisible && (
+          <img
+            src={file.thumb_key || placeholder}
+            alt={`${file.filename}`}
+            onError={(e) => { e.target.src = placeholder; }}
+          />
+        )}
+        {!isVisible && (
+          <img
+            src={placeholder}
+            alt={`${file.filename}`}
+          />
+        )}
       </div>
       {isSelected && <div className="selectscreen" />}
       <div className="fileInfo">
