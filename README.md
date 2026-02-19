@@ -67,9 +67,24 @@
    - `backend/env.py`: AWS keys, Redis URL, and JWT secrets.
    - `frontend/.env`: WebSocket and API endpoint URLs.
 
-3. **Launch the stack**:
+
+3. **Build the frontend**:
    ```bash
-   docker-compose up --build
+   cd frontend
+   npm install
+   npm run build
+   ```
+
+
+4. **Launch the stack**:
+   ```bash
+   docker build -t fast1 .
+   docker-compose up -d
+   ```
+
+5. **Verify the stack**:
+   ```bash
+   docker ps
    ```
 
 ---
