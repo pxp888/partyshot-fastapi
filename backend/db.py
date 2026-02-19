@@ -255,7 +255,7 @@ def getPhotos(album_code: str) -> dict | None:
     cursor.execute(
         """
         SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.filename,
-               p.created_at, u.username
+               p.created_at, u.username, p.size
         FROM photos p
         JOIN users u ON p.user_id = u.id
         WHERE p.album_id = %s
@@ -284,7 +284,8 @@ def getPhotos(album_code: str) -> dict | None:
                 "thumb_key": aws.create_presigned_url(row[4]),
                 "filename": row[5],
                 "created_at": created_at,
-                "username": row[7],  # <-- added field
+                "username": row[7],
+                "size": row[8],
             }
         )
     return {"photos": photos}

@@ -1,4 +1,3 @@
-/* Existing rules – keep them as they are */
 .imageView {
     display: flex;
     flex-direction: column;
@@ -15,35 +14,64 @@
 }
 
 .primo {
-    /* Let the container shrink to fit the viewport */
     max-width: 100vw;
-    /* 100 % of the viewport width */
     max-height: 100vh;
-    /* 100 % of the viewport height */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* object‑fit on the image, not the container */
-    /* color: white; */
 }
 
-/* New rule – constrain the image itself */
 .primo img {
-    /* Ensure the image never exceeds the viewport */
     max-width: 100vw;
     max-height: 100vh;
     object-fit: contain;
-    /* Keeps aspect ratio and prevents cropping */
     display: block;
     user-select: none;
-    /* Prevent accidental text selection on long press */
     -webkit-user-drag: none;
 }
 
 @media (max-width: 768px) {
     .imageView {
         background-color: rgba(0, 0, 0, 0.95);
-        /* Slightly darker for better focus on mobile */
     }
+}
+
+.fileDetails {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 40px 20px 20px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(10px);
+    z-index: 10000;
+    text-align: center;
+}
+
+.fileDetails:hover {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.fileDetails .filename {
+    font-size: 1.2rem;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.fileDetails .meta {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.fileDetails .meta strong {
+    color: #4dabf7;
+    /* Subtle blue for username */
 }
