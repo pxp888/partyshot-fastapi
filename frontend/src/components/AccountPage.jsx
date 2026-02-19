@@ -159,7 +159,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="password">New Password (min 3 chars)</label>
+                        <label htmlFor="password">New Password (min 6 chars)</label>
                         <input
                             type="password"
                             id="password"
