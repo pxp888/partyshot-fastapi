@@ -12,6 +12,7 @@ function FileItem({
   setFocus,
 }) {
   const [isVisible, setIsVisible] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const domRef = useRef();
 
   const isSelected = selected.includes(file.id);
@@ -29,7 +30,7 @@ function FileItem({
         }
       });
     }, {
-      rootMargin: '100px', // Load slightly before it comes into view
+      rootMargin: '100px',
     });
 
     if (domRef.current) {
@@ -63,17 +64,26 @@ function FileItem({
       onClick={handleClick}
     >
       <div className="thumbnail">
+        {/* Placeholder - always rendered but hidden by real image when loaded */}
+        <img
+          src={placeholder}
+          alt=""
+          className={!isLoaded ? "loaded" : ""}
+          style={{ zIndex: 1 }}
+        />
+
+        {/* Actual Image - fades in when visible and fully loaded */}
         {isVisible && (
           <img
             src={file.thumb_key || placeholder}
             alt={`${file.filename}`}
-            onError={(e) => { e.target.src = placeholder; }}
-          />
-        )}
-        {!isVisible && (
-          <img
-            src={placeholder}
-            alt={`${file.filename}`}
+            className={isLoaded ? "loaded" : ""}
+            style={{ zIndex: 2 }}
+            onLoad={() => setIsLoaded(true)}
+            onError={(e) => {
+              e.target.src = placeholder;
+              setIsLoaded(true);
+            }}
           />
         )}
       </div>
