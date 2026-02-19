@@ -16,12 +16,16 @@ async def say_hello(ctx, name: str):
 
 async def check_photo_sizes(ctx, photo_id: int, s3_key: str, thumb_key: str = None):
     print(f"Checking sizes for photo {photo_id}: {s3_key}, {thumb_key}")
-    size = aws.s3size(s3_key)
+    
+    # Run blocking S3 calls in threads
+    size = await asyncio.to_thread(aws.s3size, s3_key)
     thumb_size = None
     if thumb_key:
-        thumb_size = aws.s3size(thumb_key)
+        thumb_size = await asyncio.to_thread(aws.s3size, thumb_key)
     
-    db.updatePhotoSizes(photo_id, size, thumb_size)
+    # Run blocking DB call in thread
+    await asyncio.to_thread(db.updatePhotoSizes, photo_id, size, thumb_size)
+    
     print(f"Updated sizes for photo {photo_id}: size={size}, thumb_size={thumb_size}")
     return {"photo_id": photo_id, "size": size, "thumb_size": thumb_size}
 
