@@ -318,7 +318,7 @@ async def getAlbums(websocket, data, username):
 
 async def deleteAlbum(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
-    ok = db.deleteAlbum(username, albumcode)
+    ok = await db.deleteAlbum(username, albumcode)
     message = {"action": "deleteAlbum", "payload": ok}
     await websocket.send_json(message)
 
@@ -418,10 +418,11 @@ async def getPhotos(websocket, data, username):
     end = time.time()
     print(f"getPhotos: {end - start}")
 
+
 async def deletePhoto(websocket, data, username):
     albumcode = data["payload"]["album_code"]
     photo_id = data["payload"]["photo_id"]
-    ok = db.deletePhoto(photo_id, username)
+    ok = await db.deletePhoto(photo_id, username)
     if ok:
         message = {"action": "deletePhoto", "payload": photo_id}
         await redis_client.publish(f"album-{albumcode}", json.dumps(message))

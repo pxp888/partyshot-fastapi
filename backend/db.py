@@ -3,15 +3,24 @@ import hashlib
 import random
 import uuid
 
+import arq
 import aws
 import env
 import psycopg2
-
-# from psycopg2 import sql
+from arq.connections import RedisSettings
 
 # --------------------------------------------------------------------------- #
 # Database connection helpers
 # --------------------------------------------------------------------------- #
+
+_pool = None
+
+
+async def enqueue_delete_key(key: str):
+    global _pool
+    if _pool is None:
+        _pool = await arq.create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
+    await _pool.enqueue_job("delete_s3_object", key)
 
 
 def get_connection():
@@ -314,7 +323,7 @@ def getPhotos(
     }
 
 
-def deleteAlbum(username: str, code: str) -> bool:
+async def deleteAlbum(username: str, code: str) -> bool:
     user = getUser(username)
     if not user:
         return False
@@ -345,12 +354,12 @@ def deleteAlbum(username: str, code: str) -> bool:
         )
         photo_rows = cursor.fetchall()
 
-        # 4. Delete S3 objects for each photo
+        # 4. Enqueue S3 deletions
         for s3_key, thumb_key in photo_rows:
             if s3_key:
-                aws.delete_file_from_s3(s3_key)
+                await enqueue_delete_key(s3_key)
             if thumb_key:
-                aws.delete_file_from_s3(thumb_key)
+                await enqueue_delete_key(thumb_key)
 
         # 5. Delete photo records
         cursor.execute(
@@ -447,7 +456,7 @@ def addPhoto(data: dict) -> dict | None:
     }
 
 
-def deletePhoto(id: str, username: str) -> bool:
+async def deletePhoto(id: str, username: str) -> bool:
     user = getUser(username)
     if not user:
         return False
@@ -494,11 +503,11 @@ def deletePhoto(id: str, username: str) -> bool:
         if user["id"] not in (photo_owner_id, album_owner_id):
             return False
 
-        # Delete S3 objects if they exist
+        # Enqueue S3 deletions if they exist
         if s3_key:
-            aws.delete_file_from_s3(s3_key)
+            await enqueue_delete_key(s3_key)
         if thumb_key:
-            aws.delete_file_from_s3(thumb_key)
+            await enqueue_delete_key(thumb_key)
 
         # Perform the delete from DB
         cursor.execute(

@@ -15,7 +15,7 @@ async def say_hello(ctx, name: str):
 
 
 async def check_photo_sizes(ctx, photo_id: int, s3_key: str, thumb_key: str = None):
-    print(f"Checking sizes for photo {photo_id}: {s3_key}, {thumb_key}")
+    # print(f"Checking sizes for photo {photo_id}: {s3_key}, {thumb_key}")
     
     # Run blocking S3 calls in threads
     size = await asyncio.to_thread(aws.s3size, s3_key)
@@ -57,8 +57,15 @@ async def recount_missing_sizes(ctx):
     return {"updated": count}
 
 
+async def delete_s3_object(ctx, key: str):
+    if key:
+        print(f"Deleting {key} from S3")
+        await asyncio.to_thread(aws.delete_file_from_s3, key)
+    return True
+
+
 # 2. Worker settings
 class WorkerSettings:
-    functions = [say_hello, check_photo_sizes, recount_missing_sizes]
+    functions = [say_hello, check_photo_sizes, recount_missing_sizes, delete_s3_object]
     # Connect to the Redis Docker container we set up earlier
     redis_settings = RedisSettings(host=env.REDIS_URL2, port=6379)
