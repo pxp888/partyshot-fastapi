@@ -29,7 +29,7 @@ function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Convert the canvas to a Blob (default to PNG)
+      // Convert the canvas to a Blob (using webp for better compression)
       canvas.toBlob(
         (blob) => {
           if (blob) {
@@ -38,8 +38,8 @@ function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
             reject(new Error("Canvas thumbnail generation failed."));
           }
         },
-        "image/png",
-        0.92, // quality (ignored for PNG but kept for consistency)
+        "image/webp",
+        0.8, // quality (0.8 is a good balance for thumbnails)
       );
     };
 
@@ -106,7 +106,7 @@ function Uploader({ album, setAlbum }) {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-          filename: `${file.name}_thumb.png`,
+          filename: `${file.name}_thumb.webp`,
           album_code: album.code,
         }),
       });
