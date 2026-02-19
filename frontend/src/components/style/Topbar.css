@@ -118,8 +118,9 @@
     }
 }
 
-@media (max-width: 750px) {
+@media (max-width: 768px) {
     .topbar {
+        position: static;
         padding: 1rem;
         flex-wrap: wrap;
         justify-content: center;

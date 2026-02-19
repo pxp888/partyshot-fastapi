@@ -58,7 +58,8 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     margin: 0;
-    padding: 0.75rem 2rem;
+    padding: 0.75rem 1rem;
+    /* Reduced padding for mobile */
     display: flex;
     justify-content: flex-start;
     gap: var(--gap-md);
@@ -69,6 +70,17 @@
     z-index: 100;
     border-bottom: 1px solid var(--border-glass, rgba(255, 255, 255, 0.1));
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow-x: auto;
+    /* Allow horizontal scroll for buttons */
+    white-space: nowrap;
+    /* Prevent buttons from wrapping */
+    scrollbar-width: none;
+    /* Hide scrollbar for cleaner look */
+}
+
+.albumActions::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar for Chrome/Safari */
 }
 
 .sortControls {
@@ -104,7 +116,8 @@
     justify-content: center;
 }
 
-.sortOrderBtn:hover, .sortControls select:hover {
+.sortOrderBtn:hover,
+.sortControls select:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
@@ -126,8 +139,38 @@
 }
 
 /* ----- Responsive tweaks ------------------------------------------- */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
     .fileList {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        margin: 0 var(--gap-sm);
+        gap: 6px;
+    }
+
+    .infoItem {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .infoItem label {
+        text-align: left;
+        font-size: 0.8rem;
+    }
+
+    .infoItem p {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .albumActions {
+        position: sticky;
+        top: 0;
+        padding: 0.6rem 0.75rem;
+        gap: var(--gap-sm);
+    }
+
+    .sortControls {
+        margin-left: 0;
     }
 }
