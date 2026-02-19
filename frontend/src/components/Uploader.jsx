@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import "./style/Uploader.css";
 
@@ -199,23 +200,25 @@ function Uploader({ album, setAlbum }) {
         {totalFiles > 0 ? "Uploading..." : "Upload Files"}
       </button>
 
-      {totalFiles > 0 && (
-        <div className="uploader-progress-container">
-          <div className="uploader-status-text">
-            {completedFiles === totalFiles
-              ? "All files uploaded!"
-              : `Uploading ${completedFiles + 1} of ${totalFiles}...`}
-          </div>
-          <div className="uploader-progress-track">
-            <div
-              className="uploader-progress-bar"
-              style={{
-                width: `${(completedFiles / totalFiles) * 100}%`,
-              }}
-            />
-          </div>
-        </div>
-      )}
+      {totalFiles > 0 &&
+        createPortal(
+          <div className="uploader-progress-container">
+            <div className="uploader-status-text">
+              {completedFiles === totalFiles
+                ? "All files uploaded!"
+                : `Uploading ${completedFiles + 1} of ${totalFiles}...`}
+            </div>
+            <div className="uploader-progress-track">
+              <div
+                className="uploader-progress-bar"
+                style={{
+                  width: `${(completedFiles / totalFiles) * 100}%`,
+                }}
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
