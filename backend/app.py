@@ -399,6 +399,12 @@ async def getEmail(websocket, data, username):
     email = db.getEmail(username)
     message = {"action": "getEmail", "payload": email}
     await websocket.send_json(message)
+
+
+async def getUsage(websocket, data, username):
+    usage = db.getUsage(username)
+    message = {"action": "getUsage", "payload": usage}
+    await websocket.send_json(message)
     
 
 
@@ -446,6 +452,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await setUserData(websocket, payload, username)
             elif action == "getEmail":
                 await getEmail(websocket, payload, username)
+            elif action == "getUsage":
+                await getUsage(websocket, payload, username)
             else:
                 print("websocket - unknown action")
                 await websocket.close(code=1008)

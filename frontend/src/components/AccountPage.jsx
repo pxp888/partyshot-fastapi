@@ -13,10 +13,12 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     const [status, setStatus] = useState({ type: "", message: "" });
     const [loading, setLoading] = useState(false);
     const [emailPlaceholder, setEmailPlaceholder] = useState("Loading current email...");
+    const [usage, setUsage] = useState(null);
 
     useEffect(() => {
         if (currentUser) {
             sendJsonMessage({ action: "getEmail" });
+            sendJsonMessage({ action: "getUsage" });
         }
     }, [currentUser, sendJsonMessage]);
 
@@ -52,6 +54,8 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                 }
             } else if (lastJsonMessage.action === "getEmail") {
                 setEmailPlaceholder(lastJsonMessage.payload || "No email set");
+            } else if (lastJsonMessage.action === "getUsage") {
+                setUsage(lastJsonMessage.payload);
             }
         }
     }, [lastJsonMessage, currentUser, setCurrentUser, sendJsonMessage]);
@@ -100,6 +104,34 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                 <div className="current-user-info">
                     Current User: <strong>{currentUser}</strong>
                 </div>
+
+                {usage && (
+                    <div className="usage-stats">
+                        <h3>Usage Statistics</h3>
+                        <div className="usage-grid">
+                            <div className="usage-item">
+                                <span className="usage-label">Photos Uploaded</span>
+                                <span className="usage-value">{usage["number of photos"]}</span>
+                            </div>
+                            <div className="usage-item">
+                                <span className="usage-label">Albums Created</span>
+                                <span className="usage-value">{usage["number of albums"]}</span>
+                            </div>
+                            <div className="usage-item">
+                                <span className="usage-label">Guest Photos (in your albums)</span>
+                                <span className="usage-value">{usage["number of other peoples photos in users albums"]}</span>
+                            </div>
+                            <div className="usage-item">
+                                <span className="usage-label">Your Photos Size</span>
+                                <span className="usage-value">{(usage["total size of photos"] / (1024 * 1024)).toFixed(2)} MB</span>
+                            </div>
+                            <div className="usage-item">
+                                <span className="usage-label">Total Album Size</span>
+                                <span className="usage-value">{(usage["total size in user albums"] / (1024 * 1024)).toFixed(2)} MB</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <form className="account-form" onSubmit={handleSubmit}>
                     <div className="form-group">

@@ -827,6 +827,74 @@ def getEmail(username: str) -> str:
         conn.close()    
 
 
+def getUsage(username: str) -> dict:
+    pass 
+    
+    
+
+def getUsage(username: str) -> dict | None:
+    """
+    Returns a dictionary with usage statistics for the given user.
+    """
+    user = getUser(username)
+    if not user:
+        return None
+    user_id = user["id"]
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # number of photos
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE user_id = %s", (user_id,))
+        num_photos = cursor.fetchone()[0]
+
+        # number of albums
+        cursor.execute("SELECT COUNT(*) FROM albums WHERE user_id = %s", (user_id,))
+        num_albums = cursor.fetchone()[0]
+
+        # number of other peoples photos in users albums
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM photos p
+            JOIN albums a ON p.album_id = a.id
+            WHERE a.user_id = %s AND p.user_id != %s
+            """,
+            (user_id, user_id),
+        )
+        num_other_photos = cursor.fetchone()[0]
+
+        # total size of photos
+        cursor.execute(
+            "SELECT SUM(COALESCE(size, 0) + COALESCE(thumb_size, 0)) FROM photos WHERE user_id = %s",
+            (user_id,),
+        )
+        total_size_photos = cursor.fetchone()[0] or 0
+
+        # total size in user albums
+        cursor.execute(
+            """
+            SELECT SUM(COALESCE(p.size, 0) + COALESCE(p.thumb_size, 0))
+            FROM photos p
+            JOIN albums a ON p.album_id = a.id
+            WHERE a.user_id = %s
+            """,
+            (user_id,),
+        )
+        total_size_albums = cursor.fetchone()[0] or 0
+
+        return {
+            "number of photos": num_photos,
+            "number of albums": num_albums,
+            "number of other peoples photos in users albums": num_other_photos,
+            "total size of photos": int(total_size_photos),
+            "total size in user albums": int(total_size_albums),
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+
 # --------------------------------------------------------------------------- #
 # Admin functions
 # --------------------------------------------------------------------------- #

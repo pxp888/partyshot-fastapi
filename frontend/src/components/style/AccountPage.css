@@ -144,6 +144,57 @@
     color: #1e40af;
 }
 
+
+.usage-stats {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.usage-stats h3 {
+    font-size: 1.2rem;
+    color: #444;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.usage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.usage-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Make the guest photos item span both columns */
+.usage-item:nth-child(3) {
+    grid-column: span 2;
+}
+
+.usage-label {
+    font-size: 0.8rem;
+    color: #777;
+    margin-bottom: 0.25rem;
+    text-align: center;
+}
+
+.usage-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e57373;
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;
