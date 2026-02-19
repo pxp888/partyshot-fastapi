@@ -166,36 +166,19 @@ def check_password(username: str, password: str) -> bool:
     return provided_hash == expected_hash
 
 
-def getAlbum_code(code: str, authuser: str | None = None) -> dict | None:
+def getAlbum(code: str) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
-    if authuser:
-        cursor.execute(
-            """
-            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
-                   (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1),
-                   EXISTS(
-                       SELECT 1 FROM subscription s 
-                       JOIN users su ON s.user_id = su.id 
-                       WHERE s.album_id = a.id AND su.username = %s
-                   )
-            FROM albums a
-            JOIN users u ON a.user_id = u.id
-            WHERE a.code = %s;
-            """,
-            (authuser, code),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
-                   (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
-            FROM albums a
-            JOIN users u ON a.user_id = u.id
-            WHERE a.code = %s;
-            """,
-            (code,),
-        )
+    cursor.execute(
+        """
+        SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+               (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
+        FROM albums a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.code = %s;
+        """,
+        (code,),
+    )
     row = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -205,7 +188,7 @@ def getAlbum_code(code: str, authuser: str | None = None) -> dict | None:
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
         thumb_key = row[8]
-        album_dict = {
+        return {
             "id": row[0],
             "code": row[1],
             "name": row[2],
@@ -216,15 +199,53 @@ def getAlbum_code(code: str, authuser: str | None = None) -> dict | None:
             "created_at": created_at,
             "username": row[7],
         }
-        if authuser:
-            album_dict["subscribed"] = bool(row[9])
-        return album_dict
-    else:
-        return None
+    return None
+
+
+def getAlbumWithSub(code: str, authuser: str) -> dict | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+               (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1),
+               EXISTS(
+                   SELECT 1 FROM subscription s 
+                   JOIN users su ON s.user_id = su.id 
+                   WHERE s.album_id = a.id AND su.username = %s
+               )
+        FROM albums a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.code = %s;
+        """,
+        (authuser, code),
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if row:
+        created_at = row[6]
+        if isinstance(created_at, datetime.datetime):
+            created_at = created_at.isoformat()
+        thumb_key = row[8]
+        return {
+            "id": row[0],
+            "code": row[1],
+            "name": row[2],
+            "user_id": row[3],
+            "open": bool(row[4]),
+            "public": bool(row[5]),
+            "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
+            "created_at": created_at,
+            "username": row[7],
+            "subscribed": bool(row[9]),
+        }
+    return None
 
 
 def getPhotos(album_code: str) -> dict | None:
-    album = getAlbum_code(album_code)
+    album = getAlbum(album_code)
     if album is None:
         return None
     album_id = album["id"]
@@ -587,7 +608,7 @@ def createAlbum(username: str, album_name: str) -> str | None:
 
 def subscribe(username: str, albumcode: str) -> bool:
     user = getUser(username)
-    album = getAlbum_code(albumcode)
+    album = getAlbum(albumcode)
     if not user or not album:
         return False
 
@@ -615,7 +636,7 @@ def subscribe(username: str, albumcode: str) -> bool:
 
 def unsubscribe(username: str, albumcode: str) -> bool:
     user = getUser(username)
-    album = getAlbum_code(albumcode)
+    album = getAlbum(albumcode)
     if not user or not album:
         return False
 
@@ -734,7 +755,7 @@ def toggleOpen(id: str, username: str) -> dict | None:
 
         conn.commit()
 
-        return getAlbum_code(album_code)
+        return getAlbum(album_code)
 
     except Exception:
         conn.rollback()
@@ -794,7 +815,7 @@ def togglePublic(id: str, username: str) -> dict | None:
 
         conn.commit()
 
-        return getAlbum_code(album_code)
+        return getAlbum(album_code)
 
     except Exception:
         conn.rollback()
@@ -811,7 +832,7 @@ def search(term: str) -> str:
         return f"/user/{user['username']}"
 
     # 2. Check for a matching album code.
-    album = getAlbum_code(term)
+    album = getAlbum(term)
     if album:
         return f"/album/{album['code']}"
 
@@ -824,7 +845,7 @@ def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
     if user is None:
         return False
     
-    album = getAlbum_code(albumcode)
+    album = getAlbum(albumcode)
     if album is None:
         return False
     

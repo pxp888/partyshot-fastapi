@@ -161,7 +161,7 @@ async def get_presigned(
     if not current_user:
         return
     user = db.getUser(str(current_user))
-    album = db.getAlbum_code(album_code)
+    album = db.getAlbum(album_code)
     if not album:
         return
     if not album["open"]:
@@ -331,7 +331,7 @@ async def deleteAlbum(websocket, data, username):
 
 async def getAlbum(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
-    album = db.getAlbum_code(albumcode, username)
+    album = db.getAlbumWithSub(albumcode, username)
     if not album:
         print("getAlbum - no album found")
         return
