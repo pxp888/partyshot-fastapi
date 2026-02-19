@@ -230,6 +230,17 @@ def cleanup_endpoint(Authorize: AuthJWT = Depends()):
     return {"status": "cleanup performed"}
 
 
+@app.post("/api/recount-sizes")
+async def recount_sizes_endpoint(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    if current_user != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    await app.state.redis.enqueue_job("recount_missing_sizes")
+    return {"status": "recount task enqueued"}
+
+
 @app.get("/api/space-used")
 def space_used(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()

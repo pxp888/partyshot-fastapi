@@ -60,6 +60,30 @@ function Adminpage({ currentUser }) {
     }
   };
 
+  const handleRecountSizes = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("/api/recount-sizes", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert("Recount task failed: " + (error.detail || response.statusText));
+        return;
+      }
+
+      alert("Recount task enqueued. Sizes will be updated in the background.");
+    } catch (err) {
+      console.error(err);
+      alert("Error enqueuing recount task");
+    }
+  };
+
   const formatBytes = (bytes) => {
     if (bytes === 0) return "0 B";
     if (!bytes) return "Loading...";
@@ -90,6 +114,10 @@ function Adminpage({ currentUser }) {
                     <span className="usage-label">System Thumbnails</span>
                     <div className="usage-value">{formatBytes(spaceUsed.thumbs)}</div>
                   </div>
+                  <div className="usage-item">
+                    <span className="usage-label">Photos Missing Size</span>
+                    <div className="usage-value">{spaceUsed.no_size_count}</div>
+                  </div>
                   <div className="usage-item total-usage">
                     <span className="usage-label">Total Cloud Storage</span>
                     <div className="total-value">
@@ -103,6 +131,16 @@ function Adminpage({ currentUser }) {
             </div>
 
             <div className="action-section">
+              <button className="recount-button" onClick={handleRecountSizes}>
+                Recount Missing Sizes
+              </button>
+              <p className="cleanup-hint">
+                Triggers a background process to fetch and record dimensions for photos that
+                currently have no size data in the database.
+              </p>
+            </div>
+
+            <div className="action-section">
               <button className="cleanup-button" onClick={handleCleanup}>
                 Run System Cleanup
               </button>
@@ -111,6 +149,8 @@ function Adminpage({ currentUser }) {
                 obsolete files that are no longer referenced in any albums.
               </p>
             </div>
+
+
           </div>
         ) : (
           <div className="denied-container">

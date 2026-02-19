@@ -1,70 +1,96 @@
-# partyShots
+# 📸 PartyShots
 
-live site: 
-[http://51.20.201.88/]
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
 
-This is a site intended for easy photo sharing.
+**PartyShots** is a high-performance, real-time photo-sharing platform designed for seamless event photography and collaborative albums. Built with a modern tech stack, it features direct-to-S3 uploads, real-time WebSocket updates, and a glassmorphic React interface.
 
-## Description 
+---
 
-This app has **users**, **albums**, and **photos** (which may any type of file). 
+## ✨ Project Preview
 
-Users create albums.
+![PartyShots Interface](./frontend/src/assets/screen1.webp)
+*Experience a clean, modern, and minimal design tailored for effortless photo sharing.*
 
-Albums have flags for **open** and **public**
+---
 
-**open** means others can upload files.
-**public** means it shows up on a users page.
+## 🚀 Key Features
 
-Any user can upload photos to any album.  
+- **🔐 Secure Authentication**: JWT-based user accounts with persistent sessions and authorized WebSocket connections.
+- **📁 Collaborative Albums**: Create albums with granular permissions:
+  - **Open**: Allow anyone to contribute photos to your event.
+  - **Public**: Showcase your best work on your public profile.
+- **☁️ Direct S3 Uploads**: Files bypass the server and go straight to AWS S3 via presigned URLs, ensuring maximum performance and minimal server load.
+- **⚡ Real-time Updates**: Instant UI refreshes across all devices using Redis Pub/Sub and WebSockets.
+- **🖼️ Smart Metadata**: Automatic tracking of photo sizes and dimensions via background workers.
+- **🔍 Global Search**: Quickly find albums and users with built-in search functionality.
+- **🛠️ Admin Dashboard**: Monitor storage usage and manage system integrity.
 
-Only an album owner can delete an album.  
+---
 
-A photo can be deleted by the album owner, or the photo owner.  
+## 🛠️ Tech Stack
 
+### Backend
+- **FastAPI**: Asynchronous Python framework for high-concurrency APIs.
+- **Postgres**: Reliable relational database for metadata.
+- **Redis**: Powering real-time messaging and WebSocket synchronization.
+- **Arq**: Distributed background job processing.
+- **S3 & Boto3**: Scalable object storage for high-resolution images.
 
+### Frontend
+- **React 18**: Modern UI development with Hooks and Context API.
+- **Vite**: Lightning-fast build tool and development server.
+- **Vanilla CSS**: Premium, custom-crafted styles with a focus on aesthetics.
 
+---
 
-## Technologies used
+## ⚙️ Getting Started
 
-### backend
+### Prerequisites
+- Docker & Docker Compose
+- AWS Account (S3 Bucket)
+- Node.js (for local frontend development)
+- Python 3.10+ (for local backend development)
 
-**FastAPI** server with JWT Auth, and authorized websockets
+### Quick Start with Docker
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/pxp888/partyshot-fastapi.git
+   cd partyshot-fastapi
+   ```
 
-**redis** for arq background workers and authorization
+2. **Configure Environment**:
+   Create the following files (refer to `example.env` templates):
+   - `.env`: Database credentials for Docker Compose.
+   - `backend/env.py`: AWS keys, Redis URL, and JWT secrets.
+   - `frontend/.env`: WebSocket and API endpoint URLs.
 
-**postgres** backend database
+3. **Launch the stack**:
+   ```bash
+   docker-compose up --build
+   ```
 
-**nginx** proxy and static serving
+---
 
-**docker** and docker-compose
+## 📦 Deployment Notes
 
-**EC2** hosting
+- **Build Frontend First**: The frontend must be built (`npm run build`) before creating the production Docker image, as the backend serves the static assets.
+- **NGINX**: A pre-configured `nginx.conf` is provided to handle reverse proxying and static file serving.
+- **EC2 Hosting**: Optimized for deployment on Amazon EC2 with S3 integration.
 
-**S3** direct uploads to S3, the server only stores metadata. 
+---
 
-**React/Vite** frontend
+## 🗺️ Roadmap
+- [ ] CloudFront integration for faster global delivery.
+- [ ] Advanced album editor permissions.
+- [ ] Mobile-first progressive web app (PWA) features.
 
+---
 
+## 📄 License
+Individual/Private Use. See repository owner for details.
 
-
-
-
-
-
-## todo list
-
-* Cloudfront & S3 setup
-* add editors table
-* track item size
-* item sorting 
-
-
-
-## deploy notes 
-
-* build front end before image, it is not part of the Dockerfile
-* there are three environment files to create.  
-  * **.env** - database location for docker-compose
-  * **backend/env.py** - aws, everything else for the server
-  * **frontend/.env**  - websocket url
+---
+*Created with ❤️ by [pxp888](https://github.com/pxp888)*

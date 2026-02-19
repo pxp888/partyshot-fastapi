@@ -953,6 +953,7 @@ def spaceUsed() -> dict:
     result = {
         "total": 0,
         "thumbs": 0,
+        "no_size_count": 0,
     }
     conn = get_connection()
     cursor = conn.cursor()
@@ -961,6 +962,8 @@ def spaceUsed() -> dict:
         result["total"] = cursor.fetchone()[0] or 0
         cursor.execute("SELECT SUM(thumb_size) FROM photos")
         result["thumbs"] = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE size IS NULL")
+        result["no_size_count"] = cursor.fetchone()[0] or 0
     finally:
         cursor.close()
         conn.close()
@@ -969,6 +972,7 @@ def spaceUsed() -> dict:
 
 
 def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None):
+    # Update the photo sizes in the database - this is called by the worker
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -990,4 +994,14 @@ def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None):
         cursor.close()
         conn.close()
 
+
+def uncountedPhotos() -> list:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, s3_key, thumb_key FROM photos WHERE size IS NULL")
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
     
