@@ -966,4 +966,28 @@ def spaceUsed() -> dict:
         conn.close()
     return result
 
+
+
+def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        if thumb_size is not None:
+            cursor.execute(
+                "UPDATE photos SET size = %s, thumb_size = %s WHERE id = %s",
+                (size, thumb_size, photo_id),
+            )
+        else:
+            cursor.execute(
+                "UPDATE photos SET size = %s WHERE id = %s",
+                (size, photo_id),
+            )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating photo sizes for {photo_id}: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
     

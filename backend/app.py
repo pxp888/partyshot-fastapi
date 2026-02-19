@@ -198,21 +198,29 @@ async def add_photo_metadata(
     if user_record is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    photo_id = db.addPhoto(
+    photo_resp = db.addPhoto(
         {
             "user_id": user_record["id"],
             "album_id": payload["album_id"],
             "filename": payload["filename"],
             "s3_key": payload["s3_key"],
             "thumb_key": payload.get("thumb_key"),
-            "size": payload.get("size"),
-            "thumb_size": payload.get("thumb_size"),
         }
     )
 
-    message = {"action": "addPhoto", "payload": photo_id}
+    if photo_resp:
+        # Enqueue background task to check sizes (expires in 10 minutes)
+        await app.state.redis.enqueue_job(
+            "check_photo_sizes",
+            photo_resp["id"],
+            payload["s3_key"],
+            payload.get("thumb_key"),
+            _expires=600,
+        )
+
+    message = {"action": "addPhoto", "payload": photo_resp}
     await redis_client.publish(f"album-{payload['albumcode']}", json.dumps(message))
-    return {"photo_id": photo_id}
+    return {"photo_id": photo_resp}
 
 
 @app.post("/api/cleanup")
