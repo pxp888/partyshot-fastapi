@@ -303,6 +303,9 @@ async def createAlbum(websocket, data, username):
         return
     message = {"action": "newAlbum", "payload": {"type": "update"}}
     await redis_client.publish(f"user-{username}", json.dumps(message))
+    message2 = {"action": "createAlbum", "payload": result}
+    await websocket.send_json(message2)
+    
 
 
 async def getAlbums(websocket, data, username):

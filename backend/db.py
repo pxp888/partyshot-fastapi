@@ -507,7 +507,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
     return {"albums": albums}
 
 
-def createAlbum(username: str, album_name: str) -> bool:
+def createAlbum(username: str, album_name: str) -> str | None:
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -517,7 +517,7 @@ def createAlbum(username: str, album_name: str) -> bool:
         )
         user_row = cursor.fetchone()
         if user_row is None:
-            return False
+            return None
         user_id = user_row[0]
 
         album_code = uuid.uuid4().hex
@@ -532,10 +532,10 @@ def createAlbum(username: str, album_name: str) -> bool:
         )
         cursor.fetchone()  # consume the returned id
         conn.commit()
-        return True
+        return album_code
     except Exception:
         conn.rollback()
-        return False
+        return None
     finally:
         cursor.close()
         conn.close()
@@ -826,11 +826,6 @@ def getEmail(username: str) -> str:
         cursor.close()
         conn.close()    
 
-
-def getUsage(username: str) -> dict:
-    pass 
-    
-    
 
 def getUsage(username: str) -> dict | None:
     """

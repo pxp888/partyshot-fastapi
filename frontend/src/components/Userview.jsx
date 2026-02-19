@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import AlbumItem from "./AlbumItem";
 import "./style/Userview.css";
@@ -6,6 +6,7 @@ import { useSocket } from "./WebSocketContext"; // ← websocket
 
 function Userview({ currentUser }) {
   const { username } = useParams();
+  const navigate = useNavigate();
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← websocket
   const [albums, setAlbums] = useState([]);
 
@@ -39,6 +40,11 @@ function Userview({ currentUser }) {
             action: "getAlbums",
             payload: { target: username },
           });
+        }
+        break;
+      case "createAlbum":
+        if (payload) {
+          navigate(`/album/${payload}`);
         }
         break;
       default:
