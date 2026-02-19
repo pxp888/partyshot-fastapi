@@ -661,10 +661,6 @@ def unsubscribe(username: str, albumcode: str) -> bool:
         conn.close()
 
 
-
-
-
-
 def getPhoto(id: int) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -1158,7 +1154,6 @@ def spaceUsed() -> dict:
         cursor.close()
         conn.close()
     return result
-
 
 
 def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None):
