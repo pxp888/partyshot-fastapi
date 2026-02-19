@@ -244,31 +244,49 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
     return None
 
 
-def getPhotos(album_code: str) -> dict | None:
+def getPhotos(
+    album_code: str,
+    limit: int = 100,
+    offset: int = 0,
+    sort_field: str = "created_at",
+    sort_order: str = "desc",
+) -> dict | None:
     album = getAlbum(album_code)
     if album is None:
         return None
     album_id = album["id"]
 
+    # Whitelist sort fields/orders to prevent SQL injection
+    allowed_fields = {
+        "created_at": "p.created_at",
+        "filename": "p.filename",
+        "username": "u.username",
+        "size": "p.size",
+    }
+    field = allowed_fields.get(sort_field, "p.created_at")
+    order = "ASC" if sort_order.lower() == "asc" else "DESC"
+
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.filename,
-               p.created_at, u.username, p.size
-        FROM photos p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.album_id = %s
-        ORDER BY p.created_at ASC;
-        """,
-        (album_id,),
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    try:
+        # We also want to know the total count for pagination
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE album_id = %s", (album_id,))
+        total_count = cursor.fetchone()[0]
 
-    if not rows:
-        return None
+        query = f"""
+            SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.filename,
+                   p.created_at, u.username, p.size
+            FROM photos p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.album_id = %s
+            ORDER BY {field} {order}, p.id ASC
+            LIMIT %s OFFSET %s;
+        """
+        cursor.execute(query, (album_id, limit, offset))
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
 
     photos = []
     for row in rows:
@@ -288,7 +306,12 @@ def getPhotos(album_code: str) -> dict | None:
                 "size": row[8],
             }
         )
-    return {"photos": photos}
+    return {
+        "photos": photos,
+        "total": total_count,
+        "limit": limit,
+        "offset": offset,
+    }
 
 
 def deleteAlbum(username: str, code: str) -> bool:

@@ -179,6 +179,18 @@
         grid-column: 1 / -1;
         justify-content: center;
     }
+}
 
+.fetchingStatus {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--gap-lg);
+    color: var(--text-muted);
+    font-style: italic;
+    animation: fadeIn 0.5s ease-in;
+}
 
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }

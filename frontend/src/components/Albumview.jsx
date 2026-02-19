@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { sendJson } from "./helpers";
 import { useSocket } from "./WebSocketContext"; // ← NEW
 import JSZip from "jszip";
@@ -16,12 +16,30 @@ function Albumview(currentUser) {
   const { albumcode } = useParams();
   const [album, setAlbum] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [totalPhotos, setTotalPhotos] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
   const [focus, setFocus] = useState(-1);
   const [isRenaming, setIsRenaming] = useState(false);
   const [sortField, setSortField] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [limit] = useState(50);
+  const observer = useRef();
+  const lastPhotoElementRef = useCallback(
+    (node) => {
+      if (isFetching) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMore();
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isFetching, hasMore]
+  );
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
   const navigate = useNavigate();
 
@@ -33,11 +51,31 @@ function Albumview(currentUser) {
   }, [albumcode]);
 
   useEffect(() => {
+    setPhotos([]);
+    setTotalPhotos(0);
+    setHasMore(true);
+    fetchPhotos(0);
+  }, [albumcode, sortField, sortOrder]);
+
+  const fetchPhotos = (offset) => {
+    if (!albumcode) return;
+    setIsFetching(true);
     sendJsonMessage({
       action: "getPhotos",
-      payload: { albumcode: albumcode },
+      payload: {
+        albumcode: albumcode,
+        limit: limit,
+        offset: offset,
+        sortField: sortField,
+        sortOrder: sortOrder,
+      },
     });
-  }, [albumcode]);
+  };
+
+  const loadMore = () => {
+    if (isFetching || !hasMore) return;
+    fetchPhotos(photos.length);
+  };
 
   // React to messages that come from the WS
   useEffect(() => {
@@ -50,12 +88,24 @@ function Albumview(currentUser) {
         setAlbum(payload);
         break;
 
-      case "getPhotos":
-        setPhotos(payload?.photos ?? []);
+      case "getPhotos": {
+        const batch = payload?.photos ?? [];
+        setPhotos((prev) => (payload.offset === 0 ? batch : [...prev, ...batch]));
+        setTotalPhotos(payload.total ?? 0);
+        setHasMore(payload.offset + batch.length < payload.total);
+        setIsFetching(false);
         break;
+      }
 
       case "addPhoto":
-        setPhotos((prev) => [...prev, payload]);
+        setPhotos((prev) => {
+          if (sortOrder === "desc") {
+            return [payload, ...prev];
+          } else {
+            return [...prev, payload];
+          }
+        });
+        setTotalPhotos((prev) => prev + 1);
         console.log("Photo added:", payload);
         break;
 
@@ -256,22 +306,7 @@ function Albumview(currentUser) {
     });
   }
 
-  const sortedPhotos = [...photos].sort((a, b) => {
-    let valA = a[sortField];
-    let valB = b[sortField];
-
-    if (sortField === "created_at") {
-      valA = new Date(valA);
-      valB = new Date(valB);
-    } else {
-      valA = (valA || "").toString().toLowerCase();
-      valB = (valB || "").toString().toLowerCase();
-    }
-
-    if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-    if (valA > valB) return sortOrder === "asc" ? 1 : -1;
-    return 0;
-  });
+  const sortedPhotos = photos; // Photos are now sorted by the backend
 
   if (!album) {
     return (
@@ -425,17 +460,39 @@ function Albumview(currentUser) {
           <p>No files in this album.</p>
         ) : (
           <div className="fileList">
-            {sortedPhotos.map((file, index) => (
-              <FileItem
-                index={index}
-                key={file.id}
-                file={file}
-                selectMode={selectMode}
-                selected={selected}
-                setSelected={setSelected}
-                setFocus={setFocus}
-              />
-            ))}
+            {sortedPhotos.map((file, index) => {
+              if (sortedPhotos.length === index + 1) {
+                return (
+                  <div ref={lastPhotoElementRef} key={file.id}>
+                    <FileItem
+                      index={index}
+                      file={file}
+                      selectMode={selectMode}
+                      selected={selected}
+                      setSelected={setSelected}
+                      setFocus={setFocus}
+                    />
+                  </div>
+                );
+              } else {
+                return (
+                  <FileItem
+                    index={index}
+                    key={file.id}
+                    file={file}
+                    selectMode={selectMode}
+                    selected={selected}
+                    setSelected={setSelected}
+                    setFocus={setFocus}
+                  />
+                );
+              }
+            })}
+            {isFetching && (
+              <div className="fetchingStatus">
+                <p>Loading more...</p>
+              </div>
+            )}
           </div>
         )}
       </div>

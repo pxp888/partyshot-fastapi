@@ -307,14 +307,12 @@ async def createAlbum(websocket, data, username):
     await websocket.send_json(message2)
     
 
-
 async def getAlbums(websocket, data, username):
     target = data["payload"]["target"]
     result = db.getAlbums(target, username)
     message = {"action": "getAlbums", "payload": result}
     await websocket.send_json(message)
     await manager.subscribe(websocket, f"user-{target}")
-    # print("subscribed to : ", f"user-{target}")
 
 
 async def deleteAlbum(websocket, data, username):
@@ -329,6 +327,7 @@ async def deleteAlbum(websocket, data, username):
     message = {"action": "deleteAlbum", "payload": albumcode}
     await redis_client.publish(f"album-{albumcode}", json.dumps(message))
 
+
 async def getAlbum(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
     album = db.getAlbumWithSub(albumcode, username)
@@ -338,13 +337,23 @@ async def getAlbum(websocket, data, username):
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
     await manager.subscribe(websocket, f"album-{albumcode}")
-    # print("subscribed to : ", f"album-{albumcode}")
 
 
 async def getPhotos(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
-    photos = db.getPhotos(albumcode)
-    message = {"action": "getPhotos", "payload": photos}
+    limit = data["payload"].get("limit", 100)
+    offset = data["payload"].get("offset", 0)
+    sort_field = data["payload"].get("sortField", "created_at")
+    sort_order = data["payload"].get("sortOrder", "desc")
+
+    photos_data = db.getPhotos(
+        albumcode,
+        limit=limit,
+        offset=offset,
+        sort_field=sort_field,
+        sort_order=sort_order,
+    )
+    message = {"action": "getPhotos", "payload": photos_data}
     await websocket.send_json(message)
 
 
