@@ -174,10 +174,15 @@ function Albumview(currentUser) {
         return;
       }
 
+      // Load all photos into state to replicate "pre-pagination" behavior
+      setPhotos(allPhotos);
+      setHasMore(false);
+
       const zip = new JSZip();
 
       const fetchBlob = async (url, filename) => {
-        const res = await fetch(url, { mode: "cors" });
+        // use cache: "no-cache" to bypass potential CORS/Cache browser quirks
+        const res = await fetch(url, { mode: "cors", cache: "no-cache" });
         if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
         return await res.blob();
       };
@@ -223,7 +228,7 @@ function Albumview(currentUser) {
     const zip = new JSZip();
 
     const fetchBlob = async (url, filename) => {
-      const res = await fetch(url, { mode: "cors" });
+      const res = await fetch(url, { mode: "cors", cache: "no-cache" });
       if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
       return await res.blob();
     };

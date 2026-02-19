@@ -333,10 +333,12 @@ def getDownloadList(album_code: str) -> list | None:
     cursor = conn.cursor()
     try:
         query = """
-            SELECT s3_key, filename
-            FROM photos
-            WHERE album_id = %s
-            ORDER BY created_at ASC;
+            SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.filename,
+                   p.created_at, u.username, p.size
+            FROM photos p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.album_id = %s
+            ORDER BY p.created_at ASC;
         """
         cursor.execute(query, (album_id,))
         rows = cursor.fetchall()
@@ -344,7 +346,24 @@ def getDownloadList(album_code: str) -> list | None:
         cursor.close()
         conn.close()
 
-    return [{"s3_key": row[0], "filename": row[1]} for row in rows]
+    photos = []
+    for row in rows:
+        import datetime
+        created_at = row[6]
+        if isinstance(created_at, datetime.datetime):
+            created_at = created_at.isoformat()
+        photos.append({
+            "id": row[0],
+            "user_id": row[1],
+            "album_id": row[2],
+            "s3_key": row[3],
+            "thumb_key": row[4],
+            "filename": row[5],
+            "created_at": created_at,
+            "username": row[7],
+            "size": row[8],
+        })
+    return photos
 
 
 async def deleteAlbum(username: str, code: str) -> bool:
