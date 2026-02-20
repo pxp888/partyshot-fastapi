@@ -5,19 +5,17 @@
     min-height: calc(100vh - 80px);
     /* Adjust based on Topbar height */
     padding: 2rem;
-    background-color: rgb(32, 32, 32);
-    /* Keep page background dark */
-    color: #333;
+    background-color: var(--bg-main);
 }
 
 .contact-container {
     width: 100%;
     max-width: 600px;
-    background-color: gainsboro;
+    background-color: var(--form-color);
     /* Match --form-color from App.css */
     border-radius: 24px;
     padding: 3rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
     animation: fadeIn 0.6s ease-out;
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
@@ -38,8 +36,7 @@
     font-size: 2.5rem;
     font-weight: 300;
     margin-bottom: 0.5rem;
-    color: #e57373;
-    /* A slightly deeper salmon for better contrast on light bg */
+    color: var(--bright-color);
     text-align: center;
 }
 
@@ -83,7 +80,7 @@
 
 .form-group input:focus,
 .form-group textarea:focus {
-    border-color: salmon;
+    border-color: var(--bright-color);
     background: white;
     box-shadow: 0 0 0 4px rgba(250, 128, 114, 0.2);
     transform: translateY(-2px);
@@ -113,7 +110,7 @@
 }
 
 .submit-button:hover {
-    background-color: salmon;
+    background-color: var(--bright-color);
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(250, 128, 114, 0.3);
 }

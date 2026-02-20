@@ -4,17 +4,17 @@
     align-items: center;
     min-height: calc(100vh - 80px);
     padding: 2rem;
-    background-color: rgb(32, 32, 32);
-    color: #333;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
 }
 
 .account-card {
     width: 100%;
     max-width: 600px;
-    background-color: gainsboro;
+    background-color: var(--form-color);
     border-radius: 24px;
     padding: 3rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
     animation: fadeIn 0.6s ease-out;
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
@@ -35,7 +35,7 @@
     font-size: 2.5rem;
     font-weight: 300;
     margin-bottom: 0.5rem;
-    color: #e57373;
+    color: var(--bright-color);
     text-align: center;
 }
 
@@ -77,7 +77,7 @@
 }
 
 .form-group input:focus {
-    border-color: salmon;
+    border-color: var(--bright-color);
     background: white;
     box-shadow: 0 0 0 4px rgba(250, 128, 114, 0.2);
     transform: translateY(-2px);
@@ -101,7 +101,7 @@
 }
 
 .account-btn:hover {
-    background-color: salmon;
+    background-color: var(--bright-color);
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(250, 128, 114, 0.3);
 }
@@ -146,7 +146,7 @@
 
 
 .usage-stats {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 16px;
     padding: 1.5rem;
     margin-bottom: 2rem;

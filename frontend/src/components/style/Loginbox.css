@@ -25,14 +25,14 @@
 }
 
 .loginbox {
-    background-color: gainsboro;
+    background-color: var(--form-color);
     /* Match Contactpage container */
     padding: 3rem;
     border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 400px;
-    color: #333;
+    color: var(--text-primary);
     animation: slideUpBox 0.4s ease-out;
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
@@ -53,8 +53,8 @@
     font-size: 2rem;
     font-weight: 300;
     margin-bottom: 2rem;
-    color: #e57373;
-    /* Match Contactpage salmon */
+    color: var(--bright-color);
+    /* Match Contactpage var(--bright-color) */
     text-align: center;
     margin-top: 0;
 }
@@ -87,7 +87,7 @@
 }
 
 .field input:focus {
-    border-color: salmon;
+    border-color: var(--bright-color);
     background: white;
     box-shadow: 0 0 0 4px rgba(250, 128, 114, 0.2);
     transform: translateY(-2px);
@@ -111,7 +111,7 @@
 }
 
 .loginbox .btn:hover {
-    background-color: salmon;
+    background-color: var(--bright-color);
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(250, 128, 114, 0.3);
 }
