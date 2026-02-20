@@ -3,12 +3,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { sendJson } from "./helpers";
 import { useSocket } from "./WebSocketContext"; // ← NEW
 import JSZip from "jszip";
+import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
-import FileItem from "./FileItem";
 import Imageview from "./Imageview";
 import Uploader from "./Uploader";
 import AlbumRenamer from "./AlbumRenamer";
-import { useNavigate } from "react-router-dom";
+import Iconlist from "./Iconlist";
+import Listview from "./Listview";
 
 import "./style/Albumview.css";
 
@@ -480,47 +481,16 @@ function Albumview(currentUser) {
         </div>
       )}
 
-      <div className="albumFiles">
-        {photos.length === 0 ? (
-          <p>No files in this album.</p>
-        ) : (
-          <div className="fileList">
-            {sortedPhotos.map((file, index) => {
-              if (sortedPhotos.length === index + 1) {
-                return (
-                  <div ref={lastPhotoElementRef} key={file.id}>
-                    <FileItem
-                      index={index}
-                      file={file}
-                      selectMode={selectMode}
-                      selected={selected}
-                      setSelected={setSelected}
-                      setFocus={setFocus}
-                    />
-                  </div>
-                );
-              } else {
-                return (
-                  <FileItem
-                    index={index}
-                    key={file.id}
-                    file={file}
-                    selectMode={selectMode}
-                    selected={selected}
-                    setSelected={setSelected}
-                    setFocus={setFocus}
-                  />
-                );
-              }
-            })}
-            {isFetching && (
-              <div className="fetchingStatus">
-                <p>Loading more...</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <Listview
+        photos={photos}
+        sortedPhotos={sortedPhotos}
+        lastPhotoElementRef={lastPhotoElementRef}
+        selectMode={selectMode}
+        selected={selected}
+        setSelected={setSelected}
+        setFocus={setFocus}
+        isFetching={isFetching}
+      />
     </section>
   );
 }
