@@ -60,7 +60,7 @@
 .hero-snarky {
     font-size: 1.35rem;
     font-style: italic;
-     color: var(--welcome-text-dim);
+    color: var(--welcome-text-dim);
     /*color: #a389aa;*/
     color: gray;
     margin: 1rem 0 3rem;
@@ -96,15 +96,8 @@
     background: var(--card-bg);
     padding: 2.5rem;
     border-radius: 16px;
-<<<<<<< HEAD
-    transition:
-        transform var(--transition-speed),
-        box-shadow var(--transition-speed);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-=======
     transition: transform var(--transition-speed), box-shadow var(--transition-speed);
     border: 1px solid rgba(0, 0, 0, 0.05);
->>>>>>> color
     text-align: left;
 }
 
