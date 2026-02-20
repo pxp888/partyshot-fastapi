@@ -10,6 +10,14 @@ function ListItem({
 }) {
     const isSelected = selected.includes(file.id);
 
+    const formatSize = (bytes) => {
+        if (bytes === 0 || bytes === null || bytes === undefined) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    };
+
     function handleClick(e) {
         e.preventDefault();
         if (selectMode) {
@@ -36,6 +44,10 @@ function ListItem({
                 <div className="listItemInfoItem">
                     <label>user</label>
                     <p>{file.username}</p>
+                </div>
+                <div className="listItemInfoItem">
+                    <label>size</label>
+                    <p>{formatSize(file.size)}</p>
                 </div>
                 <div className="listItemInfoItem">
                     <label>uploaded</label>

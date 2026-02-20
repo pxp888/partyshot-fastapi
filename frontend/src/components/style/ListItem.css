@@ -1,0 +1,116 @@
+.listview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 1rem;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.listItem {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.listItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.listItem.selected {
+    border-color: var(--bright-color, #ff00ff);
+    background-color: var(--bright-color, #ff00ff);
+    box-shadow: 0px 0px 8px var(--bright-color, #ff00ff);
+}
+
+.listItemSelectscreen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: rgba(255, 192, 203, 0.5);
+    z-index: 20;
+}
+
+.listItemInfo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+}
+
+.listItemInfoItem {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.listItemInfoItem label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.listItemInfoItemTitle {
+    font-weight: 500;
+    color: #f5f5f7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1rem;
+}
+
+.listItemInfoItem p {
+    margin: 0;
+    color: #e5e5e7;
+    font-size: 0.9rem;
+}
+
+/* Specific widths for consistency */
+.listItemInfoItem:nth-child(1) {
+    flex: 2;
+}
+
+/* Filename */
+.listItemInfoItem:nth-child(2) {
+    flex: 1;
+}
+
+/* User */
+.listItemInfoItem:nth-child(3) {
+    flex: 0.8;
+}
+
+/* Size */
+.listItemInfoItem:nth-child(4) {
+    flex: 1.5;
+}
+
+/* Date */
+
+@media (max-width: 768px) {
+    .listItemInfo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .listItemInfoItem {
+        width: 100%;
+    }
+
+    .listItemInfoItemTitle {
+        font-size: 0.9rem;
+    }
+}

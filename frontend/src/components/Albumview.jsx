@@ -28,6 +28,7 @@ function Albumview(currentUser) {
   const [sortOrder, setSortOrder] = useState("desc");
   const [limit] = useState(50);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [viewType, setViewType] = useState(localStorage.getItem("viewType") || "icon");
   const observer = useRef();
   const lastPhotoElementRef = useCallback(
     (node) => {
@@ -417,6 +418,17 @@ function Albumview(currentUser) {
           </button>
 
           <div className="sortControls">
+            <button
+              className="sortOrderBtn"
+              onClick={() => {
+                const nextType = viewType === "icon" ? "list" : "icon";
+                setViewType(nextType);
+                localStorage.setItem("viewType", nextType);
+              }}
+              title={viewType === "icon" ? "Switch to List View" : "Switch to Icon View"}
+            >
+              {viewType === "icon" ? "☰" : "▦"}
+            </button>
             <select
               value={sortField}
               onChange={(e) => setSortField(e.target.value)}
@@ -460,6 +472,17 @@ function Albumview(currentUser) {
           )}
 
           <div className="sortControls">
+            <button
+              className="sortOrderBtn"
+              onClick={() => {
+                const nextType = viewType === "icon" ? "list" : "icon";
+                setViewType(nextType);
+                localStorage.setItem("viewType", nextType);
+              }}
+              title={viewType === "icon" ? "Switch to List View" : "Switch to Icon View"}
+            >
+              {viewType === "icon" ? "☰" : "▦"}
+            </button>
             <select
               value={sortField}
               onChange={(e) => setSortField(e.target.value)}
@@ -481,16 +504,29 @@ function Albumview(currentUser) {
         </div>
       )}
 
-      <Listview
-        photos={photos}
-        sortedPhotos={sortedPhotos}
-        lastPhotoElementRef={lastPhotoElementRef}
-        selectMode={selectMode}
-        selected={selected}
-        setSelected={setSelected}
-        setFocus={setFocus}
-        isFetching={isFetching}
-      />
+      {viewType === "icon" ? (
+        <Iconlist
+          photos={photos}
+          sortedPhotos={sortedPhotos}
+          lastPhotoElementRef={lastPhotoElementRef}
+          selectMode={selectMode}
+          selected={selected}
+          setSelected={setSelected}
+          setFocus={setFocus}
+          isFetching={isFetching}
+        />
+      ) : (
+        <Listview
+          photos={photos}
+          sortedPhotos={sortedPhotos}
+          lastPhotoElementRef={lastPhotoElementRef}
+          selectMode={selectMode}
+          selected={selected}
+          setSelected={setSelected}
+          setFocus={setFocus}
+          isFetching={isFetching}
+        />
+      )}
     </section>
   );
 }
