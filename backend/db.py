@@ -543,33 +543,19 @@ def getAlbums(username: str, authuser: str) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        if authuser == username:
-            # If viewing own profile, include subscribed albums
-            cursor.execute(
-                """
-                SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
-                       (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
-                FROM albums a
-                JOIN users u ON a.user_id = u.id
-                LEFT JOIN subscription s ON a.id = s.album_id
-                WHERE a.user_id = %s OR s.user_id = %s
-                ORDER BY a.created_at DESC;
-                """,
-                (user["id"], user["id"]),
-            )
-        else:
-            # Viewing someone else's profile, only show their albums
-            cursor.execute(
-                """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
-                       (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
-                FROM albums a
-                JOIN users u ON a.user_id = u.id
-                WHERE a.user_id = %s
-                ORDER BY a.created_at DESC;
-                """,
-                (user["id"],),
-            )
+        # Include owned and subscribed albums (owned by the user whose profile is being viewed)
+        cursor.execute(
+            """
+            SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
+                   (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
+            FROM albums a
+            JOIN users u ON a.user_id = u.id
+            LEFT JOIN subscription s ON a.id = s.album_id
+            WHERE a.user_id = %s OR s.user_id = %s
+            ORDER BY a.created_at DESC;
+            """,
+            (user["id"], user["id"]),
+        )
         rows = cursor.fetchall()
     except Exception as e:
         logging.error("Error fetching albums: %s", e)
