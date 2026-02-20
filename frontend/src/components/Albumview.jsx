@@ -436,6 +436,7 @@ function Albumview(currentUser) {
               <option value="created_at">Date</option>
               <option value="filename">Name</option>
               <option value="username">User</option>
+              <option value="size">Size</option>
             </select>
             <button
               className="sortOrderBtn"
@@ -490,6 +491,7 @@ function Albumview(currentUser) {
               <option value="created_at">Date</option>
               <option value="filename">Name</option>
               <option value="username">User</option>
+              <option value="size">Size</option>
             </select>
             <button
               className="sortOrderBtn"

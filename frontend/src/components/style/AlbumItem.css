@@ -8,7 +8,7 @@
     /*border: 1px solid #ccc;*/
     /*border-radius: 8px;*/
     padding: 10px;
-    background-color: var(--form-color);
+    background-color: black;
     color: var(--text-primary);
     transition:
         transform 0.3s ease,

@@ -95,3 +95,7 @@
 label {
     color: gray;
 }
+
+.info>p {
+    color: white;
+}
