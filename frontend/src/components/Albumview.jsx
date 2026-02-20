@@ -258,6 +258,17 @@ function Albumview(currentUser) {
     })();
   }
 
+  function deletedPhoto(photoId) {
+    try {
+      sendJsonMessage({
+        action: "deletePhoto",
+        payload: { photo_id: photoId, album_code: album.code },
+      });
+    } catch (error) {
+      console.error(`Failed to delete file with ID ${photoId}:`, error);
+    }
+  }
+
   function deleteSelected() {
     if (selected.length === 0) {
       return alert("No files selected for deletion.");
@@ -272,14 +283,7 @@ function Albumview(currentUser) {
     setSelected([]);
 
     idsToDelete.forEach(async (id) => {
-      try {
-        sendJsonMessage({
-          action: "deletePhoto",
-          payload: { photo_id: id, album_code: album.code },
-        });
-      } catch (error) {
-        console.error(`Failed to delete file with ID ${id}:`, error);
-      }
+      deletedPhoto(id);
     });
   }
 
@@ -336,7 +340,7 @@ function Albumview(currentUser) {
   return (
     <section>
       {focus > -1 && (
-        <Imageview files={sortedPhotos} focus={focus} setFocus={setFocus} />
+        <Imageview files={sortedPhotos} focus={focus} setFocus={setFocus} deletedPhoto={deletedPhoto} />
       )}
       <div className="albumview">
         <div className="albumDetails">

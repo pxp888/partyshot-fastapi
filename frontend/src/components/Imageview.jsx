@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
 import "./style/Imageview.css";
 import blankImage from "../assets/blank.jpg";
+import videoImage from "../assets/video.webp";
 
-function Imageview({ files, focus, setFocus }) {
+
+function Imageview({ files, focus, setFocus, deletedPhoto }) {
   // Reference to the container so we can compute click position
   const containerRef = useRef(null);
 
@@ -23,6 +25,15 @@ function Imageview({ files, focus, setFocus }) {
           break;
         case "Escape":
           setFocus(-1);
+          break;
+        case "Delete":
+        case "Backspace":
+          if (window.confirm("Are you sure you want to delete this file?")) {
+            deletedPhoto(files[focus].id);
+            if (focus >= files.length - 1) {
+              setFocus(focus - 1);
+            }
+          }
           break;
         default:
           return;
@@ -63,14 +74,18 @@ function Imageview({ files, focus, setFocus }) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   };
 
+  const videoExtensions = /\.(mp4|webm|ogg|mov|avi|wmv|mkv|flv)$/i;
+  const isVideo = videoExtensions.test(files[focus].filename);
+  const placeholder = isVideo ? videoImage : blankImage;
+
   return (
     <div className="imageView" ref={containerRef} onClick={handleClick}>
       <div className="primo">
         <img
-          src={files[focus].s3_key || blankImage}
+          src={files[focus].s3_key || placeholder}
           alt={`${files[focus].filename}`}
           onError={(e) => {
-            e.target.src = blankImage;
+            e.target.src = placeholder;
           }}
         />
       </div>
