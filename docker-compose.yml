@@ -5,9 +5,11 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./backend/static:/usr/share/nginx/html:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - fast1
     networks:
@@ -17,8 +19,6 @@ services:
     image: fast1
     container_name: fast1_app
     restart: always
-    # We remove the public 'ports' mapping and use 'expose'
-    # so only Nginx can talk to it inside the network.
     expose:
       - "8000"
     volumes:
