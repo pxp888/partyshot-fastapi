@@ -33,29 +33,23 @@ function Imageview({ files, focus, setFocus }) {
     return () => window.removeEventListener("keydown", handler);
   }, [focus, files, setFocus]);
 
-  // Click handler for the three zones
   const handleClick = (e) => {
-    // If the viewer is hidden or there are no files, ignore clicks
     if (focus === -1 || !files) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left; // X coordinate relative to the container
+    const clickX = e.clientX - rect.left;
     const width = rect.width;
 
-    // Guard against zero width (unlikely but defensive)
     if (width === 0) return;
 
     const leftZone = width / 3;
     const rightZone = (2 * width) / 3;
 
     if (clickX < leftZone) {
-      // Left zone – previous image
       if (focus > 0) setFocus(focus - 1);
     } else if (clickX > rightZone) {
-      // Right zone – next image
       if (focus + 1 < files.length) setFocus(focus + 1);
     } else {
-      // Center zone – hide the viewer
       setFocus(-1);
     }
   };
@@ -81,6 +75,7 @@ function Imageview({ files, focus, setFocus }) {
         />
       </div>
       <div className="fileDetails" onClick={(e) => e.stopPropagation()}>
+        {/* <div className="fileDetails"> */}
         <div className="detailRow">
           <span className="filename">{files[focus].filename}</span>
         </div>

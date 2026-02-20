@@ -22,9 +22,9 @@
 }
 
 .selected {
-    border-color: salmon;
-    background-color: salmon;
-    box-shadow: 0 4px 8px salmon;
+    border-color: var(--bright-color);
+    background-color: var(--bright-color);
+    box-shadow: 0px 0px 8px var(--bright-color);
 }
 
 .selectscreen {
@@ -35,6 +35,7 @@
     height: 100%;
     z-index: 20;
     background-color: rgba(255, 192, 203, 0.5);
+    /* background-color: rgba(var(--bright-color), 0.  5); */
 }
 
 .thumbnail {
