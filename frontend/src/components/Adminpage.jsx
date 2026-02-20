@@ -115,8 +115,16 @@ function Adminpage({ currentUser }) {
                     <div className="usage-value">{formatBytes(spaceUsed.thumbs)}</div>
                   </div>
                   <div className="usage-item">
+                    <span className="usage-label">Total Albums</span>
+                    <div className="usage-value">{spaceUsed.total_albums || 0}</div>
+                  </div>
+                  <div className="usage-item">
+                    <span className="usage-label">Total Files</span>
+                    <div className="usage-value">{spaceUsed.total_files || 0}</div>
+                  </div>
+                  <div className="usage-item">
                     <span className="usage-label">Photos Missing Size</span>
-                    <div className="usage-value">{spaceUsed.no_size_count}</div>
+                    <div className="usage-value">{spaceUsed.no_size_count || 0}</div>
                   </div>
                   <div className="usage-item total-usage">
                     <span className="usage-label">Total Cloud Storage</span>

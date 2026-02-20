@@ -1200,6 +1200,8 @@ def spaceUsed() -> dict:
         "total": 0,
         "thumbs": 0,
         "no_size_count": 0,
+        "total_files": 0,
+        "total_albums": 0,
     }
     conn = get_connection()
     cursor = conn.cursor()
@@ -1210,6 +1212,10 @@ def spaceUsed() -> dict:
         result["thumbs"] = cursor.fetchone()[0] or 0
         cursor.execute("SELECT COUNT(*) FROM photos WHERE size IS NULL")
         result["no_size_count"] = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT COUNT(*) FROM photos")
+        result["total_files"] = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT COUNT(*) FROM albums")
+        result["total_albums"] = cursor.fetchone()[0] or 0
     finally:
         cursor.close()
         conn.close()
