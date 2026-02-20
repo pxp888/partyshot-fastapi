@@ -97,6 +97,7 @@ def init_db() -> None:
                     email TEXT,
                     passhash TEXT NOT NULL,
                     salt TEXT NOT NULL,
+                    class TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
@@ -132,6 +133,7 @@ def init_db() -> None:
                 -- Add columns if they don't exist (primitive migration)
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS size INTEGER;
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS class TEXT;
                 """
             )
             conn.commit()
@@ -141,15 +143,15 @@ def init_db() -> None:
     # create admin user if it doesn't exist
     if getUser(env.ADMIN_USERNAME) is None:
         logging.info("Creating admin user: %s", env.ADMIN_USERNAME)
-        setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD)
-
+        setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD, "admin")
+    setUserData(env.ADMIN_USERNAME, user_class="admin")
 
 # --------------------------------------------------------------------------- #
 # User CRUD helpers
 # --------------------------------------------------------------------------- #
 
 
-def setUser(username: str, email: str, password: str) -> None:
+def setUser(username: str, email: str, password: str, user_class: str = None) -> None:
     """Insert a new user into the database."""
     salt = random.randbytes(16).hex()
     passhash = hashlib.sha256((password + salt).encode()).hexdigest()
@@ -158,10 +160,10 @@ def setUser(username: str, email: str, password: str) -> None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO users (username, email, passhash, salt)
-                VALUES (%s, %s, %s, %s);
+                INSERT INTO users (username, email, passhash, salt, class)
+                VALUES (%s, %s, %s, %s, %s);
                 """,
-                (username, email, passhash, salt),
+                (username, email, passhash, salt, user_class),
             )
             conn.commit()
 
@@ -172,7 +174,7 @@ def getUser(username: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, username, email, passhash, salt, created_at
+                SELECT id, username, email, passhash, salt, created_at, class
                 FROM users
                 WHERE username = %s;
                 """,
@@ -188,6 +190,7 @@ def getUser(username: str) -> dict | None:
             "passhash": row[3],
             "salt": row[4],
             "created_at": row[5],
+            "class": row[6],
         }
     else:
         return None
@@ -883,8 +886,8 @@ def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
                 return False
 
 
-def setUserData(username: str, newusername: str = None, email: str = None, password: str = None) -> str:
-    """Update user information (username, email, or password) conditionally."""
+def setUserData(username: str, newusername: str = None, email: str = None, password: str = None, user_class: str = None) -> str:
+    """Update user information (username, email, password, or class) conditionally."""
     user = getUser(username)
     if not user:
         return False
@@ -917,6 +920,11 @@ def setUserData(username: str, newusername: str = None, email: str = None, passw
         params.append(passhash)
         update_fields.append("salt = %s")
         params.append(salt)
+
+    # Check class
+    if user_class is not None and user_class != user["class"]:
+        update_fields.append("class = %s")
+        params.append(user_class)
 
     if not update_fields:
         return "no changes"  # Nothing to update, but not an error
