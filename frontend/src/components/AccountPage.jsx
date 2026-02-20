@@ -134,7 +134,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                 )}
 
                 <form className="account-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
+                    {/* <div className="form-group">
                         <label htmlFor="newusername">New Username (min 3 chars)</label>
                         <input
                             type="text"
@@ -144,7 +144,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                             onChange={handleChange}
                             placeholder="Leave blank to keep current"
                         />
-                    </div>
+                    </div> */}
 
                     <div className="form-group">
                         <label htmlFor="email">New Email</label>
