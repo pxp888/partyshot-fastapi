@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import logging
 import hashlib
@@ -1107,7 +1108,7 @@ def cleanup() -> None:
     logging.info("completed")
 
 
-def cleanup2() -> None:
+async def cleanup2(ctx=None) -> None:
     """
     Synchronise the S3 bucket with the database.
 
@@ -1124,30 +1125,41 @@ def cleanup2() -> None:
     """
 
     # --- Step 1: Collect all known keys from the database -----------------
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT s3_key, thumb_key FROM photos")
-        rows = cursor.fetchall()
-    finally:
-        cursor.close()
-        conn.close()
+    def get_known_keys():
+        conn = get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT s3_key, thumb_key FROM photos")
+            rows = cursor.fetchall()
+        finally:
+            cursor.close()
+            conn.close()
 
-    known_keys: set[str] = set()
-    for s3_key, thumb_key in rows:
-        if s3_key:
-            known_keys.add(s3_key)
-        if thumb_key:
-            known_keys.add(thumb_key)
+        keys: set[str] = set()
+        for s3_key, thumb_key in rows:
+            if s3_key:
+                keys.add(s3_key)
+            if thumb_key:
+                keys.add(thumb_key)
+        return keys
+
+    known_keys = await asyncio.to_thread(get_known_keys)
 
     # --- Step 2: List objects in the S3 bucket ----------------------------
-
-    s3 = aws.get_s3_client()
-    paginator = s3.get_paginator("list_objects_v2")
-
+    s3 = await asyncio.to_thread(aws.get_s3_client)
     delete_buffer = []
+    continuation_token = None
 
-    for page in paginator.paginate(Bucket=aws.BUCKET_NAME):
+    while True:
+        # Fetch one page of objects
+        def list_objects():
+            params = {"Bucket": aws.BUCKET_NAME}
+            if continuation_token:
+                params["ContinuationToken"] = continuation_token
+            return s3.list_objects_v2(**params)
+
+        page = await asyncio.to_thread(list_objects)
+
         for obj in page.get("Contents", []):
             key = obj["Key"]
 
@@ -1157,15 +1169,28 @@ def cleanup2() -> None:
             # Once we hit 1,000 keys, perform a bulk delete
             if len(delete_buffer) >= 1000:
                 logging.info("Deleting batch of %s objects...", len(delete_buffer))
-                s3.delete_objects(
-                    Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer}
+                await asyncio.to_thread(
+                    s3.delete_objects,
+                    Bucket=aws.BUCKET_NAME,
+                    Delete={"Objects": delete_buffer}
                 )
                 delete_buffer = []  # Reset the buffer
+
+        if not page.get("IsTruncated"):
+            break
+
+        continuation_token = page.get("NextContinuationToken")
+        # Yield control between pages to remain responsive
+        await asyncio.sleep(0.1)
 
     # Clean up any remaining keys in the buffer
     if delete_buffer:
         logging.info("Deleting final batch of %s objects...", len(delete_buffer))
-        s3.delete_objects(Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer})
+        await asyncio.to_thread(
+            s3.delete_objects,
+            Bucket=aws.BUCKET_NAME,
+            Delete={"Objects": delete_buffer}
+        )
 
     logging.info("Cleanup completed.")
 

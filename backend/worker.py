@@ -69,6 +69,6 @@ async def delete_s3_object(ctx, key: str):
 
 # 2. Worker settings
 class WorkerSettings:
-    functions = [say_hello, check_photo_sizes, recount_missing_sizes, delete_s3_object]
+    functions = [say_hello, check_photo_sizes, recount_missing_sizes, delete_s3_object, db.cleanup2]
     # Connect to the Redis Docker container we set up earlier
     redis_settings = RedisSettings(host=env.REDIS_URL2, port=6379)

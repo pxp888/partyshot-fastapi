@@ -142,7 +142,7 @@ function Adminpage({ currentUser }) {
 
             <div className="action-section">
               <button className="cleanup-button" onClick={handleCleanup}>
-                Run System Cleanup
+                Run S3 Garbage Collection
               </button>
               <p className="cleanup-hint">
                 This process synchronizes physical S3 storage with the database by removing

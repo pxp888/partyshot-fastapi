@@ -228,10 +228,14 @@ async def add_photo_metadata(
 
 
 @app.post("/api/cleanup")
-def cleanup_endpoint(Authorize: AuthJWT = Depends()):
+async def cleanup_endpoint(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
-    db.cleanup()
-    return {"status": "cleanup performed"}
+    current_user = Authorize.get_jwt_subject()
+    if current_user != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    await app.state.redis.enqueue_job("cleanup2")
+    return {"status": "cleanup task enqueued"}
 
 
 @app.post("/api/recount-sizes")
