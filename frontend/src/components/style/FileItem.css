@@ -2,7 +2,7 @@
     /*border: 1px solid gray;*/
     /*border-radius: 8px;*/
     /*padding: 10px;*/
-    background-color: rgb(32, 32, 32);
+    background-color: var(--form-color);
     transition:
         transform 0.3s ease,
         box-shadow 0.3s ease;
@@ -89,7 +89,7 @@
 
 .info .title,
 .info>.title {
-    color: salmon;
+    color: var(--bright-color);
 }
 
 label {

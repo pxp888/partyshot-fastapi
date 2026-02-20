@@ -109,7 +109,7 @@ function Welcomepage() {
 
       {/* Features Section */}
 
-      <section className="features-grid">
+      {/* <section className="features-grid">
         <div className="feature-card">
           <div className="feature-icon">📸</div>
           <h3>Easy Sharing</h3>
@@ -128,7 +128,7 @@ function Welcomepage() {
           <h3>Live Updates</h3>
           <p>See new photos as they are uploaded by others in real time.</p>
         </div>
-      </section>
+      </section>*/}
 
       {/* Footer */}
       <footer className="welcome-footer">

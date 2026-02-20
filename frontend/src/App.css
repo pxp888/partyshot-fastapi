@@ -1,15 +1,30 @@
 :root {
-    background-color: rgb(32, 32, 32);
     font-family: Arial, Helvetica, sans-serif;
-
     margin: 0 auto;
     text-align: center;
+
+    /* More Distinct Gray Theme Variables */
+    --bg-main: #212122;
+    --bg-glass: rgba(235, 235, 240, 0.85);
+    --border-glass: rgba(0, 0, 0, 0.15);
+
+    --bright-color: salmon;
+    --form-color: #e5e5ea;
+
+    --text-primary: #1c1c1e;
+    --text-secondary: #3a3a3c;
+
+    --btn-bg: #bcbcbf;
+    --btn-hover: var(--bright-color);
+    --btn-text: #1c1c1e;
+    --accent: var(--bright-color);
+
+    background-color: var(--bg-main);
 }
 
 body {
     margin: 0;
-    --bright-color: salmon;
-    --form-color: gainsboro;
+
 }
 
 .logo {
@@ -18,9 +33,11 @@ body {
     will-change: filter;
     transition: filter 300ms;
 }
+
 .logo:hover {
     filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
     filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -29,6 +46,7 @@ body {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -49,8 +67,8 @@ body {
 }
 
 .btn {
-    background-color: rgb(36, 36, 36);
-    color: white;
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
     /*grid-column-start: 2;*/
     transition: background-color 0.25s;
 
@@ -63,5 +81,5 @@ body {
 }
 
 .btn:hover {
-    background-color: salmon;
+    background-color: var(--bright-color);
 }

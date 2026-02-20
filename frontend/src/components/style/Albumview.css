@@ -59,28 +59,22 @@
     -webkit-backdrop-filter: blur(10px);
     margin: 0;
     padding: 0.75rem 1rem;
-    /* Reduced padding for mobile */
     display: flex;
     justify-content: flex-start;
     gap: var(--gap-md);
     align-items: center;
     position: sticky;
     top: 3.8rem;
-    /* Enough to clear the Topbar */
     z-index: 1000;
-    border-bottom: 1px solid var(--border-glass, rgba(255, 255, 255, 0.1));
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--border-glass, rgba(0, 0, 0, 0.1));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     overflow-x: auto;
-    /* Allow horizontal scroll for buttons */
     white-space: nowrap;
-    /* Prevent buttons from wrapping */
     scrollbar-width: none;
-    /* Hide scrollbar for cleaner look */
 }
 
 .albumActions::-webkit-scrollbar {
     display: none;
-    /* Hide scrollbar for Chrome/Safari */
 }
 
 .sortControls {
@@ -93,21 +87,21 @@
 .sortControls select {
     padding: 0.4rem 0.6rem;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     cursor: pointer;
 }
 
 .sortControls select option {
-    background: #333;
-    color: white;
+    background: white;
+    color: var(--text-primary);
 }
 
 .sortOrderBtn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
     padding: 0.4rem 0.6rem;
     border-radius: 4px;
     cursor: pointer;
@@ -118,7 +112,7 @@
 
 .sortOrderBtn:hover,
 .sortControls select:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 /* ----- Clickable elements ------------------------------------------ */
@@ -191,6 +185,11 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }

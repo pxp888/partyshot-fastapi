@@ -8,8 +8,8 @@
     /*border: 1px solid #ccc;*/
     /*border-radius: 8px;*/
     padding: 10px;
-    background-color: black;
-    color: gainsboro;
+    background-color: var(--form-color);
+    color: var(--text-primary);
     transition:
         transform 0.3s ease,
         box-shadow 0.3s ease;
@@ -37,7 +37,7 @@
 }
 
 .album-item h3 {
-    color: salmon;
+    color: var(--bright-color);
     grid-column: span 2;
     margin: 0.5rem;
 }
@@ -48,11 +48,11 @@
     grid-template-columns: 1fr 4fr;
 }
 
-.info > p {
+.info>p {
     align-items: baseline;
     text-align: left;
     margin: 0.5rem 0.5rem;
-    color: white;
+    color: var(--text-primary);
 }
 
 .info label {
