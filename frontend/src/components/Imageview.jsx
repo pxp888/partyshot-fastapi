@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./style/Imageview.css";
 import blankImage from "../assets/blank.jpg";
 import videoImage from "../assets/video.webp";
@@ -7,6 +7,7 @@ import videoImage from "../assets/video.webp";
 function Imageview({ files, focus, setFocus, deletedPhoto }) {
   // Reference to the container so we can compute click position
   const containerRef = useRef(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Keyboard navigation remains unchanged
   useEffect(() => {
@@ -44,6 +45,17 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     return () => window.removeEventListener("keydown", handler);
   }, [focus, files, setFocus]);
 
+  // Handle temporary visibility of file details when image changes
+  useEffect(() => {
+    if (focus !== -1) {
+      setShowDetails(true);
+      const timer = setTimeout(() => {
+        setShowDetails(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [focus]);
+
   const handleClick = (e) => {
     if (focus === -1 || !files) return;
 
@@ -75,8 +87,10 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   };
 
   const videoExtensions = /\.(mp4|webm|ogg|mov|avi|wmv|mkv|flv)$/i;
-  const isVideo = videoExtensions.test(files[focus].filename);
+  const isVideo = focus !== -1 && videoExtensions.test(files[focus].filename);
   const placeholder = isVideo ? videoImage : blankImage;
+
+  if (focus === -1) return null;
 
   return (
     <div className="imageView" ref={containerRef} onClick={handleClick}>
@@ -89,7 +103,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           }}
         />
       </div>
-      <div className="fileDetails" onClick={(e) => e.stopPropagation()}>
+      <div className={`fileDetails ${showDetails ? "visible" : ""}`} onClick={(e) => e.stopPropagation()}>
         {/* <div className="fileDetails"> */}
         <div className="detailRow">
           <span className="filename">{files[focus].filename}</span>

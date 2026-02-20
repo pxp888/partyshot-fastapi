@@ -55,7 +55,8 @@
     text-align: center;
 }
 
-.fileDetails:hover {
+.fileDetails:hover,
+.fileDetails.visible {
     opacity: 1;
     transform: translateY(0);
 }
