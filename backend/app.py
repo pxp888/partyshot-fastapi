@@ -592,6 +592,7 @@ async def serve_spa(request: Request, full_path: str):
 # 1️⃣ Serve the Vite build under “/” (but don’t use html=True)
 @app.on_event("startup")
 async def startup():
+    db.init_pool()
     db.init_db()
     # create pool for arq workers
     app.state.redis = await create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
