@@ -1,4 +1,5 @@
 import datetime
+import logging
 import hashlib
 import random
 import uuid
@@ -102,11 +103,11 @@ def init_db() -> None:
 
     cursor.close()
     conn.close()
-    print("Database schema initialized.")
+    logging.info("Database schema initialized.")
 
     # create admin user if it doesn't exist
     if getUser(env.ADMIN_USERNAME) is None:
-        print(f"Creating admin user: {env.ADMIN_USERNAME}")
+        logging.info("Creating admin user: %s", env.ADMIN_USERNAME)
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD)
 
 
@@ -384,7 +385,7 @@ async def deleteAlbum(username: str, code: str) -> bool:
         return True
     except Exception as e:
         conn.rollback()
-        print(f"Error deleting album: {e}")
+        logging.error("Error deleting album: %s", e)
         return False
     finally:
         cursor.close()
@@ -570,7 +571,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
             )
         rows = cursor.fetchall()
     except Exception as e:
-        print(f"Error fetching albums: {e}")
+        logging.error("Error fetching albums: %s", e)
         rows = []
     finally:
         cursor.close()
@@ -660,7 +661,7 @@ def subscribe(username: str, albumcode: str) -> bool:
         conn.commit()
         return True
     except Exception as e:
-        print(f"Error subscribing user {username} to album {albumcode}: {e}")
+        logging.error("Error subscribing user %s to album %s: %s", username, albumcode, e)
         conn.rollback()
         return False
     finally:
@@ -687,7 +688,7 @@ def unsubscribe(username: str, albumcode: str) -> bool:
         conn.commit()
         return True
     except Exception as e:
-        print(f"Error unsubscribing user {username} from album {albumcode}: {e}")
+        logging.error("Error unsubscribing user %s from album %s: %s", username, albumcode, e)
         conn.rollback()
         return False
     finally:
@@ -956,7 +957,7 @@ def setUserData(username: str, newusername: str = None, email: str = None, passw
         conn.commit()
         return "success"
     except Exception as e:
-        print(f"Error updating user data: {e}")
+        logging.error("Error updating user data: %s", e)
         conn.rollback()
         return "error"
     finally:
@@ -1091,7 +1092,7 @@ def cleanup() -> None:
     s3 = aws.get_s3_client()
     paginator = s3.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=aws.BUCKET_NAME):
-        print("considering page : ", pagenum)
+        logging.info("considering page : %s", pagenum)
         pagenum += 1
         for obj in page.get("Contents", []):
             key = obj["Key"]
@@ -1099,11 +1100,11 @@ def cleanup() -> None:
             if key not in known_keys:
                 try:
                     aws.delete_file_from_s3(key)
-                    print(f"[cleanup] Deleted orphaned object: {key}")
+                    logging.info("[cleanup] Deleted orphaned object: %s", key)
                 except Exception as exc:  # pragma: no cover - S3 side effect
-                    print(f"[cleanup] Failed to delete {key} – {exc!r}")
+                    logging.error("[cleanup] Failed to delete %s – %r", key, exc)
 
-    print("completed")
+    logging.info("completed")
 
 
 def cleanup2() -> None:
@@ -1155,7 +1156,7 @@ def cleanup2() -> None:
 
             # Once we hit 1,000 keys, perform a bulk delete
             if len(delete_buffer) >= 1000:
-                print(f"Deleting batch of {len(delete_buffer)} objects...")
+                logging.info("Deleting batch of %s objects...", len(delete_buffer))
                 s3.delete_objects(
                     Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer}
                 )
@@ -1163,10 +1164,10 @@ def cleanup2() -> None:
 
     # Clean up any remaining keys in the buffer
     if delete_buffer:
-        print(f"Deleting final batch of {len(delete_buffer)} objects...")
+        logging.info("Deleting final batch of %s objects...", len(delete_buffer))
         s3.delete_objects(Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer})
 
-    print("Cleanup completed.")
+    logging.info("Cleanup completed.")
 
 
 def spaceUsed() -> dict:
@@ -1208,7 +1209,7 @@ def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None):
         conn.commit()
     except Exception as e:
         conn.rollback()
-        print(f"Error updating photo sizes for {photo_id}: {e}")
+        logging.error("Error updating photo sizes for %s: %s", photo_id, e)
     finally:
         cursor.close()
         conn.close()

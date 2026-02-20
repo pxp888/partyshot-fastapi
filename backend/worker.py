@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import aws
 import db
@@ -7,10 +8,12 @@ from arq.connections import RedisSettings
 from PIL import Image
 
 
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+
 # 1. Define your background task
 async def say_hello(ctx, name: str):
     await asyncio.sleep(2)  # Simulate a heavy task
-    print(f"Hello, {name}!")
+    logging.info("Hello, %s!", name)
     return f"Said hello to {name}"
 
 
@@ -26,15 +29,15 @@ async def check_photo_sizes(ctx, photo_id: int, s3_key: str, thumb_key: str = No
     # Run blocking DB call in thread
     await asyncio.to_thread(db.updatePhotoSizes, photo_id, size, thumb_size)
     
-    print(f"Updated sizes for photo {photo_id}: size={size}, thumb_size={thumb_size}")
+    logging.info("Updated sizes for photo %s: size=%s, thumb_size=%s", photo_id, size, thumb_size)
     return {"photo_id": photo_id, "size": size, "thumb_size": thumb_size}
 
 
 async def recount_missing_sizes(ctx):
-    print("Starting re-count of missing photo sizes...")
+    logging.info("Starting re-count of missing photo sizes...")
     # Fetch list (blocking, but fast)
     photos = await asyncio.to_thread(db.uncountedPhotos)
-    print(f"Found {len(photos)} photos with missing sizes.")
+    logging.info("Found %s photos with missing sizes.", len(photos))
     
     count = 0
     for photo_id, s3_key, thumb_key in photos:
@@ -48,18 +51,18 @@ async def recount_missing_sizes(ctx):
         
         count += 1
         if count % 10 == 0:
-            print(f"Processed {count}/{len(photos)} photos...")
+            logging.info("Processed %s/%s photos...", count, len(photos))
 
         # Pace the task - 0.1s ensures we don't hog the CPU/Network
         await asyncio.sleep(0.1) 
             
-    print(f"Re-count completed. Updated {count} photos.")
+    logging.info("Re-count completed. Updated %s photos.", count)
     return {"updated": count}
 
 
 async def delete_s3_object(ctx, key: str):
     if key:
-        print(f"Deleting {key} from S3")
+        logging.info("Deleting %s from S3", key)
         await asyncio.to_thread(aws.delete_file_from_s3, key)
     return True
 

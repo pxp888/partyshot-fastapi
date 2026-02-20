@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 import uuid
 import time 
+
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 import aws
 import db
@@ -100,7 +103,7 @@ def register(request: RegisterRequest, Authorize: AuthJWT = Depends()):
 
     db.setUser(request.username, request.email, request.password)
 
-    print(f"Registering user: {request.username}, email: {request.email}, ")
+    logging.info("Registering user: %s, email: %s, ", request.username, request.email)
     access_token = Authorize.create_access_token(subject=request.username)
     refresh_token = Authorize.create_refresh_token(subject=request.username)
     return {
@@ -140,7 +143,7 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     wssecret = uuid.uuid4().hex
     # await redis_client.set(f"user:{current_user}:uuid", wssecret)
     await redis_client.set(f"wssecret:{wssecret}", current_user, ex=1200)
-    print("------------------------secrets for : ", current_user)
+    logging.info("------------------------secrets for : %s", current_user)
     return {"wssecret": wssecret}
 
 
@@ -167,7 +170,7 @@ async def get_presigned(
         return
     if not album["open"]:
         if album["user_id"] != user["id"]:
-            print("get_presigned - not allowed")
+            logging.info("get_presigned - not allowed")
             raise HTTPException(status_code=403, detail="Not Allowed")
             return
 
@@ -301,7 +304,7 @@ async def createAlbum(websocket, data, username):
 
     result = db.createAlbum(username, album_name)
     if not result:
-        print("createAlbum error")
+        logging.error("createAlbum error")
         return
     message = {"action": "newAlbum", "payload": {"type": "update"}}
     await redis_client.publish(f"user-{username}", json.dumps(message))
@@ -334,7 +337,7 @@ async def getAlbum(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
     album = db.getAlbumWithSub(albumcode, username)
     if not album:
-        print("getAlbum - no album found")
+        logging.info("getAlbum - no album found")
         return
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
@@ -396,7 +399,6 @@ async def attach_presigned_urls(photos_data: dict):
 
 
 async def getPhotos(websocket, data, username):
-    start = time.time()
     albumcode = data["payload"]["albumcode"]
     limit = data["payload"].get("limit", 100)
     offset = data["payload"].get("offset", 0)
@@ -416,8 +418,6 @@ async def getPhotos(websocket, data, username):
         
     message = {"action": "getPhotos", "payload": photos_data}
     await websocket.send_json(message)
-    end = time.time()
-    print(f"getPhotos: {end - start}")
 
 
 async def deletePhoto(websocket, data, username):
@@ -428,12 +428,12 @@ async def deletePhoto(websocket, data, username):
         message = {"action": "deletePhoto", "payload": photo_id}
         await redis_client.publish(f"album-{albumcode}", json.dumps(message))
     else:
-        print("not deleted", photo_id)
+        logging.info("not deleted %s", photo_id)
 
 
 async def search(websocket, data, username):
     term = data["payload"]["term"]
-    print("search", term)
+    logging.info("search %s", term)
     result = db.search(term)
     message = {"action": "search", "payload": result}
     await websocket.send_json(message)
@@ -449,7 +449,7 @@ async def setAlbumName(websocket, data, username):
         message = {"action": "newAlbum", "payload": {"type": "update"}}
         await redis_client.publish(f"user-{username}", json.dumps(message))
     else:
-        print("not set album name", albumcode)
+        logging.error("not set album name %s", albumcode)
 
 
 async def setUserData(websocket, data, username):
@@ -469,7 +469,7 @@ async def setUserData(websocket, data, username):
     else:
         message = {"action": "setUserData", "payload": {"email": email, "username": username, "message": ok}}
         await websocket.send_json(message)
-        print(f"setUserData status/error: {ok} for user {username}")
+        logging.error("setUserData status/error: %s for user %s", ok, username)
 
 
 async def getEmail(websocket, data, username):
@@ -510,7 +510,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 payload = json.loads(data)
             except json.JSONDecodeError:
                 # Bad payload – let the client know and terminate
-                print("websocket - bad message")
+                logging.error("websocket - bad message")
                 await websocket.close(code=1008)
                 return
 
@@ -519,7 +519,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if wssecret:
                 username = await redis_client.get(f"wssecret:{wssecret}")
 
-            print(username, payload)
+            logging.info("%s %s", username, payload)
 
             action = payload.get("action")
             if action == "createAlbum":
@@ -549,23 +549,23 @@ async def websocket_endpoint(websocket: WebSocket):
             elif action == "unsubscribe":
                 await unsubscribe(websocket, payload, username)
             else:
-                print("websocket - unknown action")
+                logging.error("websocket - unknown action")
                 await websocket.close(code=1008)
                 return
 
     # Handle normal client disconnects cleanly without attempting a second close
     except WebSocketDisconnect as e:
         # WebSocketDisconnect is expected when the client closes the connection
-        print(f"WebSocket disconnected: {e.code}")
+        logging.info("WebSocket disconnected: %s", e.code)
         return
     except Exception as e:
         # Log the error – keep the log readable
-        print(f"WebSocket error: {e}")
+        logging.error("WebSocket error: %s", e)
         # Ensure we close cleanly only if the socket is still open
         try:
             await websocket.close(code=1011)  # 1011 = internal error
         except Exception as close_err:
-            print(f"Failed to close websocket cleanly: {close_err}")
+            logging.error("Failed to close websocket cleanly: %s", close_err)
 
 
 # --------------------------------------------------------------------------- #
