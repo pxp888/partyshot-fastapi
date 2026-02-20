@@ -67,8 +67,18 @@ async def delete_s3_object(ctx, key: str):
     return True
 
 
+async def startup(ctx):
+    db.init_pool()
+
+
+async def shutdown(ctx):
+    db.close_pool()
+
+
 # 2. Worker settings
 class WorkerSettings:
     functions = [say_hello, check_photo_sizes, recount_missing_sizes, delete_s3_object, db.cleanup2]
     # Connect to the Redis Docker container we set up earlier
     redis_settings = RedisSettings(host=env.REDIS_URL2, port=6379)
+    on_startup = startup
+    on_shutdown = shutdown

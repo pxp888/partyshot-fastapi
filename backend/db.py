@@ -42,6 +42,13 @@ def init_pool():
         )
 
 
+def close_pool():
+    global _db_pool
+    if _db_pool is not None:
+        _db_pool.closeall()
+        _db_pool = None
+
+
 @contextmanager
 def get_db_connection():
     if _db_pool is None:
