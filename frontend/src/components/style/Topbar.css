@@ -43,6 +43,10 @@
     display: inline-block;
 }
 
+.topLeft a .title-suffix {
+    color: #888;
+}
+
 .topLeft a:hover {
     transform: scale(1.05);
 }

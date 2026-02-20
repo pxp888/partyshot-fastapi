@@ -79,7 +79,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   return (
     <div className="topbar">
       <div className="topLeft">
-        <a href="/">partyShots</a>
+        <a href="/">shareShot<span className="title-suffix">.eu</span></a>
       </div>
 
       <Searchbar className="search" />

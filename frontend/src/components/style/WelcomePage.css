@@ -34,12 +34,21 @@
     font-size: clamp(3.5rem, 10vw, 6rem);
     font-weight: 100;
     font-style: italic;
-    font-family: Arial, Helvetica, sans-serif margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
     background: linear-gradient(135deg, salmon 0%, var(--welcome-accent) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.02em;
+}
+
+.hero-title .title-suffix {
+    color: #888;
+    -webkit-text-fill-color: #888;
+    background: none;
+    -webkit-background-clip: initial;
+    background-clip: initial;
 }
 
 .hero-subtitle {

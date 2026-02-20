@@ -8,7 +8,7 @@ function Welcomepage() {
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-content">
-          <h1 className="hero-title">partyShots</h1>
+          <h1 className="hero-title">shareShot<span className="title-suffix">.eu</span></h1>
           <p className="hero-subtitle">Capture the moment, together.</p>
           <p className="hero-snarky">(because we don't all have to take the picture.)</p>
           <div className="hero-description">
