@@ -29,6 +29,10 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
       console.log("Registration successful:", data);
       setCurrentUser(data.user);
       setShowRegister(false);
+
+      const uuidData = await sendJson("/api/generate-wssecret", {});
+      localStorage.setItem("wssecret", uuidData.wssecret);
+
       if (location.pathname === "/") {
         navigate(`/user/${data.user}`);
       }
