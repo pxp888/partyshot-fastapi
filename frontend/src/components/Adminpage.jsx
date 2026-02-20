@@ -152,7 +152,7 @@ function Adminpage({ currentUser }) {
               </p>
             </div>
 
-            <div className="action-section">
+            {/* <div className="action-section">
               <button className="cleanup-button" onClick={handleCleanup}>
                 Run S3 Garbage Collection
               </button>
@@ -160,7 +160,7 @@ function Adminpage({ currentUser }) {
                 This process synchronizes physical S3 storage with the database by removing
                 obsolete files that are no longer referenced in any albums.
               </p>
-            </div>
+            </div> */}
 
 
           </div>
