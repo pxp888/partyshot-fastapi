@@ -115,6 +115,10 @@ function Adminpage({ currentUser }) {
                     <div className="usage-value">{formatBytes(spaceUsed.thumbs)}</div>
                   </div>
                   <div className="usage-item">
+                    <span className="usage-label">Total Users</span>
+                    <div className="usage-value">{spaceUsed.total_users || 0}</div>
+                  </div>
+                  <div className="usage-item">
                     <span className="usage-label">Total Albums</span>
                     <div className="usage-value">{spaceUsed.total_albums || 0}</div>
                   </div>
