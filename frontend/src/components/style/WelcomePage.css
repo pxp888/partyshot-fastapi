@@ -8,7 +8,7 @@
 }
 
 .welcome-container {
-    background-color: var(--welcome-bg);
+    background-color: var(--form-color);
     color: var(--welcome-text);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
