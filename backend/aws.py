@@ -1,3 +1,4 @@
+import logging
 import os
 
 import boto3
@@ -20,7 +21,7 @@ def upload_bytes_to_s3(bytes_data, object_name):
     try:
         s3_client.put_object(Body=bytes_data, Bucket=BUCKET_NAME, Key=object_name)
     except ClientError as e:
-        print(f"Error uploading bytes: {e}")
+        logging.error("Error uploading bytes: %s", e)
         return False
     return True
 
@@ -40,7 +41,7 @@ def create_presigned_url(object_name, expiration=86400):
             ExpiresIn=expiration,
         )
     except ClientError as e:
-        print(f"Error generating presigned GET URL: {e}")
+        logging.error("Error generating presigned GET URL: %s", e)
         return None
     return response
 
@@ -56,7 +57,7 @@ def create_presigned_post(object_name, expiration=3600):
             Bucket=BUCKET_NAME, Key=object_name, ExpiresIn=expiration
         )
     except ClientError as e:
-        print(f"Error generating presigned POST URL: {e}")
+        logging.error("Error generating presigned POST URL: %s", e)
         return None
     return response
 
@@ -67,9 +68,9 @@ def delete_file_from_s3(object_name):
     s3_client = get_s3_client()
     try:
         s3_client.delete_object(Bucket=BUCKET_NAME, Key=object_name)
-        print(f"Deleted {object_name} from S3 bucket {BUCKET_NAME}")
+        logging.info("Deleted %s from S3 bucket %s", object_name, BUCKET_NAME)
     except ClientError as e:
-        print(f"Error deleting file: {e}")
+        logging.error("Error deleting file: %s", e)
         return False
     return True
 
@@ -82,5 +83,5 @@ def s3size(key):
         response = s3_client.head_object(Bucket=BUCKET_NAME, Key=key)
         return response.get("ContentLength", 0)
     except ClientError as e:
-        print(f"Error getting s3 size for {key}: {e}")
+        logging.error("Error getting s3 size for %s: %s", key, e)
         return 0
