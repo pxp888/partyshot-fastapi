@@ -127,6 +127,7 @@
 .info-banner {
     background-color: var(--card-bg);
     margin: 4rem 2rem;
+    margin-top: 1rem;
     padding: 3rem;
     border-radius: 20px;
     max-width: 1000px;

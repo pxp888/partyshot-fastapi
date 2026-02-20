@@ -34,20 +34,20 @@ function Welcomepage() {
           <div className="step">
             <span className="step-number">01</span>
             <h4>Create</h4>
-            <p>Start a new album for your event in seconds.</p>
+            <p><strong>Create</strong> a new album and upload photos.</p>
           </div>
           <div className="step">
             <span className="step-number">02</span>
             <h4>Invite</h4>
             <p>
-              Share the album code or your username with guests, collaborators
+              Share the album URL, code or your username with guests, collaborators
               or friends.
             </p>
           </div>
           <div className="step">
             <span className="step-number">03</span>
             <h4>Collect</h4>
-            <p>Everyone can upload and download the full collection.</p>
+            <p>Everyone can upload and download the full collection in one place.</p>
           </div>
         </div>
       </section>
@@ -57,7 +57,7 @@ function Welcomepage() {
         <div className="info-content">
           <h3>Community Focused</h3>
           <p>
-            partyShots is built for open collaboration. Please note that albums
+            shareShot is built for open collaboration. Please note that albums
             are accessible via codes or usernames—it's designed for sharing, and
             albums are visible by default.
           </p>
