@@ -72,6 +72,5 @@
 }
 
 .fileDetails .meta strong {
-    color: #4dabf7;
-    /* Subtle blue for username */
+    color: var(--bright-color);
 }
