@@ -203,6 +203,9 @@ function Albumview(currentUser) {
 
   function downloadAll(e) {
     e.preventDefault();
+    if (!window.confirm("Download the full album?")) {
+      return;
+    }
     if (photos.length >= totalPhotos && totalPhotos > 0) {
       // Already have all photos, just ZIP them
       startZipProcess(photos);
