@@ -33,9 +33,9 @@
     color: #888;
 }
 
-.topLeft a:hover {
+/*.topLeft a:hover {
     transform: scale(1.05);
-}
+}*/
 
 .topbar .nav,
 .topbar .userInfo {
