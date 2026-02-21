@@ -1,10 +1,12 @@
 import json
 import logging
 import os
+import time
 import uuid
-import time 
 
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 import aws
 import db
@@ -302,7 +304,6 @@ async def toggle_public(
     return updated_album
 
 
-
 async def createAlbum(websocket, data, username):
     album_name = data["payload"]["album_name"]
 
@@ -314,7 +315,7 @@ async def createAlbum(websocket, data, username):
     await redis_client.publish(f"user-{username}", json.dumps(message))
     message2 = {"action": "createAlbum", "payload": result}
     await websocket.send_json(message2)
-    
+
 
 async def getAlbums(websocket, data, username):
     target = data["payload"]["target"]
@@ -330,11 +331,12 @@ async def deleteAlbum(websocket, data, username):
     message = {"action": "deleteAlbum", "payload": ok}
     await websocket.send_json(message)
 
-    message = {"action": "newAlbum", "payload": {"type": "update"}}
-    await redis_client.publish(f"user-{username}", json.dumps(message))
+    if ok:
+        message = {"action": "newAlbum", "payload": {"type": "update"}}
+        await redis_client.publish(f"user-{username}", json.dumps(message))
 
-    message = {"action": "deleteAlbum", "payload": albumcode}
-    await redis_client.publish(f"album-{albumcode}", json.dumps(message))
+        message = {"action": "deleteAlbum", "payload": albumcode}
+        await redis_client.publish(f"album-{albumcode}", json.dumps(message))
 
 
 async def getAlbum(websocket, data, username):
@@ -353,7 +355,7 @@ async def attach_presigned_urls(photos_data: dict):
         return photos_data
 
     photos = photos_data["photos"]
-    
+
     # Collect all unique S3 keys that need presigning
     keys_to_check = []
     for p in photos:
@@ -361,35 +363,35 @@ async def attach_presigned_urls(photos_data: dict):
             keys_to_check.append(p["s3_key"])
         if p.get("thumb_key"):
             keys_to_check.append(p["thumb_key"])
-    
+
     if not keys_to_check:
         return photos_data
 
     # deduplicate
     unique_s3_keys = list(set(keys_to_check))
-    
+
     # Construct redis keys
     redis_keys = [f"presigned:{k}" for k in unique_s3_keys]
-    
+
     # MGET from redis
     cached_urls = await redis_client.mget(*redis_keys)
     url_map = dict(zip(unique_s3_keys, cached_urls))
-    
+
     new_presigned_urls = {}
-    
+
     for p in photos:
         for key_type in ["s3_key", "thumb_key"]:
             s3_key = p.get(key_type)
             if not s3_key:
                 continue
-            
+
             presigned_url = url_map.get(s3_key)
             if not presigned_url:
                 # Generate new presigned URL (12 hour expiration)
                 presigned_url = aws.create_presigned_url(s3_key, expiration=43200)
                 if presigned_url:
                     new_presigned_urls[f"presigned:{s3_key}"] = presigned_url
-            
+
             p[key_type] = presigned_url
 
     # Cache new URLs if any
@@ -398,7 +400,7 @@ async def attach_presigned_urls(photos_data: dict):
             for r_key, url in new_presigned_urls.items():
                 pipe.set(r_key, url, ex=43200)
             await pipe.execute()
-            
+
     return photos_data
 
 
@@ -416,10 +418,10 @@ async def getPhotos(websocket, data, username):
         sort_field=sort_field,
         sort_order=sort_order,
     )
-    
+
     if photos_data:
         photos_data = await attach_presigned_urls(photos_data)
-        
+
     message = {"action": "getPhotos", "payload": photos_data}
     await websocket.send_json(message)
 
@@ -448,7 +450,10 @@ async def setAlbumName(websocket, data, username):
     name = data["payload"]["name"]
     ok = db.setAlbumName(albumcode, name, username)
     if ok:
-        message = {"action": "setAlbumName", "payload": {"albumcode": albumcode, "name": name}}
+        message = {
+            "action": "setAlbumName",
+            "payload": {"albumcode": albumcode, "name": name},
+        }
         await redis_client.publish(f"album-{albumcode}", json.dumps(message))
         message = {"action": "newAlbum", "payload": {"type": "update"}}
         await redis_client.publish(f"user-{username}", json.dumps(message))
@@ -462,16 +467,24 @@ async def setUserData(websocket, data, username):
     password = data["payload"].get("password")
     wssecret = data.get("wssecret")
     ok = db.setUserData(username, newusername, email, password)
-    
+
     if ok == "success":
         # Determine what the effective username is now
-        effective_username = newusername if (newusername and len(newusername) >= 3) else username
-        message = {"action": "setUserData", "payload": {"email": email, "username": effective_username, "message": ok}}
+        effective_username = (
+            newusername if (newusername and len(newusername) >= 3) else username
+        )
+        message = {
+            "action": "setUserData",
+            "payload": {"email": email, "username": effective_username, "message": ok},
+        }
         await websocket.send_json(message)
         if wssecret:
             await redis_client.set(f"wssecret:{wssecret}", effective_username, ex=1200)
     else:
-        message = {"action": "setUserData", "payload": {"email": email, "username": username, "message": ok}}
+        message = {
+            "action": "setUserData",
+            "payload": {"email": email, "username": username, "message": ok},
+        }
         await websocket.send_json(message)
         logging.error("setUserData status/error: %s for user %s", ok, username)
 
@@ -500,7 +513,6 @@ async def unsubscribe(websocket, data, username):
     ok = db.unsubscribe(username, albumcode)
     message = {"action": "unsubscribe", "payload": ok}
     await websocket.send_json(message)
-
 
 
 @app.websocket("/ws")
