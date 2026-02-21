@@ -388,21 +388,27 @@ async def getAlbum(websocket, data, username):
 
 async def attach_presigned_urls(photos_data: dict):
     """
-    Now simplified to just return the static CloudFront URL.
-    The browser will use the signed cookies set during login.
+    Generate CloudFront signed URLs for the photos.
     """
     if not photos_data or "photos" not in photos_data or not photos_data["photos"]:
         return photos_data
 
-    photos = photos_data["photos"]
-    cf_domain = env.CLOUDFRONT_DOMAIN
-
-    for p in photos:
-        for key_type in ["s3_key", "thumb_key"]:
-            s3_key = p.get(key_type)
-            if s3_key:
-                # Replace the key with the full CloudFront URL
-                p[key_type] = f"https://{cf_domain}/{s3_key}"
+    # if localdev, create signed urls
+    if env.LOCALDEV:
+        photos = photos_data["photos"]
+        for p in photos:
+            for key_type in ["s3_key", "thumb_key"]:
+                s3_key = p.get(key_type)
+                if s3_key:
+                    p[key_type] = aws.create_cloudfront_signed_url(s3_key)
+    else:
+        cf_domain = env.CLOUDFRONT_DOMAIN
+        photos = photos_data["photos"]
+        for p in photos:
+            for key_type in ["s3_key", "thumb_key"]:
+                s3_key = p.get(key_type)
+                if s3_key:
+                    p[key_type] = f"https://{cf_domain}/{s3_key}"
 
     return photos_data
 

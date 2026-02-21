@@ -19,6 +19,7 @@ BUCKET_NAME = env.BUCKET_NAME
 REGION = env.REGION
 
 
+
 def get_s3_client():
     """Helper to maintain consistency across functions"""
     return boto3.client("s3", region_name=REGION)
@@ -147,56 +148,6 @@ def get_cloudfront_url(object_name):
     return f"https://{env.CLOUDFRONT_DOMAIN}/{object_name}"
 
 
-def get_cloudfront_signed_cookies1(resource_url, expiration=86400):
-    """
-    Generate CloudFront signed cookies for a resource (supports wildcards).
-    :param resource_url: URL pattern to match (e.g., 'https://d123.net/album/*')
-    :param expiration: Seconds until the cookies expire (default 24h)
-    :return: Dictionary of cookie names and values or None
-    """
-    try:
-        # Calculate expiry time (epoch)
-        expire_time = int(time.time() + expiration)
-
-        # Create the custom policy
-        policy = {
-            "Statement": [
-                {
-                    "Resource": resource_url,
-                    "Condition": {"DateLessThan": {"AWS:EpochTime": expire_time}},
-                }
-            ]
-        }
-        policy_json = json.dumps(policy, separators=(",", ":"))
-
-        # Base64 encode the policy
-        policy_64 = (
-            base64.b64encode(policy_json.encode("utf-8"))
-            .decode("utf-8")
-            .replace("+", "-")
-            .replace("=", "_")
-            .replace("/", "~")
-        )
-
-        # Sign the policy directly using our rsa_signer
-        signature_binary = rsa_signer(policy_json.encode("utf-8"))
-        signature_64 = (
-            base64.b64encode(signature_binary)
-            .decode("utf-8")
-            .replace("+", "-")
-            .replace("=", "_")
-            .replace("/", "~")
-        )
-
-        return {
-            "CloudFront-Policy": policy_64,
-            "CloudFront-Signature": signature_64,
-            "CloudFront-Key-Pair-Id": env.CLOUDFRONT_KEY_ID,
-        }
-    except Exception as e:
-        logging.error("Error generating CloudFront signed cookies: %s", e)
-        return None
-
 
 def get_cloudfront_signed_cookies(resource_url, expiration=86400):
     try:
@@ -239,3 +190,9 @@ def get_cloudfront_signed_cookies(resource_url, expiration=86400):
     except Exception as e:
         print(f"Error: {e}")
         return None
+
+
+
+if env.LOCALDEV:
+    get_cloudfront_url = create_cloudfront_signed_url
+    
