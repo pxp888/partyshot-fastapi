@@ -109,7 +109,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           <img
             src={files[focus].s3_key || placeholder}
             alt={`${files[focus].filename}`}
-            onClick={(e) => e.stopPropagation()}
+            // onClick={(e) => e.stopPropagation()}
             onError={(e) => {
               e.target.src = placeholder;
             }}
@@ -117,7 +117,6 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
         )}
       </div>
       <div className={`fileDetails ${showDetails ? "visible" : ""}`} onClick={(e) => e.stopPropagation()}>
-        {/* <div className="fileDetails"> */}
         <div className="detailRow">
           <span className="filename">{files[focus].filename}</span>
         </div>
