@@ -43,6 +43,7 @@
 - **Redis**: Powering real-time messaging and WebSocket synchronization.
 - **Arq**: Distributed background job processing.
 - **S3 & Boto3**: Scalable object storage for high-resolution images.
+- **Cloudfront**: Deployed site works with session cookies to reduce server load.  For local testing signed urls must be used.  
 
 ### Frontend
 - **React 18**: Modern UI development with Hooks and Context API.

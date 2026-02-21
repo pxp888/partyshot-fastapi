@@ -87,10 +87,8 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
     refresh_token = Authorize.create_refresh_token(subject=user.username)
 
     # Set CloudFront Signed Cookies
-    # We sign for the entire distribution (*) or a specific path if preferred
     resource_url = f"https://{env.CLOUDFRONT_DOMAIN}/*"
     cookies = aws.get_cloudfront_signed_cookies(resource_url)
-
     if cookies:
         for name, value in cookies.items():
             response.set_cookie(
@@ -102,7 +100,6 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
                 domain=getattr(env, "COOKIE_DOMAIN", None),
                 path="/",
             )
-
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -143,7 +140,6 @@ def register(
                 domain=getattr(env, "COOKIE_DOMAIN", None),
                 path="/",
             )
-
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
