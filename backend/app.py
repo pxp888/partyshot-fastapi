@@ -520,68 +520,67 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
     try:
-        while True:
-            data = await websocket.receive_text()
-            try:
-                payload = json.loads(data)
-            except json.JSONDecodeError:
-                # Bad payload – let the client know and terminate
-                logging.error("websocket - bad message")
-                await websocket.close(code=1008)
-                return
-
-            username = None
-            wssecret = payload.get("wssecret")
-            if wssecret:
-                username = await redis_client.get(f"wssecret:{wssecret}")
-
-            logging.info("%s %s", username, payload)
-
-            action = payload.get("action")
-            if action == "createAlbum":
-                await createAlbum(websocket, payload, username)
-            elif action == "getAlbums":
-                await getAlbums(websocket, payload, username)
-            elif action == "deleteAlbum":
-                await deleteAlbum(websocket, payload, username)
-            elif action == "getPhotos":
-                await getPhotos(websocket, payload, username)
-            elif action == "getAlbum":
-                await getAlbum(websocket, payload, username)
-            elif action == "deletePhoto":
-                await deletePhoto(websocket, payload, username)
-            elif action == "search":
-                await search(websocket, payload, username)
-            elif action == "setAlbumName":
-                await setAlbumName(websocket, payload, username)
-            elif action == "setUserData":
-                await setUserData(websocket, payload, username)
-            elif action == "getEmail":
-                await getEmail(websocket, payload, username)
-            elif action == "getUsage":
-                await getUsage(websocket, payload, username)
-            elif action == "subscribe":
-                await subscribe(websocket, payload, username)
-            elif action == "unsubscribe":
-                await unsubscribe(websocket, payload, username)
-            else:
-                logging.error("websocket - unknown action")
-                await websocket.close(code=1008)
-                return
-
-    # Handle normal client disconnects cleanly without attempting a second close
-    except WebSocketDisconnect as e:
-        # WebSocketDisconnect is expected when the client closes the connection
-        logging.info("WebSocket disconnected: %s", e.code)
-        return
-    except Exception as e:
-        # Log the error – keep the log readable
-        logging.error("WebSocket error: %s", e)
-        # Ensure we close cleanly only if the socket is still open
         try:
-            await websocket.close(code=1011)  # 1011 = internal error
-        except Exception as close_err:
-            logging.error("Failed to close websocket cleanly: %s", close_err)
+            while True:
+                data = await websocket.receive_text()
+                try:
+                    payload = json.loads(data)
+                except json.JSONDecodeError:
+                    # Bad payload – let the client know and terminate
+                    logging.error("websocket - bad message")
+                    await websocket.close(code=1008)
+                    return
+
+                username = None
+                wssecret = payload.get("wssecret")
+                if wssecret:
+                    username = await redis_client.get(f"wssecret:{wssecret}")
+
+                logging.info("%s %s", username, payload)
+
+                action = payload.get("action")
+                if action == "createAlbum":
+                    await createAlbum(websocket, payload, username)
+                elif action == "getAlbums":
+                    await getAlbums(websocket, payload, username)
+                elif action == "deleteAlbum":
+                    await deleteAlbum(websocket, payload, username)
+                elif action == "getPhotos":
+                    await getPhotos(websocket, payload, username)
+                elif action == "getAlbum":
+                    await getAlbum(websocket, payload, username)
+                elif action == "deletePhoto":
+                    await deletePhoto(websocket, payload, username)
+                elif action == "search":
+                    await search(websocket, payload, username)
+                elif action == "setAlbumName":
+                    await setAlbumName(websocket, payload, username)
+                elif action == "setUserData":
+                    await setUserData(websocket, payload, username)
+                elif action == "getEmail":
+                    await getEmail(websocket, payload, username)
+                elif action == "getUsage":
+                    await getUsage(websocket, payload, username)
+                elif action == "subscribe":
+                    await subscribe(websocket, payload, username)
+                elif action == "unsubscribe":
+                    await unsubscribe(websocket, payload, username)
+                else:
+                    logging.error("websocket - unknown action")
+                    await websocket.close(code=1008)
+                    return
+
+        # Handle normal client disconnects cleanly
+        except WebSocketDisconnect as e:
+            logging.info("WebSocket disconnected: %s", e.code)
+        except Exception as e:
+            logging.error("WebSocket error: %s", e)
+            try:
+                await websocket.close(code=1011)
+            except Exception:
+                pass
+    finally:
+        await manager.unsubscribe(websocket)
 
 
 # --------------------------------------------------------------------------- #

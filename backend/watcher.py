@@ -2,6 +2,7 @@ import asyncio
 
 import env
 import redis.asyncio as redis
+from fastapi import WebSocket
 
 redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
@@ -18,9 +19,9 @@ class Watcher:
 
     def __init__(self):
         # Map a websocket to the subject it is currently listening on.
-        self._websocket_subject: dict[asyncio.Task, str] = {}
+        self._websocket_subject: dict[WebSocket, str] = {}
         # Map subject -> set of websockets.
-        self._subject_targets: dict[str, set] = {}
+        self._subject_targets: dict[str, set[WebSocket]] = {}
         # Map subject -> listener task.
         self._subject_listeners: dict[str, asyncio.Task] = {}
 
@@ -45,7 +46,7 @@ class Watcher:
             # Remove the listener task reference.
             self._subject_listeners.pop(subject, None)
 
-    async def subscribe(self, websocket: asyncio.Task, subject: str) -> None:
+    async def subscribe(self, websocket: WebSocket, subject: str) -> None:
         """Subscribe *websocket* to *subject*.
 
         If the websocket was previously subscribed to another subject it is
@@ -67,7 +68,7 @@ class Watcher:
             )
 
     async def unsubscribe(
-        self, websocket: asyncio.Task, subject: str | None = None
+        self, websocket: WebSocket, subject: str | None = None
     ) -> None:
         """Unsubscribe *websocket* from *subject* (or from its current subject
         if *subject* is None)."""
@@ -80,7 +81,7 @@ class Watcher:
             targets.discard(websocket)
         self._websocket_subject.pop(websocket, None)
         # If no websockets left for a subject, cancel its listener.
-        if targets and not targets:
+        if targets is not None and not targets:
             task = self._subject_listeners.pop(subject, None)
             if task and not task.done():
                 task.cancel()
