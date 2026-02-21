@@ -7,8 +7,7 @@
 
 **shareShots** is a high-performance, real-time photo-sharing platform designed for seamless event photography and collaborative albums. Built with a modern tech stack, it features direct-to-S3 uploads, real-time WebSocket updates, and a glassmorphic React interface.
 
-### [Live Site](http://51.20.201.88/) 
-_(if the EC2 VM is running)_
+### [www.shareshot.eu](https://www.shareshot.eu/) 
 
 
 ---
@@ -16,6 +15,8 @@ _(if the EC2 VM is running)_
 ## ✨ Project Preview
 
 ![shareShots Interface](./frontend/src/assets/screen1.webp)
+![shareShots Interface](./frontend/src/assets/screen2.webp)
+
 *Experience a clean, modern, and minimal design tailored for effortless photo sharing.*
 
 ---
