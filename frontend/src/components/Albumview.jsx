@@ -471,7 +471,7 @@ function Albumview(currentUser) {
           <button onClick={() => setSelectMode(true)} className="btn">
             Selection Mode
           </button>
-          <Uploader album={album} setAlbum={setAlbum} />
+          <Uploader album={album} />
           <button onClick={downloadAll} className="btn">
             Download All
           </button>

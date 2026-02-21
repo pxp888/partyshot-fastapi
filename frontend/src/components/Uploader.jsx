@@ -5,55 +5,111 @@ import "./style/Uploader.css";
 
 function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-
-    // Revoke the object URL after the image loads
     const objectUrl = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
 
-      // Calculate thumbnail dimensions while preserving aspect ratio
-      let { width, height } = img;
-      const aspect = width / height;
-      if (width > height) {
-        width = Math.min(width, maxWidth);
-        height = Math.round(width / aspect);
-      } else {
-        height = Math.min(height, maxHeight);
-        width = Math.round(height * aspect);
-      }
+    // Handle video files
+    if (file.type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.muted = true;
+      video.src = objectUrl;
 
-      // Draw the resized image on a canvas
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
+      video.onloadeddata = () => {
+        const duration = video.duration;
+        const seekTime = isNaN(duration) ? 0 : duration / 2;
 
-      // Convert the canvas to a Blob (using webp for better compression)
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob);
+        const captureFrame = () => {
+          const { videoWidth, videoHeight } = video;
+          let width = videoWidth;
+          let height = videoHeight;
+          const aspect = width / height;
+          if (width > height) {
+            width = Math.min(width, maxWidth);
+            height = Math.round(width / aspect);
           } else {
-            reject(new Error("Canvas thumbnail generation failed."));
+            height = Math.min(height, maxHeight);
+            width = Math.round(height * aspect);
           }
-        },
-        "image/webp",
-        0.8, // quality (0.8 is a good balance for thumbnails)
-      );
-    };
 
-    img.onerror = (e) => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Failed to load image for thumbnail creation."));
-    };
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(video, 0, 0, width, height);
 
-    img.src = objectUrl;
+          canvas.toBlob(
+            (blob) => {
+              URL.revokeObjectURL(objectUrl);
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error("Canvas thumbnail generation failed."));
+              }
+            },
+            "image/webp",
+            0.8,
+          );
+        };
+
+        if (isNaN(duration) || duration === 0) {
+          captureFrame();
+        } else {
+          video.currentTime = seekTime;
+          video.onseeked = captureFrame;
+        }
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to load video for thumbnail creation."));
+      };
+    } else {
+      // Handle image files (original implementation)
+      const img = new Image();
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+
+        let { width, height } = img;
+        const aspect = width / height;
+        if (width > height) {
+          width = Math.min(width, maxWidth);
+          height = Math.round(width / aspect);
+        } else {
+          height = Math.min(height, maxHeight);
+          width = Math.round(height * aspect);
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Canvas thumbnail generation failed."));
+            }
+          },
+          "image/webp",
+          0.8,
+        );
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to load image for thumbnail creation."));
+      };
+
+      img.src = objectUrl;
+    }
   });
 }
 
-function Uploader({ album, setAlbum }) {
+function Uploader({ album }) {
   const { albumcode } = useParams();
   const [totalFiles, setTotalFiles] = useState(0);
   const [completedFiles, setCompletedFiles] = useState(0);
