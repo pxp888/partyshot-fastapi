@@ -130,10 +130,10 @@ function Albumview(currentUser) {
       }
 
       case "deleteAlbum":
-        if (payload) {
+        if (payload === "ok") {
           window.location.href = `/user/${currentUser.currentUser}`;
         } else {
-          alert("Album deletion failed");
+          alert(`Album deletion failed: ${payload}`);
         }
         break;
 
@@ -159,7 +159,7 @@ function Albumview(currentUser) {
       default:
         break;
     }
-  }, [lastJsonMessage, currentUser]); // photos removed
+  }, [lastJsonMessage, currentUser]); 
 
   async function handleDeleteAlbum() {
     if (!window.confirm("Are you sure you want to delete this album?")) {

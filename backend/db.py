@@ -1,9 +1,10 @@
 import asyncio
 import datetime
-import logging
 import hashlib
+import logging
 import random
 import uuid
+from contextlib import contextmanager
 
 import arq
 import aws
@@ -11,7 +12,6 @@ import env
 import psycopg2
 from arq.connections import RedisSettings
 from psycopg2.pool import ThreadedConnectionPool
-from contextlib import contextmanager
 
 # --------------------------------------------------------------------------- #
 # Database connection helpers
@@ -146,6 +146,7 @@ def init_db() -> None:
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD, "admin")
     setUserData(env.ADMIN_USERNAME, user_class="admin")
 
+
 # --------------------------------------------------------------------------- #
 # User CRUD helpers
 # --------------------------------------------------------------------------- #
@@ -250,8 +251,8 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
                 SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.created_at, u.username,
                        (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1),
                        EXISTS(
-                           SELECT 1 FROM subscription s 
-                           JOIN users su ON s.user_id = su.id 
+                           SELECT 1 FROM subscription s
+                           JOIN users su ON s.user_id = su.id
                            WHERE s.album_id = a.id AND su.username = %s
                        )
                 FROM albums a
@@ -307,7 +308,9 @@ def getPhotos(
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             # We also want to know the total count for pagination
-            cursor.execute("SELECT COUNT(*) FROM photos WHERE album_id = %s", (album_id,))
+            cursor.execute(
+                "SELECT COUNT(*) FROM photos WHERE album_id = %s", (album_id,)
+            )
             total_count = cursor.fetchone()[0]
 
             query = f"""
@@ -348,11 +351,10 @@ def getPhotos(
     }
 
 
-
-async def deleteAlbum(username: str, code: str) -> bool:
+async def deleteAlbum(username: str, code: str) -> str:
     user = getUser(username)
     if not user:
-        return False
+        return "user_not_found"
 
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
@@ -367,7 +369,7 @@ async def deleteAlbum(username: str, code: str) -> bool:
                 )
                 album_row = cursor.fetchone()
                 if album_row is None:
-                    return False
+                    return "album_not_found"
                 album_id = album_row[0]
 
                 # 3. Get all photos for the album
@@ -406,11 +408,11 @@ async def deleteAlbum(username: str, code: str) -> bool:
                 )
 
                 conn.commit()
-                return True
+                return "ok"
             except Exception as e:
                 conn.rollback()
                 logging.error("Error deleting album: %s", e)
-                return False
+                return str(e)
 
 
 def addPhoto(data: dict) -> dict | None:
@@ -656,7 +658,9 @@ def subscribe(username: str, albumcode: str) -> bool:
                 conn.commit()
                 return True
             except Exception as e:
-                logging.error("Error subscribing user %s to album %s: %s", username, albumcode, e)
+                logging.error(
+                    "Error subscribing user %s to album %s: %s", username, albumcode, e
+                )
                 conn.rollback()
                 return False
 
@@ -680,7 +684,12 @@ def unsubscribe(username: str, albumcode: str) -> bool:
                 conn.commit()
                 return True
             except Exception as e:
-                logging.error("Error unsubscribing user %s from album %s: %s", username, albumcode, e)
+                logging.error(
+                    "Error unsubscribing user %s from album %s: %s",
+                    username,
+                    albumcode,
+                    e,
+                )
                 conn.rollback()
                 return False
 
@@ -855,11 +864,11 @@ def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
     user = getUser(username)
     if user is None:
         return False
-    
+
     album = getAlbum(albumcode)
     if album is None:
         return False
-    
+
     if album["user_id"] != user["id"]:
         return False
 
@@ -886,7 +895,13 @@ def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
                 return False
 
 
-def setUserData(username: str, newusername: str = None, email: str = None, password: str = None, user_class: str = None) -> str:
+def setUserData(
+    username: str,
+    newusername: str = None,
+    email: str = None,
+    password: str = None,
+    user_class: str = None,
+) -> str:
     """Update user information (username, email, password, or class) conditionally."""
     user = getUser(username)
     if not user:
@@ -949,14 +964,15 @@ def getEmail(username: str) -> str:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                cursor.execute("SELECT email FROM users WHERE username = %s", (username,))
+                cursor.execute(
+                    "SELECT email FROM users WHERE username = %s", (username,)
+                )
                 row = cursor.fetchone()
                 if row is None:
                     return None
                 return row[0]
             except Exception:
                 return None
-    
 
 
 def getUsage(username: str) -> dict | None:
@@ -1016,9 +1032,6 @@ def getUsage(username: str) -> dict | None:
                 "total size of photos": int(total_size_photos),
                 "total size in user albums": int(total_size_albums),
             }
-
-
-
 
 
 # --------------------------------------------------------------------------- #
@@ -1136,7 +1149,7 @@ async def cleanup2(ctx=None) -> None:
                 await asyncio.to_thread(
                     s3.delete_objects,
                     Bucket=aws.BUCKET_NAME,
-                    Delete={"Objects": delete_buffer}
+                    Delete={"Objects": delete_buffer},
                 )
                 delete_buffer = []  # Reset the buffer
 
@@ -1151,9 +1164,7 @@ async def cleanup2(ctx=None) -> None:
     if delete_buffer:
         logging.info("Deleting final batch of %s objects...", len(delete_buffer))
         await asyncio.to_thread(
-            s3.delete_objects,
-            Bucket=aws.BUCKET_NAME,
-            Delete={"Objects": delete_buffer}
+            s3.delete_objects, Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer}
         )
 
     logging.info("Cleanup completed.")
@@ -1209,6 +1220,7 @@ def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None):
 def uncountedPhotos() -> list:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT id, s3_key, thumb_key FROM photos WHERE size IS NULL")
+            cursor.execute(
+                "SELECT id, s3_key, thumb_key FROM photos WHERE size IS NULL"
+            )
             return cursor.fetchall()
-    

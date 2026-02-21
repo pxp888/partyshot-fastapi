@@ -327,11 +327,11 @@ async def getAlbums(websocket, data, username):
 
 async def deleteAlbum(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
-    ok = await db.deleteAlbum(username, albumcode)
-    message = {"action": "deleteAlbum", "payload": ok}
+    result = await db.deleteAlbum(username, albumcode)
+    message = {"action": "deleteAlbum", "payload": result}
     await websocket.send_json(message)
 
-    if ok:
+    if result == "ok":
         message = {"action": "newAlbum", "payload": {"type": "update"}}
         await redis_client.publish(f"user-{username}", json.dumps(message))
 
