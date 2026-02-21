@@ -22,6 +22,7 @@ from fastapi import (
     Form,
     HTTPException,
     Request,
+    Response,
     WebSocket,
 )
 
@@ -77,13 +78,32 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 
 @app.post("/api/login")
-def login(user: User, Authorize: AuthJWT = Depends()):
+def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
     db_user = db.check_password(user.username, user.password)
     if not db_user:
         raise HTTPException(status_code=401, detail="Bad username or password")
 
     access_token = Authorize.create_access_token(subject=user.username)
     refresh_token = Authorize.create_refresh_token(subject=user.username)
+
+    # Set CloudFront Signed Cookies
+    # We sign for the entire distribution (*) or a specific path if preferred
+    resource_url = f"https://{env.CLOUDFRONT_DOMAIN}/*"
+    cookies = aws.get_cloudfront_signed_cookies(resource_url)
+
+    
+
+    if cookies:
+        for name, value in cookies.items():
+            response.set_cookie(
+                key=name,
+                value=value,
+                httponly=True,
+                secure=True,
+                samesite="none",
+                domain=getattr(env, "COOKIE_DOMAIN", None),
+                path="/",
+            )
 
     return {
         "access_token": access_token,
@@ -93,7 +113,7 @@ def login(user: User, Authorize: AuthJWT = Depends()):
 
 
 @app.post("/api/register")
-def register(request: RegisterRequest, Authorize: AuthJWT = Depends()):
+def register(request: RegisterRequest, response: Response, Authorize: AuthJWT = Depends()):
     """
     Handle user registration.  The frontend sends a JSON body, so FastAPI
     parses it into the RegisterRequest model.
@@ -108,6 +128,22 @@ def register(request: RegisterRequest, Authorize: AuthJWT = Depends()):
     logging.info("Registering user: %s, email: %s, ", request.username, request.email)
     access_token = Authorize.create_access_token(subject=request.username)
     refresh_token = Authorize.create_refresh_token(subject=request.username)
+
+    # Set CloudFront Signed Cookies
+    resource_url = f"https://{env.CLOUDFRONT_DOMAIN}/*"
+    cookies = aws.get_cloudfront_signed_cookies(resource_url)
+    if cookies:
+        for name, value in cookies.items():
+            response.set_cookie(
+                key=name,
+                value=value,
+                httponly=True,
+                secure=True,
+                samesite="none",
+                domain=getattr(env, "COOKIE_DOMAIN", None),
+                path="/",
+            )
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -351,55 +387,22 @@ async def getAlbum(websocket, data, username):
 
 
 async def attach_presigned_urls(photos_data: dict):
+    """
+    Now simplified to just return the static CloudFront URL.
+    The browser will use the signed cookies set during login.
+    """
     if not photos_data or "photos" not in photos_data or not photos_data["photos"]:
         return photos_data
 
     photos = photos_data["photos"]
-
-    # Collect all unique S3 keys that need presigning
-    keys_to_check = []
-    for p in photos:
-        if p.get("s3_key"):
-            keys_to_check.append(p["s3_key"])
-        if p.get("thumb_key"):
-            keys_to_check.append(p["thumb_key"])
-
-    if not keys_to_check:
-        return photos_data
-
-    # deduplicate
-    unique_s3_keys = list(set(keys_to_check))
-
-    # Construct redis keys
-    redis_keys = [f"presigned:{k}" for k in unique_s3_keys]
-
-    # MGET from redis
-    cached_urls = await redis_client.mget(*redis_keys)
-    url_map = dict(zip(unique_s3_keys, cached_urls))
-
-    new_presigned_urls = {}
+    cf_domain = env.CLOUDFRONT_DOMAIN
 
     for p in photos:
         for key_type in ["s3_key", "thumb_key"]:
             s3_key = p.get(key_type)
-            if not s3_key:
-                continue
-
-            presigned_url = url_map.get(s3_key)
-            if not presigned_url:
-                # Generate new presigned URL (12 hour expiration)
-                presigned_url = aws.create_presigned_url(s3_key, expiration=43200)
-                if presigned_url:
-                    new_presigned_urls[f"presigned:{s3_key}"] = presigned_url
-
-            p[key_type] = presigned_url
-
-    # Cache new URLs if any
-    if new_presigned_urls:
-        async with redis_client.pipeline(transaction=False) as pipe:
-            for r_key, url in new_presigned_urls.items():
-                pipe.set(r_key, url, ex=43200)
-            await pipe.execute()
+            if s3_key:
+                # Replace the key with the full CloudFront URL
+                p[key_type] = f"https://{cf_domain}/{s3_key}"
 
     return photos_data
 

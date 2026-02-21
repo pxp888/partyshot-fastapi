@@ -236,7 +236,7 @@ def getAlbum(code: str) -> dict | None:
             "user_id": row[3],
             "open": bool(row[4]),
             "public": bool(row[5]),
-            "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
+            "thumb_key": aws.get_cloudfront_url(thumb_key) if thumb_key else None,
             "created_at": created_at,
             "username": row[7],
         }
@@ -275,7 +275,7 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             "user_id": row[3],
             "open": bool(row[4]),
             "public": bool(row[5]),
-            "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
+            "thumb_key": aws.get_cloudfront_url(thumb_key) if thumb_key else None,
             "created_at": created_at,
             "username": row[7],
             "subscribed": bool(row[9]),
@@ -468,8 +468,8 @@ def addPhoto(data: dict) -> dict | None:
         "id": row[0],
         "user_id": row[1],
         "album_id": row[2],
-        "s3_key": aws.create_presigned_url(row[3]),
-        "thumb_key": aws.create_presigned_url(row[4]),
+        "s3_key": aws.get_cloudfront_url(row[3]),
+        "thumb_key": aws.get_cloudfront_url(row[4]),
         "filename": row[5],
         "created_at": created_at,
         "size": None,
@@ -600,7 +600,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "username": row[7],
                 "open": bool(row[4]),
                 "public": bool(row[5]),
-                "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
+                "thumb_key": aws.get_cloudfront_url(thumb_key) if thumb_key else None,
                 "created_at": created_at,
             }
         )
@@ -723,8 +723,8 @@ def getPhoto(id: int) -> dict | None:
         "id": row[0],
         "user_id": row[1],
         "album_id": row[2],
-        "s3_key": aws.create_presigned_url(row[3]),
-        "thumb_key": aws.create_presigned_url(row[4]),
+        "s3_key": aws.get_cloudfront_url(row[3]),
+        "thumb_key": aws.get_cloudfront_url(row[4]),
         "filename": row[5],
         "created_at": created_at,
         "username": row[7],  # <-- added field
