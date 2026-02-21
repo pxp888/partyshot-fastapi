@@ -19,7 +19,6 @@ BUCKET_NAME = env.BUCKET_NAME
 REGION = env.REGION
 
 
-
 def get_s3_client():
     """Helper to maintain consistency across functions"""
     return boto3.client("s3", region_name=REGION)
@@ -134,7 +133,9 @@ def create_cloudfront_signed_url(object_name, expiration=86400):
         signed_url = signer.generate_presigned_url(url, date_less_than=expire_date)
         return signed_url
     except Exception as e:
-        logging.error("Error generating CloudFront signed URL for %s: %s", object_name, e)
+        logging.error(
+            "Error generating CloudFront signed URL for %s: %s", object_name, e
+        )
         return None
 
 
@@ -148,11 +149,10 @@ def get_cloudfront_url(object_name):
     return f"https://{env.CLOUDFRONT_DOMAIN}/{object_name}"
 
 
-
 def get_cloudfront_signed_cookies(resource_url, expiration=86400):
     try:
         expire_time = int(time.time() + expiration)
-        
+
         # 1. Build policy with NO whitespace
         policy = {
             "Statement": [
@@ -192,7 +192,5 @@ def get_cloudfront_signed_cookies(resource_url, expiration=86400):
         return None
 
 
-
-if env.LOCALDEV:
+if env.LOCALDEV == "True":
     get_cloudfront_url = create_cloudfront_signed_url
-    

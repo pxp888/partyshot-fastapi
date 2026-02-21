@@ -91,7 +91,7 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
     resource_url = f"https://{env.CLOUDFRONT_DOMAIN}/*"
     cookies = aws.get_cloudfront_signed_cookies(resource_url)
 
-    
+
 
     if cookies:
         for name, value in cookies.items():
@@ -394,7 +394,7 @@ async def attach_presigned_urls(photos_data: dict):
         return photos_data
 
     # if localdev, create signed urls
-    if env.LOCALDEV:
+    if env.LOCALDEV="True":
         photos = photos_data["photos"]
         for p in photos:
             for key_type in ["s3_key", "thumb_key"]:
