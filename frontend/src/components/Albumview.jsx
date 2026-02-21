@@ -28,7 +28,9 @@ function Albumview(currentUser) {
   const [sortOrder, setSortOrder] = useState("desc");
   const [limit] = useState(50);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
-  const [viewType, setViewType] = useState(localStorage.getItem("viewType") || "icon");
+  const [viewType, setViewType] = useState(
+    localStorage.getItem("viewType") || "icon",
+  );
   const observer = useRef();
   const lastPhotoElementRef = useCallback(
     (node) => {
@@ -41,7 +43,7 @@ function Albumview(currentUser) {
       });
       if (node) observer.current.observe(node);
     },
-    [isFetching, hasMore]
+    [isFetching, hasMore],
   );
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
   const navigate = useNavigate();
@@ -344,9 +346,13 @@ function Albumview(currentUser) {
 
   return (
     <section>
-      {focus > -1 && (
-        <Imageview files={sortedPhotos} focus={focus} setFocus={setFocus} deletedPhoto={deletedPhoto} />
-      )}
+      <Imageview
+        files={sortedPhotos}
+        focus={focus}
+        setFocus={setFocus}
+        deletedPhoto={deletedPhoto}
+      />
+
       <div className="albumview">
         <div className="albumDetails">
           <div className="infoItem">
@@ -364,7 +370,9 @@ function Albumview(currentUser) {
                     setIsRenaming(true);
                   }
                 }}
-                className={album.username === currentUser.currentUser ? "clickable" : ""}
+                className={
+                  album.username === currentUser.currentUser ? "clickable" : ""
+                }
               >
                 {album.name}
               </p>
@@ -372,7 +380,12 @@ function Albumview(currentUser) {
           </div>
           <div className="infoItem">
             <label> user </label>
-            <p onClick={() => navigate(`/user/${album.username}`)} className="clickable" >{album.username} </p>
+            <p
+              onClick={() => navigate(`/user/${album.username}`)}
+              className="clickable"
+            >
+              {album.username}{" "}
+            </p>
           </div>
           <div className="infoItem">
             <label>open </label>
@@ -396,8 +409,6 @@ function Albumview(currentUser) {
           </div>
         </div>
       </div>
-
-
 
       {selectMode && currentUser.currentUser && (
         <div className="albumActions">
@@ -425,7 +436,11 @@ function Albumview(currentUser) {
                 setViewType(nextType);
                 localStorage.setItem("viewType", nextType);
               }}
-              title={viewType === "icon" ? "Switch to List View" : "Switch to Icon View"}
+              title={
+                viewType === "icon"
+                  ? "Switch to List View"
+                  : "Switch to Icon View"
+              }
             >
               {viewType === "icon" ? "☰" : "▦"}
             </button>
@@ -480,7 +495,11 @@ function Albumview(currentUser) {
                 setViewType(nextType);
                 localStorage.setItem("viewType", nextType);
               }}
-              title={viewType === "icon" ? "Switch to List View" : "Switch to Icon View"}
+              title={
+                viewType === "icon"
+                  ? "Switch to List View"
+                  : "Switch to Icon View"
+              }
             >
               {viewType === "icon" ? "☰" : "▦"}
             </button>

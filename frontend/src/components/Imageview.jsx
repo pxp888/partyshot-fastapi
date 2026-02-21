@@ -3,13 +3,59 @@ import "./style/Imageview.css";
 import blankImage from "../assets/blank.jpg";
 import videoImage from "../assets/video.webp";
 
-
 function Imageview({ files, focus, setFocus, deletedPhoto }) {
   // Reference to the container so we can compute click position
   const containerRef = useRef(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Keyboard navigation remains unchanged
+  /* ----------------------------------------------
+   *  URL sync logic – now using file.id
+   * ---------------------------------------------- */
+  // 1️⃣  On mount: read focus from query string (file.id)
+  useEffect(() => {
+    if (!files) return;
+    const params = new URLSearchParams(window.location.search);
+    const focusId = params.get("focus");
+    if (!focusId) return;
+
+    const targetIndex = files.findIndex((f) => String(f.id) === focusId);
+    if (targetIndex !== -1 && targetIndex !== focus) {
+      setFocus(targetIndex);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files, setFocus]); // run once when files are available
+
+  // 2️⃣  Whenever focus changes, update the query string
+  useEffect(() => {
+    if (!files || files.length === 0) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (focus === -1) {
+      if (params.has("focus")) {
+        params.delete("focus");
+        const newUrl =
+          window.location.pathname +
+          (params.toString() ? "?" + params.toString() : "") +
+          window.location.hash;
+        window.history.replaceState({}, "", newUrl);
+      }
+    } else {
+      const id = files[focus]?.id;
+      if (id !== undefined) {
+        params.set("focus", String(id));
+        const newUrl =
+          window.location.pathname +
+          "?" +
+          params.toString() +
+          window.location.hash;
+        window.history.replaceState({}, "", newUrl);
+      }
+    }
+  }, [focus, files]);
+
+  /* ----------------------------------------------
+   *  Keyboard navigation remains unchanged
+   * ---------------------------------------------- */
   useEffect(() => {
     const handler = (e) => {
       if (!files) return;
@@ -116,7 +162,10 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           />
         )}
       </div>
-      <div className={`fileDetails ${showDetails ? "visible" : ""}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`fileDetails ${showDetails ? "visible" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="detailRow">
           <span className="filename">{files[focus].filename}</span>
         </div>
