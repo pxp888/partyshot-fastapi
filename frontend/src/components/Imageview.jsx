@@ -95,13 +95,26 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   return (
     <div className="imageView" ref={containerRef} onClick={handleClick}>
       <div className="primo">
-        <img
-          src={files[focus].s3_key || placeholder}
-          alt={`${files[focus].filename}`}
-          onError={(e) => {
-            e.target.src = placeholder;
-          }}
-        />
+        {isVideo ? (
+          <video
+            src={files[focus].s3_key}
+            controls
+            autoPlay
+            loop
+            muted // Many browsers require muted for autoPlay
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <img
+            src={files[focus].s3_key || placeholder}
+            alt={`${files[focus].filename}`}
+            onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              e.target.src = placeholder;
+            }}
+          />
+        )}
       </div>
       <div className={`fileDetails ${showDetails ? "visible" : ""}`} onClick={(e) => e.stopPropagation()}>
         {/* <div className="fileDetails"> */}
