@@ -1,5 +1,6 @@
 import "./style/WelcomePage.css";
 import screen1 from "../assets/screen1.webp";
+import screen2 from "../assets/screen2.webp";
 
 function Welcomepage() {
   return (
@@ -34,20 +35,24 @@ function Welcomepage() {
           <div className="step">
             <span className="step-number">01</span>
             <h4>Create</h4>
-            <p><strong>Create</strong> a new album and upload photos.</p>
+            <p>
+              <strong>Create</strong> a new album and upload photos.
+            </p>
           </div>
           <div className="step">
             <span className="step-number">02</span>
             <h4>Invite</h4>
             <p>
-              Share the album URL, code or your username with guests, collaborators
-              or friends.
+              Share the album URL, code or your username with guests,
+              collaborators or friends.
             </p>
           </div>
           <div className="step">
             <span className="step-number">03</span>
             <h4>Collect</h4>
-            <p>Everyone can upload and download the full collection in one place.</p>
+            <p>
+              Everyone can upload and download the full collection in one place.
+            </p>
           </div>
         </div>
       </section>
@@ -105,6 +110,14 @@ function Welcomepage() {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="screenshot-section">
+        <img
+          src={screen2}
+          alt="Application Screenshot"
+          className="screenshot-image"
+        />
       </section>
 
       {/* Features Section */}
