@@ -1,9 +1,43 @@
+import { useState } from "react";
 import ListItem from "./ListItem";
 
+function Listview({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selected, setSelected, setFocus, isFetching, onDrop }) {
+    const [isDragging, setIsDragging] = useState(false);
 
-function Listview({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selected, setSelected, setFocus, isFetching }) {
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            onDrop(files);
+        }
+    };
+
     return (
-        <div className="albumListview">
+        <div
+            className={`albumListview ${isDragging ? "dragging" : ""}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
+            {isDragging && (
+                <div className="drop-overlay">
+                    <p>Drop files to upload</p>
+                </div>
+            )}
             {photos.length === 0 ? (
                 <p>No files in this album.</p>
             ) : (

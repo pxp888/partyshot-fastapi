@@ -218,3 +218,35 @@
         opacity: 1;
     }
 }
+
+.albumFiles,
+.albumListview {
+    position: relative;
+    min-height: 200px;
+}
+
+.albumFiles.dragging,
+.albumListview.dragging {
+    outline: 2px dashed var(--primary-color);
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.drop-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    pointer-events: none;
+}
+
+.drop-overlay p {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}

@@ -32,6 +32,8 @@ function Albumview(currentUser) {
     localStorage.getItem("viewType") || "icon",
   );
   const observer = useRef();
+  const uploaderRef = useRef();
+
   const lastPhotoElementRef = useCallback(
     (node) => {
       if (isFetching) return;
@@ -159,7 +161,7 @@ function Albumview(currentUser) {
       default:
         break;
     }
-  }, [lastJsonMessage, currentUser]); 
+  }, [lastJsonMessage, currentUser]);
 
   async function handleDeleteAlbum() {
     if (!window.confirm("Are you sure you want to delete this album?")) {
@@ -333,6 +335,12 @@ function Albumview(currentUser) {
     });
   }
 
+  const handleUpload = (files) => {
+    if (uploaderRef.current) {
+      uploaderRef.current.handleFiles(files);
+    }
+  };
+
   const sortedPhotos = photos; // Photos are now sorted by the backend
 
   if (!album) {
@@ -471,7 +479,8 @@ function Albumview(currentUser) {
           <button onClick={() => setSelectMode(true)} className="btn">
             Selection Mode
           </button>
-          <Uploader album={album} />
+          <Uploader album={album} ref={uploaderRef} />
+
           <button onClick={downloadAll} className="btn">
             Download All
           </button>
@@ -535,7 +544,9 @@ function Albumview(currentUser) {
           setSelected={setSelected}
           setFocus={setFocus}
           isFetching={isFetching}
+          onDrop={handleUpload}
         />
+
       ) : (
         <Listview
           photos={photos}
@@ -546,7 +557,9 @@ function Albumview(currentUser) {
           setSelected={setSelected}
           setFocus={setFocus}
           isFetching={isFetching}
+          onDrop={handleUpload}
         />
+
       )}
     </section>
   );

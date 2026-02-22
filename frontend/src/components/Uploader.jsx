@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useImperativeHandle, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import "./style/Uploader.css";
@@ -109,7 +109,7 @@ function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
   });
 }
 
-function Uploader({ album }) {
+const Uploader = forwardRef(({ album }, ref) => {
   const { albumcode } = useParams();
   const [totalFiles, setTotalFiles] = useState(0);
   const [completedFiles, setCompletedFiles] = useState(0);
@@ -215,6 +215,32 @@ function Uploader({ album }) {
     }
   }
 
+  const handleFiles = async (files) => {
+    if (!files || files.length === 0) return;
+
+    setTotalFiles(files.length);
+    setCompletedFiles(0);
+
+    for (let i = 0; i < files.length; i++) {
+      try {
+        await uploadFile(files[i]);
+      } catch (err) {
+        console.error("Upload failed for file:", files[i].name, err);
+      }
+      setCompletedFiles((prev) => prev + 1);
+    }
+
+    // Reset progress after a delay
+    setTimeout(() => {
+      setTotalFiles(0);
+      setCompletedFiles(0);
+    }, 3000);
+  };
+
+  useImperativeHandle(ref, () => ({
+    handleFiles,
+  }));
+
   return (
     <>
       <input
@@ -223,28 +249,8 @@ function Uploader({ album }) {
         multiple
         id="hiddenFileInput"
         style={{ display: "none" }}
-        onChange={async (e) => {
-          const files = e.target.files;
-          if (!files || files.length === 0) return;
-
-          setTotalFiles(files.length);
-          setCompletedFiles(0);
-
-          for (let i = 0; i < files.length; i++) {
-            try {
-              await uploadFile(files[i]);
-            } catch (err) {
-              console.error("Upload failed for file:", files[i].name, err);
-            }
-            setCompletedFiles((prev) => prev + 1);
-          }
-
-          // Reset progress after a delay
-          setTimeout(() => {
-            setTotalFiles(0);
-            setCompletedFiles(0);
-          }, 3000);
-
+        onChange={(e) => {
+          handleFiles(e.target.files);
           e.target.value = "";
         }}
       />
@@ -277,6 +283,7 @@ function Uploader({ album }) {
         )}
     </>
   );
-}
+});
 
 export default Uploader;
+
