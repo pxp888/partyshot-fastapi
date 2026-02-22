@@ -39,6 +39,9 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
       if (location.pathname === "/") {
         navigate(`/user/${data.user}`);
       }
+      else {
+        window.location.reload();
+      }
     } catch (err) {
       setError(err.message);
     }
