@@ -7,31 +7,45 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   // Reference to the container so we can compute click position
   const containerRef = useRef(null);
   const [showDetails, setShowDetails] = useState(false);
+  const lastFocus = useRef(focus);
 
   /* ----------------------------------------------
    *  URL sync logic – now using file.id
    * ---------------------------------------------- */
-  // 1️⃣  On mount: read focus from query string (file.id)
+  // 1️⃣  On mount & popstate: read focus from query string (file.id)
   useEffect(() => {
     if (!files) return;
-    const params = new URLSearchParams(window.location.search);
-    const focusId = params.get("focus");
-    if (!focusId) return;
 
-    const targetIndex = files.findIndex((f) => String(f.id) === focusId);
-    if (targetIndex !== -1 && targetIndex !== focus) {
-      setFocus(targetIndex);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files, setFocus]); // run once when files are available
+    const syncFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const focusId = params.get("focus");
+      if (!focusId) {
+        setFocus(-1);
+        return;
+      }
+
+      const targetIndex = files.findIndex((f) => String(f.id) === focusId);
+      if (targetIndex !== -1) {
+        setFocus(targetIndex);
+      }
+    };
+
+    // Initial sync
+    syncFromUrl();
+
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, [files, setFocus]); // Removed 'focus' dependency
 
   // 2️⃣  Whenever focus changes, update the query string
   useEffect(() => {
     if (!files || files.length === 0) return;
 
     const params = new URLSearchParams(window.location.search);
+    const currentFocusId = params.get("focus");
+
     if (focus === -1) {
-      if (params.has("focus")) {
+      if (currentFocusId) {
         params.delete("focus");
         const newUrl =
           window.location.pathname +
@@ -41,16 +55,22 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
       }
     } else {
       const id = files[focus]?.id;
-      if (id !== undefined) {
+      if (id !== undefined && String(id) !== currentFocusId) {
         params.set("focus", String(id));
         const newUrl =
           window.location.pathname +
           "?" +
           params.toString() +
           window.location.hash;
-        window.history.replaceState({}, "", newUrl);
+
+        if (lastFocus.current === -1) {
+          window.history.pushState({}, "", newUrl);
+        } else {
+          window.history.replaceState({}, "", newUrl);
+        }
       }
     }
+    lastFocus.current = focus;
   }, [focus, files]);
 
   /* ----------------------------------------------
