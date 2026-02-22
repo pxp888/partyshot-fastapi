@@ -65,6 +65,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    width: 100%;
 }
 
 .userActions .btn {
@@ -97,7 +98,7 @@
     color: #e5e5e7;
     font: inherit;
     transition: all 0.2s ease;
-    flex: 0 1 200px;
+    flex: 1 1 auto;
 }
 
 #albumName:focus,

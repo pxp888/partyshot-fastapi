@@ -34,7 +34,9 @@ function Userview({ currentUser }) {
 
     switch (action) {
       case "getAlbums":
-        setAlbums(Array.isArray(payload?.albums) ? payload.albums : []);
+        if (payload?.albums !== undefined) {
+          setAlbums(Array.isArray(payload?.albums) ? payload.albums : []);
+        }
         break;
       case "newAlbum":
         if (payload?.type === "update") {
