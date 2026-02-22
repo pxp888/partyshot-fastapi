@@ -48,7 +48,7 @@ function Howitworks() {
                 <div className="hiw-step-item">
                     <div className="hiw-step-content">
                         <span className="hiw-step-number">Step 02</span>
-                        <h2>Share the Love</h2>
+                        <h2>Let People Know</h2>
                         <p>
                             Invite guests to contribute by sharing your album <strong>URL</strong> or your <strong>username</strong>.  There's also a QR code if you'd like.
                         </p>
@@ -68,7 +68,7 @@ function Howitworks() {
                 <div className="hiw-step-item">
                     <div className="hiw-step-content">
                         <span className="hiw-step-number">Step 03</span>
-                        <h2>Real-Time Magic</h2>
+                        <h2>Real-Time Updates</h2>
                         <p>
                             As photos are uploaded, they appear instantly for everyone.
                             Watch the collection grow in real-time as your event unfolds.
