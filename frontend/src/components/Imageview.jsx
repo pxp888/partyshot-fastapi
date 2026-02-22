@@ -83,12 +83,16 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
       switch (e.key) {
         case "ArrowRight":
           if (focus + 1 < files.length) setFocus(focus + 1);
+          else setFocus(0);
           break;
         case " ":
           if (focus + 1 < files.length) setFocus(focus + 1);
+          else setFocus(0);
+          e.preventDefault();
           break;
         case "ArrowLeft":
           if (focus > 0) setFocus(focus - 1);
+          else setFocus(files.length - 1);
           break;
         case "Escape":
           setFocus(-1);

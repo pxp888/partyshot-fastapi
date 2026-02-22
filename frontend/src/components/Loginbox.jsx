@@ -29,10 +29,12 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
       const data = await sendJson("/api/login", credentials);
       console.log("Login successful:");
       setCurrentUser(data.user);
+      localStorage.setItem("user", data.user);
       setShowLogin(false);
 
       const uuidData = await sendJson("/api/generate-wssecret", {});
       localStorage.setItem("wssecret", uuidData.wssecret);
+
 
       if (location.pathname === "/") {
         navigate(`/user/${data.user}`);
