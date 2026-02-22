@@ -89,34 +89,57 @@ function Howitworks() {
                 </div>
             </section>
 
-            {/* Features Grid */}
-            {/* <section className="hiw-features">
-                <div className="container">
-                    <h2>Everything you need.</h2>
-                    <div className="hiw-features-grid">
-                        <div className="hiw-feature-card">
-                            <span className="hiw-feature-icon">⚡</span>
-                            <h3>Instant Upload</h3>
-                            <p>Lightning fast uploads directly from your mobile browser. No app store required.</p>
-                        </div>
-                        <div className="hiw-feature-card">
-                            <span className="hiw-feature-icon">🔒</span>
-                            <h3>Privacy First</h3>
-                            <p>You control who sees and who contributes. Close albums anytime to stop new uploads.</p>
-                        </div>
-                        <div className="hiw-feature-card">
-                            <span className="hiw-feature-icon">📱</span>
-                            <h3>Mobile Friendly</h3>
-                            <p>Designed to work perfectly on any device, from the latest iPhone to your old tablet.</p>
-                        </div>
-                        <div className="hiw-feature-card">
-                            <span className="hiw-feature-icon">🤝</span>
-                            <h3>Collaborative</h3>
-                            <p>Subscribe to friends' albums to follow their updates and build shared collections.</p>
-                        </div>
+
+            {/* General Mechanics Section */}
+            <section className="hiw-features">
+                <h2>General Mechanics</h2>
+                <div className="hiw-features-grid">
+                    <div className="hiw-feature-card">
+                        <h3>Smart Deletion</h3>
+                        <p>
+                            Maintain control over your content. Photos can only be deleted by the person who uploaded them or the album owner.
+                        </p>
+                    </div>
+
+                    <div className="hiw-feature-card">
+                        <h3>Complete Ownership</h3>
+                        <p>
+                            As an album owner, you have full authority. Only you can delete albums, change settings, or modify visibility.
+                        </p>
+                    </div>
+
+                    <div className="hiw-feature-card">
+                        <h3>Easy Subscriptions</h3>
+                        <p>
+                            Never miss an update. Subscribe to albums you love, and they'll be pinned to your profile for quick access.
+                        </p>
+                    </div>
+
+                    <div className="hiw-feature-card">
+                        <h3>Public Profiles</h3>
+                        <p>
+                            Showcase your best work. Any album set to public will automatically appear on your shareShot profile.
+                        </p>
+                    </div>
+
+                    <div className="hiw-feature-card">
+                        <h3>Privacy</h3>
+                        <p>
+                            Albums that are marked as private will not appear on your profile, and can only be accessed by users with the album URL.
+                        </p>
+                    </div>
+
+                    <div className="hiw-feature-card">
+                        <h3>Public Albums</h3>
+                        <p>
+                            Albums that are marked as public will appear on your profile, and can be accessed by anyone with the album URL.
+                        </p>
                     </div>
                 </div>
-            </section> */}
+            </section>
+
+
+
 
             {/* CTA Section */}
             <section className="hiw-cta">
