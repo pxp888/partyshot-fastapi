@@ -10,6 +10,7 @@ import Contactpage from "./components/Contactpage";
 import { WebSocketProvider } from "./components/WebSocketContext";
 
 import AccountPage from "./components/AccountPage";
+import Howitworks from "./components/Howitworks";
 
 function About() {
   return <h2>About this app</h2>;
@@ -29,6 +30,7 @@ export default function App() {
 
         <Routes>
           <Route path="/" element={<WelcomePage />} />
+          <Route path="/how-it-works" element={<Howitworks />} />
           <Route path="/about" element={<About />} />
           <Route
             path="/user/:username"

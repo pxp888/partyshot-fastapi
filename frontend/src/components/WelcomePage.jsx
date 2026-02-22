@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./style/WelcomePage.css";
 import screen1 from "../assets/screen1.webp";
 import screen2 from "../assets/screen2.webp";
@@ -54,6 +55,11 @@ function Welcomepage() {
               Everyone can upload and download the full collection in one place.
             </p>
           </div>
+        </div>
+        <div style={{ textAlign: "center", marginTop: "2rem" }}>
+          <Link to="/how-it-works" className="cta-note" style={{ textDecoration: "none", borderBottom: "2px solid" }}>
+            Learn more about how shareShot works →
+          </Link>
         </div>
       </section>
 
@@ -146,14 +152,15 @@ function Welcomepage() {
       {/* Footer */}
       <footer className="welcome-footer">
         <nav className="footer-nav">
+          <Link to="/how-it-works">How it works</Link>
           <a
             href="https://github.com/pxp888/partyshot-fastapi"
             target="_blank"
             rel="noopener noreferrer"
           >
-            About
+            GitHub
           </a>
-          <a href="/contact">Contact</a>
+          <Link to="/contact">Contact</Link>
         </nav>
         <p className="footer-copy">
           &copy; {new Date().getFullYear()} partyShots
