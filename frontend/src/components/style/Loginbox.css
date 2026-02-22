@@ -5,12 +5,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    z-index: 9999;
+    right: 0;
+    bottom: 0;
+    z-index: 10001;
     animation: fadeInOverlay 0.3s ease-out;
 }
 
@@ -35,6 +35,14 @@
     color: var(--text-primary);
     animation: slideUpBox 0.4s ease-out;
     border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 480px) {
+    .loginbox {
+        padding: 2rem 1.5rem;
+        width: 85%;
+        border-radius: 16px;
+    }
 }
 
 @keyframes slideUpBox {

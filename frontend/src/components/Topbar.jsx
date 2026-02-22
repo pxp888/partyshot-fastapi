@@ -88,43 +88,44 @@ function Topbar({ currentUser, setCurrentUser }) {
   }
 
   return (
-    <div className="topbar">
-      <div className="topLeft">
-        <a href="/">
-          shareShot<span className="title-suffix">.eu</span>
-        </a>
+    <>
+      <div className="topbar">
+        <div className="topLeft">
+          <a href="/">
+            shareShot<span className="title-suffix">.eu</span>
+          </a>
+        </div>
+
+        <Searchbar className="search" />
+        {currentUser ? (
+          <div className="userInfo">
+            <button
+              className="btn"
+              onClick={() => (window.location.href = `/user/${currentUser}`)}
+            >
+              {currentUser} home
+            </button>
+            <button
+              className="btn"
+              onClick={() => (window.location.href = "/account")}
+            >
+              Account
+            </button>
+            <button className="btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        ) : (
+          <div className="nav">
+            <button className="btn" onClick={() => setShowLogin(true)}>
+              Login
+            </button>
+            <button className="btn" onClick={() => setShowRegister(true)}>
+              Register
+            </button>
+          </div>
+        )}
       </div>
-
-      <Searchbar className="search" />
-      {currentUser ? (
-        <div className="userInfo">
-          <button
-            className="btn"
-            onClick={() => (window.location.href = `/user/${currentUser}`)}
-          >
-            {currentUser} home
-          </button>
-          <button
-            className="btn"
-            onClick={() => (window.location.href = "/account")}
-          >
-            Account
-          </button>
-          <button className="btn" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      ) : (
-        <div className="nav">
-          <button className="btn" onClick={() => setShowLogin(true)}>
-            Login
-          </button>
-          <button className="btn" onClick={() => setShowRegister(true)}>
-            Register
-          </button>
-        </div>
-      )}
-
       {showLogin && (
         <Loginbox setCurrentUser={setCurrentUser} setShowLogin={setShowLogin} />
       )}
@@ -134,7 +135,7 @@ function Topbar({ currentUser, setCurrentUser }) {
           setShowRegister={setShowRegister}
         />
       )}
-    </div>
+    </>
   );
 }
 
