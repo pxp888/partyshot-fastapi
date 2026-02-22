@@ -77,9 +77,9 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
    *  Keyboard navigation remains unchanged
    * ---------------------------------------------- */
   useEffect(() => {
-    const handler = (e) => {
-      if (!files) return;
+    if (focus === -1 || !files) return;
 
+    const handler = (e) => {
       switch (e.key) {
         case "ArrowRight":
           if (focus + 1 < files.length) setFocus(focus + 1);
@@ -113,7 +113,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [focus, files, setFocus]);
+  }, [focus, files, setFocus, deletedPhoto]);
 
   // Handle temporary visibility of file details when image changes
   useEffect(() => {
