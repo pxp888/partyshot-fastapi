@@ -17,6 +17,10 @@
     /*position: relative;*/
 }
 
+.album-item.other-user {
+    background-color: #25282a;
+}
+
 .album-item img {
     /*position: absolute;
     top: 0;

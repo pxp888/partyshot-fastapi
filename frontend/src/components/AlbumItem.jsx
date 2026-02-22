@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import "./style/AlbumItem.css";
 import blankImage from "../assets/blank.jpg";
 
-function AlbumItem({ album }) {
+function AlbumItem({ album, isOtherUser }) {
   const navigate = useNavigate();
 
   function handleClick(event) {
@@ -12,7 +12,7 @@ function AlbumItem({ album }) {
 
   return (
     <div
-      className="album-item"
+      className={`album-item ${isOtherUser ? "other-user" : ""}`}
       onClick={handleClick}
       style={{ cursor: "pointer" }}
     >

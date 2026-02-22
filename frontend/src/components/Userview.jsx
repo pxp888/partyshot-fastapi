@@ -88,7 +88,13 @@ function Userview({ currentUser }) {
       )}
       <div className="album-list">
         {albums.length > 0 ? (
-          albums.map((album) => <AlbumItem key={album.id} album={album} />)
+          albums.map((album) => (
+            <AlbumItem
+              key={album.id}
+              album={album}
+              isOtherUser={album.username !== currentUser}
+            />
+          ))
         ) : (
           <p>No albums found for this user.</p>
         )}
