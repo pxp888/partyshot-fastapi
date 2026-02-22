@@ -1,6 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./style/Howitworks.css";
+import how1 from "../assets/how1.webp";
+import how2 from "../assets/how2.webp";
+import how3 from "../assets/how3.webp";
+import how4 from "../assets/how4.webp";
 
 function Howitworks() {
     return (
@@ -34,7 +38,7 @@ function Howitworks() {
                         </p>
                     </div>
                     <div className="hiw-step-image-placeholder">
-                        {/* Replace with your image: <img src={createImg} alt="Create Album" /> */}
+                        <img src={how1} className="hiw-step-image" alt="Create Album" />
                     </div>
                 </div>
 
@@ -43,7 +47,9 @@ function Howitworks() {
                         <span className="hiw-step-number">Step 02</span>
                         <h2>Share the Love</h2>
                         <p>
-                            Invite guests to contribute by sharing your album <strong>URL</strong> or your <strong>username</strong>.
+                            Invite guests to contribute by sharing your album <strong>URL</strong> or your <strong>username</strong>.  There's also a QR code if you'd like.
+                        </p>
+                        <p>
                             Participants don't need to create an account to view your album,
                             but they will need an account to upload photos.
                         </p>
@@ -52,7 +58,7 @@ function Howitworks() {
                         </p>
                     </div>
                     <div className="hiw-step-image-placeholder">
-                        {/* Replace with your image: <img src={shareImg} alt="Share Album" /> */}
+                        <img src={how2} className="hiw-step-image" alt="Share Album" />
                     </div>
                 </div>
 
@@ -69,7 +75,7 @@ function Howitworks() {
                         </p>
                     </div>
                     <div className="hiw-step-image-placeholder">
-                        {/* Replace with your image: <img src={realtimeImg} alt="Real-time Updates" /> */}
+                        <img src={how3} className="hiw-step-image" alt="Real-time Updates" />
                     </div>
                 </div>
 
@@ -84,7 +90,7 @@ function Howitworks() {
                         </p>
                     </div>
                     <div className="hiw-step-image-placeholder">
-                        {/* Replace with your image: <img src={downloadImg} alt="Download Photos" /> */}
+                        <img src={how4} className="hiw-step-image" alt="Download Photos" />
                     </div>
                 </div>
             </section>
