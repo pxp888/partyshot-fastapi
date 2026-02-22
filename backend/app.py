@@ -77,15 +77,7 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
-@app.post("/api/login")
-def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
-    db_user = db.check_password(user.username, user.password)
-    if not db_user:
-        raise HTTPException(status_code=401, detail="Bad username or password")
-
-    access_token = Authorize.create_access_token(subject=user.username)
-    refresh_token = Authorize.create_refresh_token(subject=user.username)
-
+def cookie(response):
     # Set CloudFront Signed Cookies
     resource_url = f"https://{env.CLOUDFRONT_DOMAIN}/*"
     cookies = aws.get_cloudfront_signed_cookies(resource_url)
@@ -100,6 +92,26 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
                 domain=getattr(env, "COOKIE_DOMAIN", None),
                 path="/",
             )
+
+
+@app.get("/api/cookie")
+async def setCookie():
+    resp = Response(status_code=204)
+    cookie(resp)
+    return resp
+
+
+@app.post("/api/login")
+def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
+    db_user = db.check_password(user.username, user.password)
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Bad username or password")
+
+    access_token = Authorize.create_access_token(subject=user.username)
+    refresh_token = Authorize.create_refresh_token(subject=user.username)
+
+    cookie(response)
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -126,20 +138,8 @@ def register(
     access_token = Authorize.create_access_token(subject=request.username)
     refresh_token = Authorize.create_refresh_token(subject=request.username)
 
-    # Set CloudFront Signed Cookies
-    resource_url = f"https://{env.CLOUDFRONT_DOMAIN}/*"
-    cookies = aws.get_cloudfront_signed_cookies(resource_url)
-    if cookies:
-        for name, value in cookies.items():
-            response.set_cookie(
-                key=name,
-                value=value,
-                httponly=True,
-                secure=True,
-                samesite="none",
-                domain=getattr(env, "COOKIE_DOMAIN", None),
-                path="/",
-            )
+    cookie(response)
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -159,6 +159,7 @@ def refresh(Authorize: AuthJWT = Depends()):
 
     current_user = Authorize.get_jwt_subject()
     new_access_token = Authorize.create_access_token(subject=current_user)
+
     return {"access_token": new_access_token}
 
 

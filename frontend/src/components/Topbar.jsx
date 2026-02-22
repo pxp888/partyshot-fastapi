@@ -29,6 +29,16 @@ function Topbar({ currentUser, setCurrentUser }) {
       });
   }, [setCurrentUser]); // Test protected route on mount
 
+  useEffect(() => {
+    fetch("/api/cookie", { method: "GET" })
+      .then(() => {
+        console.log("CloudFront cookie set");
+      })
+      .catch((err) => {
+        console.error("Failed to set CloudFront cookie:", err);
+      });
+  }, []);
+
   /* ---- Keep‑alive logic ---- */
   useEffect(() => {
     // Only run if we have a refresh token (user is logged in)
@@ -79,7 +89,9 @@ function Topbar({ currentUser, setCurrentUser }) {
   return (
     <div className="topbar">
       <div className="topLeft">
-        <a href="/">shareShot<span className="title-suffix">.eu</span></a>
+        <a href="/">
+          shareShot<span className="title-suffix">.eu</span>
+        </a>
       </div>
 
       <Searchbar className="search" />
