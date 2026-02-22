@@ -9,6 +9,8 @@ function Userview({ currentUser }) {
   const navigate = useNavigate();
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← websocket
   const [albums, setAlbums] = useState([]);
+  const [sortField, setSortField] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   // --------------------------------------------------------
   // 1️⃣  Initial load – same as before
@@ -19,7 +21,7 @@ function Userview({ currentUser }) {
       action: "getAlbums",
       payload: { target: username },
     });
-  }, [username]);
+  }, [username, sendJsonMessage]);
 
   // --------------------------------------------------------
   // 2️⃣  React to messages that come from the WS
@@ -50,7 +52,7 @@ function Userview({ currentUser }) {
       default:
         break;
     }
-  }, [lastJsonMessage, sendJsonMessage, username]);
+  }, [lastJsonMessage, sendJsonMessage, username, navigate]);
 
   // --------------------------------------------------------
   // 3️⃣  Create a new album – send via WS
@@ -68,10 +70,28 @@ function Userview({ currentUser }) {
     });
   }
 
+  // Frontend Sorting Logic
+  const sortedAlbums = [...albums].sort((a, b) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
+
+    if (sortField === "created_at") {
+      valA = new Date(valA);
+      valB = new Date(valB);
+    } else {
+      valA = (valA || "").toString().toLowerCase();
+      valB = (valB || "").toString().toLowerCase();
+    }
+
+    if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+    if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+
   return (
     <div className="userview">
-      {username === currentUser && (
-        <div className="userActions">
+      <div className="userActions">
+        {username === currentUser && (
           <form onSubmit={handleCreateAlbum}>
             {/* <label htmlFor="albumName">New Album Name : </label>*/}
             <input
@@ -84,11 +104,30 @@ function Userview({ currentUser }) {
               Create Album
             </button>
           </form>
+        )}
+        <div className="sortControls">
+          <select
+            value={sortField}
+            onChange={(e) => setSortField(e.target.value)}
+          >
+            <option value="created_at">Date</option>
+            <option value="name">Name</option>
+            <option value="username">User</option>
+          </select>
+          <button
+            className="sortOrderBtn"
+            onClick={() =>
+              setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+            }
+            title={sortOrder === "asc" ? "Ascending" : "Descending"}
+          >
+            {sortOrder === "asc" ? "↑" : "↓"}
+          </button>
         </div>
-      )}
+      </div>
       <div className="album-list">
-        {albums.length > 0 ? (
-          albums.map((album) => (
+        {sortedAlbums.length > 0 ? (
+          sortedAlbums.map((album) => (
             <AlbumItem
               key={album.id}
               album={album}

@@ -7,7 +7,8 @@
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1rem;
     margin: 0 2rem;
-    padding: 0.5rem 0; /* added a little vertical padding */
+    padding: 0.5rem 0;
+    /* added a little vertical padding */
     /* Prevent items from bleeding outside the container */
     box-sizing: border-box;
 }
@@ -16,67 +17,174 @@
  * 2️⃣  Form styling – use the same variables for consistency
  * ------------------------------------------------------------------ */
 .userview form {
-    background-color: var(--form-color, #f9f9f9); /* fallback colour */
+    background-color: var(--form-color, #f9f9f9);
+    /* fallback colour */
     padding: 0.5rem 1rem;
     border-radius: 4px;
     display: flex;
-    flex-wrap: wrap; /* wrap on tiny screens */
+    flex-wrap: wrap;
+    /* wrap on tiny screens */
     gap: 0.5rem;
 }
 
 /* ------------------------------------------------------------------
  * 3️⃣  Action bar – better spacing & alignment
  * ------------------------------------------------------------------ */
-.albumActions {
-    background-color: var(--form-color, #f9f9f9);
-    margin: 0.5rem 0;
-    padding: 0.5rem 1rem;
+/* ------------------------------------------------------------------
+ * 3️⃣  Action bar – matched to Albumview style
+ * ------------------------------------------------------------------ */
+.userActions {
+    background: rgba(20, 20, 22, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    margin: 0;
+    padding: 0.75rem 1.25rem;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    position: sticky;
+    top: 3.8rem;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    color: #e5e5e7;
+}
+
+.userActions::-webkit-scrollbar {
+    display: none;
+}
+
+.userActions form {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
-    align-items: center; /* vertical centering */
+}
+
+.userActions .btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f5f5f7;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.userActions .btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* ------------------------------------------------------------------
- * 4️⃣  Input styling – focus/placeholder and size
+ * 4️⃣  Input styling – updated for dark theme
  * ------------------------------------------------------------------ */
 #albumName,
 .userview input[name="albumName"] {
-    /* fall back to attribute selector for safety */
-    height: 2rem;
-    padding: 0 0.5rem;
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 4px;
-    background: var(--input-bg, #fff);
-    color: var(--text-color, #111);
+    height: 2.1rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e5e5e7;
     font: inherit;
-    transition: border-color 0.2s;
-    flex: 1 1 200px; /* grow/shrink, but never get too small */
+    transition: all 0.2s ease;
+    flex: 0 1 200px;
 }
 
 #albumName:focus,
 .userview input[name="albumName"]:focus {
     outline: none;
-    border-color: var(--primary-color, #3b82f6);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* placeholder colour (needs vendor prefixes for older browsers) */
-#albumName::placeholder,
-.userview input[name="albumName"]::placeholder {
-    color: var(--placeholder-color, #888);
-    opacity: 1; /* override Firefox’s default opacity */
+#albumName::placeholder {
+    color: rgba(255, 255, 255, 0.4);
 }
 
 /* ------------------------------------------------------------------
- * 5️⃣  Button – subtle hover/focus effect
+ * 5️⃣  Sort Controls – matched to Albumview
  * ------------------------------------------------------------------ */
-/* ------------------------------------------------------------------
- * 6️⃣  No‑albums message – centre and style
- * ------------------------------------------------------------------ */
+.sortControls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 
-/*.userview p {
-    text-align: center;
-    color: var(--text-muted, #666);
-    font-style: italic;
-}*/
+.sortControls select {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e5e5e7;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.sortControls select option {
+    background: #1c1c1e;
+    color: #e5e5e7;
+}
+
+.sortOrderBtn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e5e5e7;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    height: 32px;
+    width: 32px;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.sortOrderBtn:hover,
+.sortControls select:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ------------------------------------------------------------------
+ * 6️⃣  Responsive tweaks
+ * ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+    .userActions {
+        top: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        padding: 0.6rem 0.75rem;
+        gap: 0.5rem;
+        white-space: normal;
+        overflow-x: visible;
+    }
+
+    .userActions form {
+        width: 100%;
+    }
+
+    .userActions input[name="albumName"] {
+        flex: 1;
+    }
+
+    .sortControls {
+        margin-left: 0;
+        justify-content: center;
+    }
+}
