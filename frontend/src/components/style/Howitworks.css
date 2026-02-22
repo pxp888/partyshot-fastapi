@@ -186,12 +186,14 @@
 
 /* Responsive */
 @media (max-width: 900px) {
-    .hiw-step-item, .hiw-step-item:nth-child(even) {
+
+    .hiw-step-item,
+    .hiw-step-item:nth-child(even) {
         flex-direction: column;
         gap: 2rem;
         margin-bottom: 6rem;
     }
-    
+
     .hiw-step-content {
         text-align: center;
     }

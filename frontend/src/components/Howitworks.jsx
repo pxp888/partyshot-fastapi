@@ -12,8 +12,7 @@ function Howitworks() {
                     Together.
                 </h1>
                 <p>
-                    shareShot is a minimal photo sharing platform designed for events,
-                    parties, and collaborative collections. No apps, no friction—just sharing.
+                    shareShot is a minimal photo sharing platform designed for collaborative collections. No apps, no friction—just sharing.
                 </p>
             </section>
 
@@ -24,13 +23,14 @@ function Howitworks() {
                         <span className="hiw-step-number">Step 01</span>
                         <h2>Create Your Album</h2>
                         <p>
-                            Start by naming your event and choosing a unique album code.
-                            Whether it's a wedding, a birthday party, or a weekend getaway,
-                            your album is ready in seconds.
+                            Just choose a name, and click create.  It's that simple.
                         </p>
                         <p>
                             Set your album to <strong>Public</strong> to show it on your profile,
                             or keep it unlisted for private sharing.
+                        </p>
+                        <p>
+                            You can also choose to set it as <strong>Open</strong> to allow anyone upload to your album.
                         </p>
                     </div>
                     <div className="hiw-step-image-placeholder">
@@ -43,12 +43,12 @@ function Howitworks() {
                         <span className="hiw-step-number">Step 02</span>
                         <h2>Share the Love</h2>
                         <p>
-                            Invite guests to contribute by sharing your album URL or your username.
-                            Participants don't need to create an account to view or upload
-                            to <strong>Open</strong> albums.
+                            Invite guests to contribute by sharing your album <strong>URL</strong> or your <strong>username</strong>.
+                            Participants don't need to create an account to view your album,
+                            but they will need an account to upload photos.
                         </p>
                         <p>
-                            Just point, shoot, and share. It's that simple.
+                            But, creating an account is free and only takes a few seconds.
                         </p>
                     </div>
                     <div className="hiw-step-image-placeholder">
@@ -65,7 +65,7 @@ function Howitworks() {
                             Watch the collection grow in real-time as your event unfolds.
                         </p>
                         <p>
-                            Every guest becomes a photographer, ensuring no memory goes uncaptured.
+                            Everyone becomes a photographer, ensuring no memory goes uncaptured.
                         </p>
                     </div>
                     <div className="hiw-step-image-placeholder">
@@ -90,7 +90,7 @@ function Howitworks() {
             </section>
 
             {/* Features Grid */}
-            <section className="hiw-features">
+            {/* <section className="hiw-features">
                 <div className="container">
                     <h2>Everything you need.</h2>
                     <div className="hiw-features-grid">
@@ -116,7 +116,7 @@ function Howitworks() {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section> */}
 
             {/* CTA Section */}
             <section className="hiw-cta">

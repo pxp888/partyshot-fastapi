@@ -24,13 +24,15 @@ function Welcomepage() {
             </p>
           </div>
           <div className="hero-cta">
-            <p className="cta-note">Create an album to get started.</p>
+            <Link to="/how-it-works" className="cta-note" style={{ textDecoration: "none", borderBottom: "2px solid" }}>
+              Learn more about how shareShot works →
+            </Link>
           </div>
         </div>
       </section>
 
       {/* How it Works */}
-      <section className="guide-section">
+      {/* <section className="guide-section">
         <h2 className="section-title">How it works</h2>
         <div className="guide-steps">
           <div className="step">
@@ -61,7 +63,7 @@ function Welcomepage() {
             Learn more about how shareShot works →
           </Link>
         </div>
-      </section>
+      </section> */}
 
       {/* Info/Warning Section */}
       <section className="info-banner">
