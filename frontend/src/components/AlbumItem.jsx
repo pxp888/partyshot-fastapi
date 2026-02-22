@@ -12,7 +12,7 @@ function AlbumItem({ album, isOtherUser }) {
 
   return (
     <div
-      className={`album-item ${isOtherUser ? "other-user" : ""}`}
+      className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.public ? "not-public" : ""}`}
       onClick={handleClick}
       style={{ cursor: "pointer" }}
     >

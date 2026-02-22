@@ -2,34 +2,24 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    /*width: 150px;*/
     margin: 10px;
-
-    /*border: 1px solid #ccc;*/
-    /*border-radius: 8px;*/
     padding: 10px;
     background-color: black;
     color: var(--text-primary);
     transition:
         transform 0.3s ease,
         box-shadow 0.3s ease;
-
-    /*position: relative;*/
 }
 
 .album-item.other-user {
     background-color: #25282a;
 }
 
-.album-item img {
-    /*position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;*/
+.album-item.not-public {
+    background-color: rgb(15, 16, 35);
+}
 
-    /*height: 100%;*/
-    /*border-radius: 4px;*/
-    /*margin-bottom: 10px;*/
+.album-item img {
     object-fit: cover;
     width: 100%;
 }
