@@ -1,0 +1,67 @@
+.qr-hover-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.qr-trigger-text {
+    margin: 0 1rem;
+    padding: 0;
+    transition: color 0.2s ease;
+    text-align: left;
+}
+
+.qr-hover-container:hover .qr-trigger-text {
+    color: var(--primary-color, #3b82f6);
+    text-decoration: underline;
+}
+
+.qr-code-popup {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    z-index: 2000;
+    animation: qrFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.qr-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.qr-inner span {
+    font-size: 1rem;
+    color: #444;
+    font-weight: 500;
+}
+
+@keyframes qrFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Ensure the popup doesn't disappear if mouse moves over it */
+.qr-code-popup::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: 100%;
+    height: 15px;
+    background: transparent;
+}

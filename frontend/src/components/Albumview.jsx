@@ -10,6 +10,7 @@ import Uploader from "./Uploader";
 import AlbumRenamer from "./AlbumRenamer";
 import Iconlist from "./Iconlist";
 import Listview from "./Listview";
+import QRHover from "./QRHover";
 
 import "./style/Albumview.css";
 
@@ -413,7 +414,7 @@ function Albumview(currentUser) {
           </div>
           <div className="infoItem">
             <label>Code: </label>
-            <p>{album.code}</p>
+            <QRHover text={album.code} />
           </div>
         </div>
       </div>
