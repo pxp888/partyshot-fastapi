@@ -29,9 +29,9 @@ export default function App() {
         <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
         <Routes>
-          <Route path="/" element={<WelcomePage />} />
-          <Route path="/how-it-works" element={<Howitworks />} />
-          <Route path="/about" element={<About />} />
+          {/* <Route path="/" element={<WelcomePage />} /> */}
+          <Route path="/" element={<Howitworks />} />
+          {/* <Route path="/about" element={<About />} /> */}
           <Route
             path="/user/:username"
             element={<Userview currentUser={currentUser} />}

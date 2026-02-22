@@ -15,8 +15,11 @@ function Howitworks() {
                     Capture the <span className="accent-text">Moment</span>, <br />
                     Together.
                 </h1>
-                <p>
-                    shareShot is a minimal photo sharing platform designed for collaborative collections. No apps, no friction—just sharing.
+                <p className="hero-snarky">
+                    (because we don't all have to take the picture)
+                </p>
+                <p className="hero-subtext">
+                    shareShot is a minimal photo sharing platform designed for collaborative collections. No hashtags, no friction—just sharing.
                 </p>
             </section>
 
@@ -138,7 +141,7 @@ function Howitworks() {
                     <div className="hiw-feature-card">
                         <h3>Public Albums</h3>
                         <p>
-                            Albums that are marked as public will appear on your profile, and can be accessed by anyone with the album URL.
+                            Albums that are marked as public will appear on your profile, and other users can view and subscribe to them.
                         </p>
                     </div>
                 </div>
@@ -158,7 +161,7 @@ function Howitworks() {
 
             <footer className="welcome-footer">
                 <nav className="footer-nav">
-                    <Link to="/">Home</Link>
+                    {/* <Link to="/">Home</Link> */}
                     <Link to="/contact">Contact</Link>
                     <a
                         href="https://github.com/pxp888/partyshot-fastapi"
