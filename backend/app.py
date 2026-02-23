@@ -212,6 +212,7 @@ async def get_presigned(
     file_id = uuid.uuid4().hex
     s3_key = f"{album_code}/{file_id}"
     thumb_key = f"{album_code}/thumb_{file_id}"
+    mid_key = f"{album_code}/mid_{file_id}"
 
     s3_client = aws.get_s3_client()
     try:
@@ -227,6 +228,12 @@ async def get_presigned(
             Key=thumb_key,
             ExpiresIn=3600,
         )
+        # Generate presigned POST for mid-sized
+        mid_presigned = s3_client.generate_presigned_post(
+            Bucket=aws.BUCKET_NAME,
+            Key=mid_key,
+            ExpiresIn=3600,
+        )
     except ClientError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -235,6 +242,8 @@ async def get_presigned(
         "presigned": original_presigned,
         "thumb_key": thumb_key,
         "thumb_presigned": thumb_presigned,
+        "mid_key": mid_key,
+        "mid_presigned": mid_presigned,
     }
 
 
@@ -256,6 +265,10 @@ async def add_photo_metadata(
             "filename": payload["filename"],
             "s3_key": payload["s3_key"],
             "thumb_key": payload.get("thumb_key"),
+            "mid_key": payload.get("mid_key"),
+            "size": payload.get("size"),
+            "thumb_size": payload.get("thumb_size"),
+            "mid_size": payload.get("mid_size"),
         }
     )
 
@@ -266,6 +279,7 @@ async def add_photo_metadata(
             photo_resp["id"],
             payload["s3_key"],
             payload.get("thumb_key"),
+            payload.get("mid_key"),
             _expires=600,
         )
 
@@ -406,7 +420,7 @@ async def attach_presigned_urls(photos_data: dict):
     if env.LOCALDEV == "True":
         photos = photos_data["photos"]
         for p in photos:
-            for key_type in ["s3_key", "thumb_key"]:
+            for key_type in ["s3_key", "thumb_key", "mid_key"]:
                 s3_key = p.get(key_type)
                 if s3_key:
                     p[key_type] = aws.create_cloudfront_signed_url(s3_key)
@@ -414,7 +428,7 @@ async def attach_presigned_urls(photos_data: dict):
         cf_domain = env.CLOUDFRONT_DOMAIN
         photos = photos_data["photos"]
         for p in photos:
-            for key_type in ["s3_key", "thumb_key"]:
+            for key_type in ["s3_key", "thumb_key", "mid_key"]:
                 s3_key = p.get(key_type)
                 if s3_key:
                     p[key_type] = f"https://{cf_domain}/{s3_key}"

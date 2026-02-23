@@ -177,7 +177,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           />
         ) : (
           <img
-            src={files[focus].s3_key || placeholder}
+            src={files[focus].mid_key || files[focus].s3_key || placeholder}
             alt={`${files[focus].filename}`}
             // onClick={(e) => e.stopPropagation()}
             onError={(e) => {

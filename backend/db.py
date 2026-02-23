@@ -117,9 +117,11 @@ def init_db() -> None:
                     album_id INTEGER REFERENCES albums(id) ON DELETE CASCADE,
                     s3_key TEXT,
                     thumb_key TEXT,
+                    mid_key TEXT,
                     filename TEXT NOT NULL,
                     size INTEGER,
                     thumb_size INTEGER,
+                    mid_size INTEGER,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
@@ -133,6 +135,8 @@ def init_db() -> None:
                 -- Add columns if they don't exist (primitive migration)
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS size INTEGER;
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
+                ALTER TABLE photos ADD COLUMN IF NOT EXISTS mid_key TEXT;
+                ALTER TABLE photos ADD COLUMN IF NOT EXISTS mid_size INTEGER;
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS class TEXT;
                 """
             )
@@ -314,8 +318,8 @@ def getPhotos(
             total_count = cursor.fetchone()[0]
 
             query = f"""
-                SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.filename,
-                       p.created_at, u.username, p.size
+                SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.mid_key, p.filename,
+                       p.created_at, u.username, p.size, p.thumb_size, p.mid_size
                 FROM photos p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.album_id = %s
@@ -327,7 +331,7 @@ def getPhotos(
 
     photos = []
     for row in rows:
-        created_at = row[6]
+        created_at = row[7]
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
         photos.append(
@@ -337,10 +341,13 @@ def getPhotos(
                 "album_id": row[2],
                 "s3_key": row[3],
                 "thumb_key": row[4],
-                "filename": row[5],
+                "mid_key": row[5],
+                "filename": row[6],
                 "created_at": created_at,
-                "username": row[7],
-                "size": row[8],
+                "username": row[8],
+                "size": row[9],
+                "thumb_size": row[10],
+                "mid_size": row[11],
             }
         )
     return {
@@ -375,7 +382,7 @@ async def deleteAlbum(username: str, code: str) -> str:
                 # 3. Get all photos for the album
                 cursor.execute(
                     """
-                    SELECT s3_key, thumb_key FROM photos
+                    SELECT s3_key, thumb_key, mid_key FROM photos
                     WHERE album_id = %s
                     """,
                     (album_id,),
@@ -383,11 +390,13 @@ async def deleteAlbum(username: str, code: str) -> str:
                 photo_rows = cursor.fetchall()
 
                 # 4. Enqueue S3 deletions
-                for s3_key, thumb_key in photo_rows:
+                for s3_key, thumb_key, mid_key in photo_rows:
                     if s3_key:
                         await enqueue_delete_key(s3_key)
                     if thumb_key:
                         await enqueue_delete_key(thumb_key)
+                    if mid_key:
+                        await enqueue_delete_key(mid_key)
 
                 # 5. Delete photo records
                 cursor.execute(
@@ -424,16 +433,20 @@ def addPhoto(data: dict) -> dict | None:
             try:
                 cursor.execute(
                     """
-                    INSERT INTO photos (user_id, album_id, s3_key, thumb_key, filename)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id, user_id, album_id, s3_key, thumb_key, filename, created_at;
+                    INSERT INTO photos (user_id, album_id, s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id, user_id, album_id, s3_key, thumb_key, mid_key, filename, created_at, size, thumb_size, mid_size;
                     """,
                     (
                         data.get("user_id"),
                         data.get("album_id"),
                         s3_key,
                         thumb_key,
+                        data.get("mid_key"),
                         data.get("filename"),
+                        data.get("size"),
+                        data.get("thumb_size"),
+                        data.get("mid_size"),
                     ),
                 )
                 row = cursor.fetchone()
@@ -460,7 +473,7 @@ def addPhoto(data: dict) -> dict | None:
     if row is None:
         return None
 
-    created_at = row[6]
+    created_at = row[7]
     if isinstance(created_at, datetime.datetime):
         created_at = created_at.isoformat()
 
@@ -470,10 +483,12 @@ def addPhoto(data: dict) -> dict | None:
         "album_id": row[2],
         "s3_key": aws.get_cloudfront_url(row[3]),
         "thumb_key": aws.get_cloudfront_url(row[4]),
-        "filename": row[5],
+        "mid_key": aws.get_cloudfront_url(row[5]),
+        "filename": row[6],
         "created_at": created_at,
-        "size": None,
-        "thumb_size": None,
+        "size": row[8],
+        "thumb_size": row[9],
+        "mid_size": row[10],
         "username": username,
     }
 
@@ -494,7 +509,7 @@ async def deletePhoto(id: str, username: str) -> bool:
                 # Fetch photo details including S3 keys
                 cursor.execute(
                     """
-                    SELECT user_id, album_id, s3_key, thumb_key
+                    SELECT user_id, album_id, s3_key, thumb_key, mid_key
                     FROM photos
                     WHERE id = %s;
                     """,
@@ -504,7 +519,7 @@ async def deletePhoto(id: str, username: str) -> bool:
                 if not photo_row:
                     return False
 
-                photo_owner_id, album_id, s3_key, thumb_key = photo_row
+                photo_owner_id, album_id, s3_key, thumb_key, mid_key = photo_row
 
                 # Fetch album owner
                 cursor.execute(
@@ -530,6 +545,8 @@ async def deletePhoto(id: str, username: str) -> bool:
                     await enqueue_delete_key(s3_key)
                 if thumb_key:
                     await enqueue_delete_key(thumb_key)
+                if mid_key:
+                    await enqueue_delete_key(mid_key)
 
                 # Perform the delete from DB
                 cursor.execute(
@@ -700,8 +717,8 @@ def getPhoto(id: int) -> dict | None:
             try:
                 cursor.execute(
                     """
-                    SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key,
-                           p.filename, p.created_at, u.username
+                    SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.mid_key,
+                           p.filename, p.created_at, u.username, p.size, p.thumb_size, p.mid_size
                     FROM photos p
                     JOIN users u ON p.user_id = u.id
                     WHERE p.id = %s;
@@ -715,7 +732,7 @@ def getPhoto(id: int) -> dict | None:
     if row is None:
         return None
 
-    created_at = row[6]
+    created_at = row[7]
     if isinstance(created_at, datetime.datetime):
         created_at = created_at.isoformat()
 
@@ -725,9 +742,13 @@ def getPhoto(id: int) -> dict | None:
         "album_id": row[2],
         "s3_key": aws.get_cloudfront_url(row[3]),
         "thumb_key": aws.get_cloudfront_url(row[4]),
-        "filename": row[5],
+        "mid_key": aws.get_cloudfront_url(row[5]),
+        "filename": row[6],
         "created_at": created_at,
-        "username": row[7],  # <-- added field
+        "username": row[8],
+        "size": row[9],
+        "thumb_size": row[10],
+        "mid_size": row[11],
     }
 
 
@@ -1058,15 +1079,17 @@ def cleanup() -> None:
     # --- Step 1: Collect all known keys from the database -----------------
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT s3_key, thumb_key FROM photos")
+            cursor.execute("SELECT s3_key, thumb_key, mid_key FROM photos")
             rows = cursor.fetchall()
 
     known_keys: set[str] = set()
-    for s3_key, thumb_key in rows:
+    for s3_key, thumb_key, mid_key in rows:
         if s3_key:
             known_keys.add(s3_key)
         if thumb_key:
             known_keys.add(thumb_key)
+        if mid_key:
+            known_keys.add(mid_key)
 
     # --- Step 2: List objects in the S3 bucket ----------------------------
 
@@ -1109,15 +1132,17 @@ async def cleanup2(ctx=None) -> None:
     def get_known_keys():
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT s3_key, thumb_key FROM photos")
+                cursor.execute("SELECT s3_key, thumb_key, mid_key FROM photos")
                 rows = cursor.fetchall()
 
         keys: set[str] = set()
-        for s3_key, thumb_key in rows:
+        for s3_key, thumb_key, mid_key in rows:
             if s3_key:
                 keys.add(s3_key)
             if thumb_key:
                 keys.add(thumb_key)
+            if mid_key:
+                keys.add(mid_key)
         return keys
 
     known_keys = await asyncio.to_thread(get_known_keys)
@@ -1185,6 +1210,8 @@ def spaceUsed() -> dict:
             result["total"] = cursor.fetchone()[0] or 0
             cursor.execute("SELECT SUM(thumb_size) FROM photos")
             result["thumbs"] = cursor.fetchone()[0] or 0
+            cursor.execute("SELECT SUM(mid_size) FROM photos")
+            result["mids"] = cursor.fetchone()[0] or 0
             cursor.execute("SELECT COUNT(*) FROM photos WHERE size IS NULL")
             result["no_size_count"] = cursor.fetchone()[0] or 0
             cursor.execute("SELECT COUNT(*) FROM photos")
@@ -1196,21 +1223,25 @@ def spaceUsed() -> dict:
     return result
 
 
-def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None):
+def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None, mid_size: int = None):
     # Update the photo sizes in the database - this is called by the worker
+    updates = ["size = %s"]
+    params = [size]
+    
+    if thumb_size is not None:
+        updates.append("thumb_size = %s")
+        params.append(thumb_size)
+    if mid_size is not None:
+        updates.append("mid_size = %s")
+        params.append(mid_size)
+    
+    params.append(photo_id)
+    query = f"UPDATE photos SET {', '.join(updates)} WHERE id = %s"
+    
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                if thumb_size is not None:
-                    cursor.execute(
-                        "UPDATE photos SET size = %s, thumb_size = %s WHERE id = %s",
-                        (size, thumb_size, photo_id),
-                    )
-                else:
-                    cursor.execute(
-                        "UPDATE photos SET size = %s WHERE id = %s",
-                        (size, photo_id),
-                    )
+                cursor.execute(query, tuple(params))
                 conn.commit()
             except Exception as e:
                 conn.rollback()
@@ -1221,6 +1252,6 @@ def uncountedPhotos() -> list:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(
-                "SELECT id, s3_key, thumb_key FROM photos WHERE size IS NULL"
+                "SELECT id, s3_key, thumb_key, mid_key FROM photos WHERE size IS NULL"
             )
             return cursor.fetchall()

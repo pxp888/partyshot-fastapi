@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import "./style/Uploader.css";
 
-function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
+function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
 
@@ -43,11 +43,11 @@ function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
               if (blob) {
                 resolve(blob);
               } else {
-                reject(new Error("Canvas thumbnail generation failed."));
+                reject(new Error("Canvas resize failed."));
               }
             },
             "image/webp",
-            0.8,
+            quality,
           );
         };
 
@@ -61,10 +61,10 @@ function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
 
       video.onerror = () => {
         URL.revokeObjectURL(objectUrl);
-        reject(new Error("Failed to load video for thumbnail creation."));
+        reject(new Error("Failed to load video for resizing."));
       };
     } else {
-      // Handle image files (original implementation)
+      // Handle image files
       const img = new Image();
 
       img.onload = () => {
@@ -73,11 +73,15 @@ function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
         let { width, height } = img;
         const aspect = width / height;
         if (width > height) {
-          width = Math.min(width, maxWidth);
-          height = Math.round(width / aspect);
+          if (width > maxWidth) {
+            width = maxWidth;
+            height = Math.round(width / aspect);
+          }
         } else {
-          height = Math.min(height, maxHeight);
-          width = Math.round(height * aspect);
+          if (height > maxHeight) {
+            height = maxHeight;
+            width = Math.round(height * aspect);
+          }
         }
 
         const canvas = document.createElement("canvas");
@@ -91,17 +95,17 @@ function createThumbnail(file, maxWidth = 300, maxHeight = 300) {
             if (blob) {
               resolve(blob);
             } else {
-              reject(new Error("Canvas thumbnail generation failed."));
+              reject(new Error("Canvas resize failed."));
             }
           },
           "image/webp",
-          0.8,
+          quality,
         );
       };
 
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
-        reject(new Error("Failed to load image for thumbnail creation."));
+        reject(new Error("Failed to load image for resizing."));
       };
 
       img.src = objectUrl;
@@ -137,6 +141,8 @@ const Uploader = forwardRef(({ album }, ref) => {
       presigned,
       thumb_key: t_key,
       thumb_presigned,
+      mid_key: m_key,
+      mid_presigned,
     } = await presignRes.json();
 
     // 2️⃣  Build the form exactly as the bucket expects and POST to S3
@@ -154,30 +160,70 @@ const Uploader = forwardRef(({ album }, ref) => {
       throw new Error(`S3 upload failed: ${s3Res.status} ${errText}`);
     }
 
-    // 3️⃣ Create a thumbnail and upload it using the already received thumb_presigned
+    // 3️⃣ Create a thumbnail and mid-sized image and upload them
     let thumbnailBlob = null;
     let final_thumb_key = null;
+    let midBlob = null;
+    let final_mid_key = null;
+
+    // --- Thumbnail Generation & Upload ---
     try {
-      thumbnailBlob = await createThumbnail(file);
+      thumbnailBlob = await resizeImage(file, 300, 300, 0.8);
+      if (thumbnailBlob) {
+        const thumbForm = new FormData();
+        Object.entries(thumb_presigned.fields).forEach(([k, v]) =>
+          thumbForm.append(k, v),
+        );
+        thumbForm.append("file", thumbnailBlob);
 
-      const thumbForm = new FormData();
-      Object.entries(thumb_presigned.fields).forEach(([k, v]) =>
-        thumbForm.append(k, v),
-      );
-      thumbForm.append("file", thumbnailBlob);
+        const thumbS3Res = await fetch(thumb_presigned.url, {
+          method: "POST",
+          body: thumbForm,
+        });
 
-      const thumbS3Res = await fetch(thumb_presigned.url, {
-        method: "POST",
-        body: thumbForm,
-      });
-
-      if (thumbS3Res.ok) {
-        final_thumb_key = t_key;
-      } else {
-        console.warn("Thumbnail upload failed, continuing without thumb");
+        if (thumbS3Res.ok) {
+          final_thumb_key = t_key;
+        } else {
+          console.warn("Thumbnail upload failed, continuing without thumb");
+        }
       }
     } catch (err) {
       console.warn("Thumbnail creation or upload failed:", err);
+    }
+
+    // --- Mid-sized Generation & Upload ---
+    // Only attempt mid-sized for images, not videos.
+    if (!file.type.startsWith("video/")) {
+      try {
+        midBlob = await resizeImage(file, 2560, 2560, 0.85);
+
+        // Fail gracefully: only upload if generation succeeded and size is reasonable
+        if (midBlob) {
+          if (midBlob.size <= file.size / 2) {
+            const midForm = new FormData();
+            Object.entries(mid_presigned.fields).forEach(([k, v]) =>
+              midForm.append(k, v),
+            );
+            midForm.append("file", midBlob);
+
+            const midS3Res = await fetch(mid_presigned.url, {
+              method: "POST",
+              body: midForm,
+            });
+
+            if (midS3Res.ok) {
+              final_mid_key = m_key;
+            } else {
+              console.warn("Mid-size upload failed, continuing without mid version");
+            }
+          } else {
+            console.info("Mid-sized image larger than 50% of original, skipping upload");
+            midBlob = null; // Don't report size if we didn't upload
+          }
+        }
+      } catch (err) {
+        console.warn("Mid-size creation or upload failed:", err);
+      }
     }
 
     // 4️⃣  Notify backend of metadata via REST
@@ -192,9 +238,11 @@ const Uploader = forwardRef(({ album }, ref) => {
         filename: file.name,
         s3_key,
         thumb_key: final_thumb_key || null,
+        mid_key: final_mid_key || null,
         albumcode: albumcode,
         size: file.size,
         thumb_size: thumbnailBlob ? thumbnailBlob.size : null,
+        mid_size: midBlob ? midBlob.size : null,
       }),
     });
 
