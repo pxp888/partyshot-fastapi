@@ -211,19 +211,31 @@ async def get_presigned(
 
     file_id = uuid.uuid4().hex
     s3_key = f"{album_code}/{file_id}"
+    thumb_key = f"{album_code}/thumb_{file_id}"
 
     s3_client = aws.get_s3_client()
     try:
-        # **No ACL field** – let S3 keep the object private (the default)
-        response = s3_client.generate_presigned_post(
+        # Generate presigned POST for original
+        original_presigned = s3_client.generate_presigned_post(
             Bucket=aws.BUCKET_NAME,
             Key=s3_key,
+            ExpiresIn=3600,
+        )
+        # Generate presigned POST for thumbnail
+        thumb_presigned = s3_client.generate_presigned_post(
+            Bucket=aws.BUCKET_NAME,
+            Key=thumb_key,
             ExpiresIn=3600,
         )
     except ClientError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return {"s3_key": s3_key, "presigned": response}
+    return {
+        "s3_key": s3_key,
+        "presigned": original_presigned,
+        "thumb_key": thumb_key,
+        "thumb_presigned": thumb_presigned,
+    }
 
 
 @app.post("/api/add-photo-metadata")

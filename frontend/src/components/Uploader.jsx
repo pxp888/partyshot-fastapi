@@ -120,7 +120,7 @@ const Uploader = forwardRef(({ album }, ref) => {
    * @param {File} file - The user‑selected file.
    */
   async function uploadFile(file) {
-    // 1️⃣  Ask for presigned data
+    // 1️⃣  Ask for presigned data (returns both original and thumbnail info)
     const presignRes = await fetch("/api/s3-presigned", {
       method: "POST",
       headers: {
@@ -132,14 +132,18 @@ const Uploader = forwardRef(({ album }, ref) => {
         album_code: album.code,
       }),
     });
-    const { s3_key, presigned } = await presignRes.json();
+    const {
+      s3_key,
+      presigned,
+      thumb_key: t_key,
+      thumb_presigned,
+    } = await presignRes.json();
 
-    // 2️⃣  Build the form exactly as the bucket expects
+    // 2️⃣  Build the form exactly as the bucket expects and POST to S3
     const formData = new FormData();
     Object.entries(presigned.fields).forEach(([k, v]) => formData.append(k, v));
     formData.append("file", file); // key must be "file"
 
-    // 3️⃣  POST to S3
     const s3Res = await fetch(presigned.url, {
       method: "POST",
       body: formData,
@@ -150,48 +154,33 @@ const Uploader = forwardRef(({ album }, ref) => {
       throw new Error(`S3 upload failed: ${s3Res.status} ${errText}`);
     }
 
-    // 3️⃣ (Optional) Create a thumbnail and upload it the same way
+    // 3️⃣ Create a thumbnail and upload it using the already received thumb_presigned
     let thumbnailBlob = null;
-    let thumb_key = null;
+    let final_thumb_key = null;
     try {
       thumbnailBlob = await createThumbnail(file);
 
-      const thumbPresignRes = await fetch("/api/s3-presigned", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          filename: `${file.name}_thumb.webp`,
-          album_code: album.code,
-        }),
-      });
-
-      const { s3_key: t_key, presigned: thumbPresign } =
-        await thumbPresignRes.json();
-      thumb_key = t_key;
-
       const thumbForm = new FormData();
-      Object.entries(thumbPresign.fields).forEach(([k, v]) =>
+      Object.entries(thumb_presigned.fields).forEach(([k, v]) =>
         thumbForm.append(k, v),
       );
       thumbForm.append("file", thumbnailBlob);
 
-      const thumbS3Res = await fetch(thumbPresign.url, {
+      const thumbS3Res = await fetch(thumb_presigned.url, {
         method: "POST",
         body: thumbForm,
       });
 
-      if (!thumbS3Res.ok) {
+      if (thumbS3Res.ok) {
+        final_thumb_key = t_key;
+      } else {
         console.warn("Thumbnail upload failed, continuing without thumb");
-        thumb_key = null;
       }
     } catch (err) {
       console.warn("Thumbnail creation or upload failed:", err);
     }
 
-    // 4️⃣  Notify backend of metadata via REST instead of websocket
+    // 4️⃣  Notify backend of metadata via REST
     const metadataRes = await fetch("/api/add-photo-metadata", {
       method: "POST",
       headers: {
@@ -202,7 +191,7 @@ const Uploader = forwardRef(({ album }, ref) => {
         album_id: album.id,
         filename: file.name,
         s3_key,
-        thumb_key: thumb_key || null,
+        thumb_key: final_thumb_key || null,
         albumcode: albumcode,
         size: file.size,
         thumb_size: thumbnailBlob ? thumbnailBlob.size : null,
@@ -218,14 +207,17 @@ const Uploader = forwardRef(({ album }, ref) => {
   const handleFiles = async (files) => {
     if (!files || files.length === 0) return;
 
-    setTotalFiles(files.length);
+    // Convert FileList to a static array so that clearing the input value
+    // (e.target.value = "") doesn't empty the list during processing.
+    const fileArray = Array.from(files);
+    setTotalFiles(fileArray.length);
     setCompletedFiles(0);
 
-    for (let i = 0; i < files.length; i++) {
+    for (const file of fileArray) {
       try {
-        await uploadFile(files[i]);
+        await uploadFile(file);
       } catch (err) {
-        console.error("Upload failed for file:", files[i].name, err);
+        console.error("Upload failed for file:", file.name, err);
       }
       setCompletedFiles((prev) => prev + 1);
     }
