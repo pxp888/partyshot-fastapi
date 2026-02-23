@@ -9,68 +9,85 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   const [showDetails, setShowDetails] = useState(false);
   const lastFocus = useRef(focus);
 
+  const updateUrl = (newFocus, mode = "replace") => {
+    if (!files || files.length === 0) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const currentFocusId = params.get("focus");
+    const targetId = newFocus === -1 ? null : String(files[newFocus]?.id);
+
+    // Only update if the ID in the URL actually differs from what we want
+    if (targetId === currentFocusId) {
+      lastFocus.current = newFocus;
+      return;
+    }
+
+    if (newFocus === -1) {
+      params.delete("focus");
+    } else if (targetId) {
+      params.set("focus", targetId);
+    }
+
+    const newSearch = params.toString() ? "?" + params.toString() : "";
+    const newUrl = window.location.pathname + newSearch + window.location.hash;
+
+    // Use pushState only when opening from a closed state, otherwise replaceState
+    if (mode === "push" || (lastFocus.current === -1 && newFocus !== -1)) {
+      window.history.pushState({}, "", newUrl);
+    } else {
+      window.history.replaceState({}, "", newUrl);
+    }
+
+    lastFocus.current = newFocus;
+  };
+
+  const next = () => {
+    if (!files || files.length === 0) return;
+    const nextFocus = focus + 1 < files.length ? focus + 1 : 0;
+    setFocus(nextFocus);
+    updateUrl(nextFocus);
+  };
+
+  const previous = () => {
+    if (!files || files.length === 0) return;
+    const prevFocus = focus > 0 ? focus - 1 : files.length - 1;
+    setFocus(prevFocus);
+    updateUrl(prevFocus);
+  };
+
+  const hide = () => {
+    setFocus(-1);
+    updateUrl(-1);
+  };
+
   /* ----------------------------------------------
    *  URL sync logic – now using file.id
    * ---------------------------------------------- */
-  // 1️⃣  On mount & popstate: read focus from query string (file.id)
+  // 1️⃣  On mount & popstate
   useEffect(() => {
     if (!files) return;
 
     const syncFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const focusId = params.get("focus");
-      if (!focusId) {
-        setFocus(-1);
-        return;
-      }
 
-      const targetIndex = files.findIndex((f) => String(f.id) === focusId);
-      if (targetIndex !== -1) {
-        setFocus(targetIndex);
-      }
+      setFocus((prevFocus) => {
+        if (!focusId) return -1;
+        const targetIndex = files.findIndex((f) => String(f.id) === focusId);
+        return targetIndex !== -1 ? targetIndex : prevFocus;
+      });
     };
 
-    // Initial sync
     syncFromUrl();
-
     window.addEventListener("popstate", syncFromUrl);
     return () => window.removeEventListener("popstate", syncFromUrl);
-  }, [files, setFocus]); // Removed 'focus' dependency
+  }, [files, setFocus]); // focus removed from dependencies
 
-  // 2️⃣  Whenever focus changes, update the query string
+  // 2️⃣  Catch external focus changes (e.g. thumbnail clicks in parent)
   useEffect(() => {
-    if (!files || files.length === 0) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const currentFocusId = params.get("focus");
-
-    if (focus === -1) {
-      if (currentFocusId) {
-        params.delete("focus");
-        const newUrl =
-          window.location.pathname +
-          (params.toString() ? "?" + params.toString() : "") +
-          window.location.hash;
-        window.history.replaceState({}, "", newUrl);
-      }
-    } else {
-      const id = files[focus]?.id;
-      if (id !== undefined && String(id) !== currentFocusId) {
-        params.set("focus", String(id));
-        const newUrl =
-          window.location.pathname +
-          "?" +
-          params.toString() +
-          window.location.hash;
-
-        if (lastFocus.current === -1) {
-          window.history.pushState({}, "", newUrl);
-        } else {
-          window.history.replaceState({}, "", newUrl);
-        }
-      }
+    if (focus !== lastFocus.current) {
+      updateUrl(focus);
     }
-    lastFocus.current = focus;
   }, [focus, files]);
 
   /* ----------------------------------------------
@@ -82,20 +99,17 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     const handler = (e) => {
       switch (e.key) {
         case "ArrowRight":
-          if (focus + 1 < files.length) setFocus(focus + 1);
-          else setFocus(0);
+          next();
           break;
         case " ":
-          if (focus + 1 < files.length) setFocus(focus + 1);
-          else setFocus(0);
+          next();
           e.preventDefault();
           break;
         case "ArrowLeft":
-          if (focus > 0) setFocus(focus - 1);
-          else setFocus(files.length - 1);
+          previous();
           break;
         case "Escape":
-          setFocus(-1);
+          hide();
           break;
         case "Delete":
         case "Backspace":
@@ -113,7 +127,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [focus, files, setFocus, deletedPhoto]);
+  }, [focus, files, setFocus, deletedPhoto, next, previous, hide]);
 
   // Handle temporary visibility of file details when image changes
   useEffect(() => {
@@ -139,11 +153,11 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     const rightZone = (2 * width) / 3;
 
     if (clickX < leftZone) {
-      if (focus > 0) setFocus(focus - 1);
+      previous();
     } else if (clickX > rightZone) {
-      if (focus + 1 < files.length) setFocus(focus + 1);
+      next();
     } else {
-      setFocus(-1);
+      hide();
     }
   };
 
