@@ -115,6 +115,10 @@ function Adminpage({ currentUser }) {
                     <div className="usage-value">{formatBytes(spaceUsed.thumbs)}</div>
                   </div>
                   <div className="usage-item">
+                    <span className="usage-label">Midsized Images</span>
+                    <div className="usage-value">{formatBytes(spaceUsed.mids)}</div>
+                  </div>
+                  <div className="usage-item">
                     <span className="usage-label">Total Users</span>
                     <div className="usage-value">{spaceUsed.total_users || 0}</div>
                   </div>
@@ -133,7 +137,7 @@ function Adminpage({ currentUser }) {
                   <div className="usage-item total-usage">
                     <span className="usage-label">Total Cloud Storage</span>
                     <div className="total-value">
-                      {formatBytes((spaceUsed.total || 0) + (spaceUsed.thumbs || 0))}
+                      {formatBytes((spaceUsed.total || 0) + (spaceUsed.thumbs || 0) + (spaceUsed.mids || 0))}
                     </div>
                   </div>
                 </div>
