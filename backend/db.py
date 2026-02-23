@@ -711,47 +711,6 @@ def unsubscribe(username: str, albumcode: str) -> bool:
                 return False
 
 
-def getPhoto(id: int) -> dict | None:
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            try:
-                cursor.execute(
-                    """
-                    SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.mid_key,
-                           p.filename, p.created_at, u.username, p.size, p.thumb_size, p.mid_size
-                    FROM photos p
-                    JOIN users u ON p.user_id = u.id
-                    WHERE p.id = %s;
-                    """,
-                    (id,),
-                )
-                row = cursor.fetchone()
-            except Exception:
-                row = None
-
-    if row is None:
-        return None
-
-    created_at = row[7]
-    if isinstance(created_at, datetime.datetime):
-        created_at = created_at.isoformat()
-
-    return {
-        "id": row[0],
-        "user_id": row[1],
-        "album_id": row[2],
-        "s3_key": aws.get_cloudfront_url(row[3]),
-        "thumb_key": aws.get_cloudfront_url(row[4]),
-        "mid_key": aws.get_cloudfront_url(row[5]),
-        "filename": row[6],
-        "created_at": created_at,
-        "username": row[8],
-        "size": row[9],
-        "thumb_size": row[10],
-        "mid_size": row[11],
-    }
-
-
 def toggleOpen(id: str, username: str) -> dict | None:
     user = getUser(username)
     if user is None:
@@ -1223,21 +1182,23 @@ def spaceUsed() -> dict:
     return result
 
 
-def updatePhotoSizes(photo_id: int, size: int, thumb_size: int = None, mid_size: int = None):
+def updatePhotoSizes(
+    photo_id: int, size: int, thumb_size: int = None, mid_size: int = None
+):
     # Update the photo sizes in the database - this is called by the worker
     updates = ["size = %s"]
     params = [size]
-    
+
     if thumb_size is not None:
         updates.append("thumb_size = %s")
         params.append(thumb_size)
     if mid_size is not None:
         updates.append("mid_size = %s")
         params.append(mid_size)
-    
+
     params.append(photo_id)
     query = f"UPDATE photos SET {', '.join(updates)} WHERE id = %s"
-    
+
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:

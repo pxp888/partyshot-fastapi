@@ -11,7 +11,10 @@
 .how-it-works-page {
     background-color: var(--form-color);
     color: var(--hiw-text);
-    font-family: 'Inter', -apple-system, sans-serif;
+    font-family:
+        "Inter",
+        -apple-system,
+        sans-serif;
     line-height: 1.6;
     overflow-x: hidden;
 }
@@ -102,7 +105,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px dashed rgba(0, 0, 0, 0.1);
+    /*border: 2px dashed rgba(0, 0, 0, 0.1);*/
+    box-shadow: 0 0 30px gray;
     position: relative;
     overflow: hidden;
     transition: transform var(--transition-speed);
@@ -207,7 +211,9 @@
     border-radius: 50px;
     font-weight: 700;
     font-size: 1.1rem;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
 }
 
 .hiw-button:hover {
@@ -217,7 +223,6 @@
 
 /* Responsive */
 @media (max-width: 900px) {
-
     .hiw-step-item,
     .hiw-step-item:nth-child(even) {
         flex-direction: column;
