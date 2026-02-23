@@ -56,7 +56,7 @@ class RegisterRequest(BaseModel):
 
 
 class Settings(BaseModel):
-    authjwt_secret_key: str = "secretstuffherethis is a long secret key for jwt signing"
+    authjwt_secret_key: str = env.AUTH_JWT_SECRET_KEY
 
 
 class ToggleOpenRequest(BaseModel):
