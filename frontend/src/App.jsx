@@ -7,6 +7,7 @@ import Userview from "./components/Userview";
 import Albumview from "./components/Albumview";
 import Adminpage from "./components/Adminpage";
 import Contactpage from "./components/Contactpage";
+import Plans from "./components/Plans";
 import { WebSocketProvider } from "./components/WebSocketContext";
 
 import AccountPage from "./components/AccountPage";
@@ -31,7 +32,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Howitworks />} />
           <Route path="/welcome" element={<WelcomePage />} />
-          {/* <Route path="/about" element={<About />} /> */}
+          <Route path="/plans" element={<Plans />} />
           <Route
             path="/user/:username"
             element={<Userview currentUser={currentUser} />}
