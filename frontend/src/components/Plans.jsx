@@ -41,8 +41,8 @@ function Plans() {
               </div>
               <div className="pricing-table-cell">2 GB</div>
               <div className="pricing-table-cell">100 GB</div>
-              <div className="pricing-table-cell">1 TB</div>
-              <div className="pricing-table-cell">2 TB+</div>
+              <div className="pricing-table-cell">500 TB</div>
+              <div className="pricing-table-cell">1 TB+</div>
             </div>
 
             <div className="pricing-table-row">
@@ -74,7 +74,7 @@ function Plans() {
             <div className="pricing-table-row">
               <div className="pricing-table-cell feature-cell">Subscribe</div>
               <div className="pricing-table-cell">
-                <button className="subscribe-button">Select</button>
+                {/* <button className="subscribe-button">Select</button>*/}
               </div>
               <div className="pricing-table-cell">
                 <button className="subscribe-button">Select</button>
