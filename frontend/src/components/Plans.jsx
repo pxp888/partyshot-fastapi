@@ -3,108 +3,92 @@ import { Link } from "react-router-dom";
 import "./style/Plans.css";
 
 function Plans() {
+  const plansData = [
+    {
+      name: "Free",
+      storage: "500 MB",
+      video: "Limited",
+      price: "Free",
+      isPopular: false,
+    },
+    {
+      name: "Starter",
+      storage: "5 GB",
+      video: "HD",
+      price: "€4.99",
+      isPopular: false,
+    },
+    {
+      name: "Basic",
+      storage: "20 GB",
+      video: "4K",
+      price: "€9.99",
+      isPopular: false,
+    },
+    {
+      name: "Pro",
+      storage: "100 GB",
+      video: "Unlimited",
+      price: "€19.99",
+      isPopular: false,
+    },
+  ];
+
   return (
     <div className="plans-page">
       {/* Hero Section */}
       <section className="plans-hero">
-        <h1>
-          Choose Your <span className="accent-text">Plan</span>,
-        </h1>
-        <p className="hero-snarky">
-          (because we want to make sharing easy for everyone)
-        </p>
-        <p className="hero-subtext">
-          We have three plan levels for you to choose what suits your needs
-          best.
-        </p>
-      </section>
-
-      {/* Pricing Table Section */}
-      <section className="pricing-table">
-        <div className="pricing-table-container">
-          <div className="pricing-table-header">
-            <h2>Storage & Features</h2>
-          </div>
-
-          <div className="pricing-table-content">
-            <div className="pricing-table-row">
-              <div className="pricing-table-cell header-cell">Level</div>
-              <div className="pricing-table-cell header-cell">Free</div>
-              <div className="pricing-table-cell header-cell">Starter</div>
-              <div className="pricing-table-cell header-cell">Basic</div>
-              <div className="pricing-table-cell header-cell">Pro</div>
-            </div>
-
-            <div className="pricing-table-row">
-              <div className="pricing-table-cell feature-cell">
-                Storage Space
-              </div>
-              <div className="pricing-table-cell">2 GB</div>
-              <div className="pricing-table-cell">100 GB</div>
-              <div className="pricing-table-cell">500 TB</div>
-              <div className="pricing-table-cell">1 TB+</div>
-            </div>
-
-            <div className="pricing-table-row">
-              <div className="pricing-table-cell feature-cell">
-                Video Playback
-              </div>
-              <div className="pricing-table-cell">-</div>
-              <div className="pricing-table-cell">Yes</div>
-              <div className="pricing-table-cell">Yes</div>
-              <div className="pricing-table-cell">Yes</div>
-            </div>
-
-            <div className="pricing-table-row">
-              <div className="pricing-table-cell feature-cell">
-                Monthly Cost
-              </div>
-              <div className="pricing-table-cell">0</div>
-              <div className="pricing-table-cell">
-                <strong>5</strong> Euro
-              </div>
-              <div className="pricing-table-cell">
-                <strong>10</strong> Euro
-              </div>
-              <div className="pricing-table-cell">
-                <strong>15</strong> Euro
-              </div>
-            </div>
-
-            <div className="pricing-table-row">
-              <div className="pricing-table-cell feature-cell">Subscribe</div>
-              <div className="pricing-table-cell">
-                {/* <button className="subscribe-button">Select</button>*/}
-              </div>
-              <div className="pricing-table-cell">
-                <button className="subscribe-button">Select</button>
-              </div>
-              <div className="pricing-table-cell">
-                <button className="subscribe-button">Select</button>
-              </div>
-              <div className="pricing-table-cell">
-                <button className="subscribe-button">Select</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="pricing-table-footer">
-            <p>
-              * At the <strong>Pro</strong> tier storage consumed above plan
-              levels will be charged at our best estimation of actual cost.
-            </p>
-          </div>
+        <div className="hero-content">
+          <h1>
+            Ready to <span className="accent-text">Level Up?</span>
+          </h1>
+          <p className="hero-snarky">
+            (because storage shouldn't be your bottleneck)
+          </p>
+          <p className="hero-subtext">
+            Choose the perfect plan for your memories. From casual sharing to
+            professional-grade collections, we've got you covered.
+          </p>
         </div>
       </section>
 
-      {/* CTA Section */}
-      {/* <section className="plans-cta">
-        <h2>Start your collection today.</h2>
-        <p>Join thousands of users sharing their best moments on shareShot.</p>
-        <Link to="/" className="plans-button">
-          Get Started for Free
-        </Link>
-      </section>*/}
+      {/* Pricing Table Section */}
+      <section className="pricing-section">
+        <div className="pricing-container">
+          <div className="comparison-table">
+            <div className="labels-column">
+              <div className="cell label-cell cell-header">Plan</div>
+              <div className="cell label-cell">Storage</div>
+              <div className="cell label-cell">Video Playback</div>
+              <div className="cell label-cell">Monthly Cost</div>
+              <div className="cell label-cell cell-footer"></div>
+            </div>
+
+            <div className="plans-scroll-area">
+              {plansData.map((plan, index) => (
+                <div key={index} className={`plan-column ${plan.isPopular ? 'popular' : ''}`}>
+                  {plan.isPopular && <div className="popular-badge">Best Value</div>}
+                  <div className="cell data-cell cell-header">
+                    <span className="plan-name">{plan.name}</span>
+                  </div>
+                  <div className="cell data-cell">{plan.storage}</div>
+                  <div className="cell data-cell">{plan.video}</div>
+                  <div className="cell data-cell">
+                    <span className="plan-price">{plan.price}</span>
+                  </div>
+                  <div className="cell data-cell cell-footer">
+                    {plan.price === "Free" ? (
+                      <Link to="/" className="subscribe-button secondary">Get Started</Link>
+                    ) : (
+                      <button className="subscribe-button">Subscribe</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <footer className="welcome-footer">
         <nav className="footer-nav">
@@ -127,3 +111,4 @@ function Plans() {
 }
 
 export default Plans;
+

@@ -1,5 +1,5 @@
 :root {
-    --hiw-bg: #f8f9fa;
+    --hiw-bg: #e2e2e2;
     --hiw-text: #1c1c1e;
     --hiw-accent: salmon;
     --hiw-accent-light: rgba(250, 128, 114, 0.1);
@@ -223,6 +223,7 @@
 
 /* Responsive */
 @media (max-width: 900px) {
+
     .hiw-step-item,
     .hiw-step-item:nth-child(even) {
         flex-direction: column;
