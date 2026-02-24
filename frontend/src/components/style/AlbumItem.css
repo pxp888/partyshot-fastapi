@@ -43,7 +43,7 @@
     grid-template-columns: 1fr 4fr;
 }
 
-.info>p {
+.info > p {
     align-items: baseline;
     text-align: left;
     margin: 0.5rem 0.5rem;
@@ -55,4 +55,27 @@
     text-align: right;
     margin: 0.5rem 0.5rem;
     color: gray;
+}
+
+@media (max-width: 768px) {
+    .album-item {
+        margin: 0px;
+        padding: 10px;
+    }
+    .album-item .info p,
+    .album-item .info label {
+        font-size: 12px;
+    }
+
+    .hideMobile {
+        display: none;
+    }
+
+    .album-item > img {
+        max-height: 200px;
+    }
+
+    .info h3 {
+        font-size: 12px;
+    }
 }

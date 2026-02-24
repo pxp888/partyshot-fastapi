@@ -27,12 +27,14 @@ function AlbumItem({ album, isOtherUser }) {
         <h3>{album.name}</h3>
         <label>user</label>
         <p>{album.username} </p>
-        <label>open</label>
-        <p>{album.open ? "Yes" : "No"}</p>
-        <label>public</label>
-        <p>{album.public ? "Yes" : "No"}</p>
-        <label>created</label>
-        <p>{new Date(album.created_at).toLocaleString()}</p>
+        <label className="hideMobile">open</label>
+        <p className="hideMobile">{album.open ? "Yes" : "No"}</p>
+        <label className="hideMobile">public</label>
+        <p className="hideMobile">{album.public ? "Yes" : "No"}</p>
+        <label className="hideMobile">created</label>
+        <p className="hideMobile">
+          {new Date(album.created_at).toLocaleString()}
+        </p>
       </div>
       {/* <p>Code: {album.code}</p> */}
     </div>
