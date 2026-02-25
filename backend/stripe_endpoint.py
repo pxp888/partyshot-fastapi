@@ -6,8 +6,7 @@ from fastapi import HTTPException, Request, Depends, APIRouter
 from fastapi_jwt_auth2 import AuthJWT
 
 # Create a router for Stripe endpoints
-# router = APIRouter(prefix="/api/stripe")
-router = APIRouter(prefix="/api/stripe")
+router = APIRouter(prefix="/api")
 
 
 # Set your Stripe secret key
