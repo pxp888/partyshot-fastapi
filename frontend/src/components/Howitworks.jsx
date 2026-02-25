@@ -5,6 +5,7 @@ import how1 from "../assets/how1.webp";
 import how2 from "../assets/how2.webp";
 import how3 from "../assets/how3.webp";
 import how4 from "../assets/how4.webp";
+import screen1 from "../assets/screen1.webp";
 
 function Howitworks() {
   return (
@@ -23,6 +24,17 @@ function Howitworks() {
           collaborative collections. No hashtags, no friction—just sharing.
         </p>
       </section>
+
+
+      <section className="screenshot-section">
+        <img
+          src={screen1}
+          alt="Application Screenshot"
+          className="screenshot-image"
+        />
+      </section>
+
+
 
       {/* Steps Section */}
       <section className="hiw-steps">
