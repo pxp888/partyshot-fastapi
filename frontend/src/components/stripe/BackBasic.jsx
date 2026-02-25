@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Stripe1 from "./Stripe1";
+import { useNavigate } from "react-router-dom";
 
 const BackBasic = () => {
+    const navigate = useNavigate();
     const [status, setStatus] = useState(null);
     const [customerEmail, setCustomerEmail] = useState("");
 

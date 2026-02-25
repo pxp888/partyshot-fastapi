@@ -110,14 +110,27 @@ async def stripe_webhook(request: Request):
         customer = invoice.get("customer")
         date = invoice.get("period_start")
         class_type = metadata.get("plan_type")
-        amount = invoice.get("amount_paid")
+        event_id = event.get("id")
+        invoice_created = invoice.get("created")
     
         if user_id:
             print(f"Success! Found metadata for user: {user_id}")
             print(f"Customer: {customer}")
             print(f"Date: {date}")
             print(f"Class type: {class_type}")
-            print(f"Amount: {amount}")
-            # Now update your DB for 'pxp'
+            print(f"Event ID: {event_id}")
+            print(f"Invoice Created: {invoice_created}")
+            
+            # Log the event to the database with the Stripe timestamp
+            db.addStripeEvent(user_id, customer, class_type, event_id, invoice_created)
+            
+            # Update the user's class to premium
+            db.setUserData(user_id, user_class="premium")
+
 
     return {"status": "success"}
+
+
+
+    # invoice.payment_failed
+    # customer.subscription.deleted

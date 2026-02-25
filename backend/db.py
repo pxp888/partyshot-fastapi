@@ -132,6 +132,17 @@ def init_db() -> None:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(user_id, album_id)
                 );
+
+                CREATE TABLE IF NOT EXISTS stripe1 (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER,
+                    username TEXT,
+                    customer TEXT,
+                    plan TEXT,
+                    event_id TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
                 -- Add columns if they don't exist (primitive migration)
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS size INTEGER;
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
@@ -1216,3 +1227,27 @@ def uncountedPhotos() -> list:
                 "SELECT id, s3_key, thumb_key, mid_key FROM photos WHERE size IS NULL"
             )
             return cursor.fetchall()
+
+
+def addStripeEvent(username: str, customer: str, plan: str, event_id: str, timestamp: int = None):
+    user = getUser(username)
+    user_id = user["id"] if user else None
+    
+    event_time = datetime.datetime.fromtimestamp(timestamp) if timestamp else datetime.datetime.now()
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO stripe1 (user_id, username, customer, plan, event_id, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s);
+                    """,
+                    (user_id, username, customer, plan, event_id, event_time),
+                )
+                conn.commit()
+                return True
+            except Exception as e:
+                conn.rollback()
+                logging.error("Error adding stripe event: %s", e)
+                return False
