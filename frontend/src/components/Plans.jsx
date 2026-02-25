@@ -42,13 +42,91 @@ function Plans() {
         </div>
       </section>
 
+      {/* Comparison Table Section */}
+      <section className="comparison-section" style={{ marginBottom: "40px" }}>
+        <div className="pricing-container">
+          <div className="comparison-table">
+            <div className="labels-column">
+              <div className="cell label-cell cell-header">Plans & Specs</div>
+              <div className="cell label-cell">Total Storage</div>
+              <div className="cell label-cell">Max Photos</div>
+              <div className="cell label-cell">Collaborative Albums</div>
+              {/* <div className="cell label-cell cell-footer"></div> */}
+            </div>
+            <div className="plans-scroll-area">
+              {[
+                {
+                  name: "Free",
+                  storage: "1 GB",
+                  photos: "200",
+                  albums: "3 Albums",
+                  support: "Community",
+                },
+                {
+                  name: "Starter",
+                  storage: "10 GB",
+                  photos: "2,000",
+                  albums: "Unlimited",
+                  support: "Email Support",
+                },
+                {
+                  name: "Basic",
+                  storage: "50 GB",
+                  photos: "10,000",
+                  albums: "Unlimited",
+                  support: "Priority Email",
+                },
+                {
+                  name: "Pro",
+                  storage: "250 GB",
+                  photos: "50,000",
+                  albums: "Unlimited",
+                  support: "24/7 Priority",
+                },
+              ].map((plan, idx) => (
+                <div
+                  key={idx}
+                  className={`plan-column ${plan.popular ? "popular" : ""}`}
+                >
+                  {plan.popular && (
+                    <div className="popular-badge">Most Popular</div>
+                  )}
+                  <div className="cell cell-header">
+                    <div className="plan-name">{plan.name}</div>
+                  </div>
+                  <div className="cell data-cell">{plan.storage}</div>
+                  <div className="cell data-cell">{plan.photos}</div>
+                  <div className="cell data-cell">{plan.albums}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Table Section */}
       <section className="pricing-section">
         <div className="pricing-container">
-          <StripePricingTable
-            userEmail={userInfo?.email}
-            userId={userInfo?.username}
-          />
+          {userInfo ? (
+            <StripePricingTable
+              userEmail={userInfo?.email}
+              userId={userInfo?.username}
+            />
+          ) : (
+            <div className="login-required-overlay">
+              <div className="auth-card">
+                <div className="auth-icon">🔒</div>
+                <h3>Authentication Required</h3>
+                <p>Please log in or create an account to view our premium plans and secure your subscription.</p>
+                <div className="auth-actions">
+                  <Link to="/" className="subscribe-button">
+                    Get Started / Login
+                  </Link>
+                </div>
+                <p className="auth-note">It only takes 30 seconds to set up your account.</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

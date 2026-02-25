@@ -1236,6 +1236,15 @@ def uncountedPhotos() -> list:
             return cursor.fetchall()
 
 
+
+
+
+
+
+
+
+
+
 def addStripeEvent(username: str, customer: str, plan: str, event_id: str, timestamp: int = None):
     user = getUser(username)
     user_id = user["id"] if user else None
@@ -1265,6 +1274,15 @@ def getStripeCustomerId(username: str) -> str | None:
         with conn.cursor() as cursor:
             # Get the most recent customer ID from stripe1 events for this user
             cursor.execute("SELECT customer FROM stripe1 WHERE username = %s ORDER BY created_at DESC LIMIT 1", (username,))
+            row = cursor.fetchone()
+            return row[0] if row else None
+
+
+def getUsernameByStripeCustomerId(customer: str) -> str | None:
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            # Get the most recent username for this customer ID
+            cursor.execute("SELECT username FROM stripe1 WHERE customer = %s ORDER BY created_at DESC LIMIT 1", (customer,))
             row = cursor.fetchone()
             return row[0] if row else None
 

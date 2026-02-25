@@ -102,51 +102,66 @@ async def stripe_webhook(request: Request):
     
     print('STRIPE EVENT TYPE: ', event["type"])
 
-
-    if event["type"] == "invoice.paid":
-        invoice = event["data"]["object"]
+    # --- 1. SESSION COMPLETED (Initial Purchase) ---
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        user_id = session.get("client_reference_id")
+        customer = session.get("customer")
+        metadata = session.get("metadata") or {}
         
-        # Use .get() chains to prevent "KeyError" if Stripe changes things
-        parent = invoice.get("parent", {})
-        sub_details = parent.get("subscription_details", {})
-        metadata = sub_details.get("metadata", {})
-    
-        user_id = metadata.get("user_id")
-        customer = invoice.get("customer")
-        date = invoice.get("period_start")
-        class_type = metadata.get("plan_type")
-        event_id = event.get("id")
-        invoice_created = invoice.get("created")
-    
+        # Fallback identification
+        if not user_id:
+            user_id = metadata.get("user_id")
+        if not user_id and customer:
+            user_id = db.getUsernameByStripeCustomerId(customer)
+            
         if user_id:
-            print(f"Success! Found metadata for user: {user_id}")
-            print(f"Customer: {customer}")
-            print(f"Date: {date}")
-            print(f"Class type: {class_type}")
-            print(f"Event ID: {event_id}")
-            print(f"Invoice Created: {invoice_created}")
-            
-            # Log the event to the database with the Stripe timestamp
-            db.addStripeEvent(user_id, customer, class_type, event_id, invoice_created)
-            
-            # Update the user's class (e.g. to premium)
-            db.updateUserClass(user_id, class_type)
+            print(f"Checkout completed for: {user_id}")
+            # Map the customer to the user in our DB early
+            db.addStripeEvent(user_id, customer, "session_completed", event["id"], event["created"])
 
+    # --- 2. INVOICE PAID (Subscription Activation & Renewals) ---
+    elif event["type"] == "invoice.paid":
+        invoice = event["data"]["object"]
+        customer = invoice.get("customer")
+        
+        # Look for user_id in subscription_details or metadata
+        sub_details = invoice.get("subscription_details") or {}
+        user_id = sub_details.get("client_reference_id") or (invoice.get("metadata") or {}).get("user_id")
+        
+        # Last resort: Database lookup by customer ID
+        if not user_id and customer:
+            user_id = db.getUsernameByStripeCustomerId(customer)
 
+        # Determine Plan Type
+        class_type = (invoice.get("metadata") or {}).get("plan_type")
+        if not class_type:
+            # Fallback: check the description of the items line
+            lines = invoice.get("lines", {}).get("data", [])
+            if lines:
+                desc = lines[0].get("description", "").lower()
+                if "pro" in desc: class_type = "pro"
+                elif "basic" in desc: class_type = "basic"
+                elif "starter" in desc: class_type = "starter"
+
+        if user_id:
+            print(f"Success! Payment received for user: {user_id}")
+            db.addStripeEvent(user_id, customer, class_type or "paid", event["id"], event["created"])
+            if class_type:
+                db.updateUserClass(user_id, class_type)
+
+    # --- 3. SUBSCRIPTION DELETED (Cancellation) ---
     elif event["type"] == "customer.subscription.deleted":
         subscription = event["data"]["object"]
-        metadata = subscription.get("metadata", {})
-        user_id = metadata.get("user_id")
         customer = subscription.get("customer")
-        event_id = event.get("id")
-        created = event.get("created")
-
+        user_id = (subscription.get("metadata") or {}).get("user_id")
+        
+        if not user_id and customer:
+            user_id = db.getUsernameByStripeCustomerId(customer)
 
         if user_id:
             print(f"Subscription deleted for user: {user_id}")
-            # Log the cancellation
-            db.addStripeEvent(user_id, customer, "cancelled", event_id, created)
-            # Revert the user's class (e.g. to empty/basic)
+            db.addStripeEvent(user_id, customer, "cancelled", event["id"], event["created"])
             db.updateUserClass(user_id, "")
 
             # TODO later cleanup routines

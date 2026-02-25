@@ -17,6 +17,8 @@ const StripePricingTable = ({ userEmail, userId }) => {
         };
     }, []);
 
+    const returnUrl = `${window.location.origin}/basic/return?session_id={CHECKOUT_SESSION_ID}`;
+
     return (
         <div className="stripe-pricing-table-container">
             <stripe-pricing-table
@@ -24,6 +26,7 @@ const StripePricingTable = ({ userEmail, userId }) => {
                 publishable-key="pk_test_51T3cGfL8Y0JfbCB1IGvFR59EjCXSO89qjUKqqRATyS7e4Sm0dCBaO0rlNo1gN6kzQ1XffSNVuwJWXTCC8rtrtcJQ00qpo9ksPd"
                 customer-email={userEmail}
                 client-reference-id={userId}
+                return-url={returnUrl}
             ></stripe-pricing-table>
         </div>
     );
