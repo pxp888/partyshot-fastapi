@@ -168,7 +168,9 @@ def protected(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
 
     current_user = Authorize.get_jwt_subject()
-    return {"user": current_user}
+
+    user_info = db.getUser(current_user)
+    return {"user_info": user_info}
 
 
 @app.post("/api/generate-wssecret")
@@ -536,7 +538,6 @@ async def getUsage(websocket, data, username):
 async def getUserInfo(websocket, data, username):
     user = db.getUser(username)
     if user:
-        # Don't send sensitive info
         info = {
             "username": user["username"],
             "email": user["email"],

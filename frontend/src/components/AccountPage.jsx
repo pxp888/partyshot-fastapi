@@ -107,10 +107,10 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
             <div className="account-card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                     <h2 style={{ margin: 0 }}>Account Settings</h2>
-                    {userInfo?.class !== "" && <ManageBilling />}
                 </div>
                 <div className="current-user-info">
-                    Current User: <strong>{currentUser}</strong>
+                    {userInfo?.class && <p>Current Plan: <strong>{userInfo.class}</strong></p>}
+                    {userInfo?.class !== "" && <ManageBilling />}
                 </div>
 
                 {usage && (

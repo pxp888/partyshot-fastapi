@@ -97,8 +97,7 @@ async def stripe_webhook(request: Request):
         # Invalid signature
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # TODO: dump event to db
-    # db.dumpStripeEvent(event["id"], event) 
+    db.dumpStripeEvent(event["id"], event) 
     
     print('STRIPE EVENT TYPE: ', event["type"])
 

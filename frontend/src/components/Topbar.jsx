@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { sendJson, receiveJson } from "./helpers";
-// import { useSocket } from "./WebSocketContext"; // ← NEW
-// import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 import Searchbar from "./Searchbar";
 import "./style/Topbar.css";
@@ -11,16 +10,19 @@ import "./style/Topbar.css";
 function Topbar({ currentUser, setCurrentUser }) {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  // const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← websocket
-  // const navigate = useNavigate();
+  const [userInfo, setUserInfo] = useState(null);
+  const [userClass, setUserClass] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("topbar protect test");
     receiveJson("/api/protected")
       .then((data) => {
         console.log("Logged in:", data);
-        if (data.user) {
-          setCurrentUser(data.user);
+        if (data.user_info) {
+          setCurrentUser(data.user_info.username);
+          setUserInfo(data.user_info);
+          setUserClass(data.user_info.class);
         }
       })
       .catch((err) => {
@@ -99,6 +101,10 @@ function Topbar({ currentUser, setCurrentUser }) {
         <Searchbar className="search" />
         {currentUser ? (
           <div className="userInfo">
+
+            <Link to="/plans" className="plans-link">
+              Plans
+            </Link>
             <button
               className="btn"
               onClick={() => (window.location.href = `/user/${currentUser}`)}
@@ -117,6 +123,9 @@ function Topbar({ currentUser, setCurrentUser }) {
           </div>
         ) : (
           <div className="nav">
+            <Link to="/plans" className="plans-link">
+              Plans
+            </Link>
             <button className="btn" onClick={() => setShowLogin(true)}>
               Login
             </button>
