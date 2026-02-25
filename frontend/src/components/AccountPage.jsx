@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useSocket } from "./WebSocketContext";
 import "./style/AccountPage.css";
+import ManageBilling from "./stripe/ManageBilling";
 
 const AccountPage = ({ currentUser, setCurrentUser }) => {
     const { sendJsonMessage, lastJsonMessage } = useSocket();
+    const [userInfo, setUserInfo] = useState(null);
     const [formData, setFormData] = useState({
         newusername: "",
         email: "",
@@ -19,6 +21,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
         if (currentUser) {
             sendJsonMessage({ action: "getEmail" });
             sendJsonMessage({ action: "getUsage" });
+            sendJsonMessage({ action: "getUserInfo" });
         }
     }, [currentUser, sendJsonMessage]);
 
@@ -56,6 +59,8 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                 setEmailPlaceholder(lastJsonMessage.payload || "No email set");
             } else if (lastJsonMessage.action === "getUsage") {
                 setUsage(lastJsonMessage.payload);
+            } else if (lastJsonMessage.action === "getUserInfo") {
+                setUserInfo(lastJsonMessage.payload);
             }
         }
     }, [lastJsonMessage, currentUser, setCurrentUser, sendJsonMessage]);
@@ -100,7 +105,10 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     return (
         <div className="account-container">
             <div className="account-card">
-                <h2>Account Settings</h2>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                    <h2 style={{ margin: 0 }}>Account Settings</h2>
+                    {userInfo?.class !== "" && <ManageBilling />}
+                </div>
                 <div className="current-user-info">
                     Current User: <strong>{currentUser}</strong>
                 </div>

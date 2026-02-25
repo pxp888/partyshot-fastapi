@@ -533,6 +533,19 @@ async def getUsage(websocket, data, username):
     await websocket.send_json(message)
 
 
+async def getUserInfo(websocket, data, username):
+    user = db.getUser(username)
+    if user:
+        # Don't send sensitive info
+        info = {
+            "username": user["username"],
+            "email": user["email"],
+            "class": user["class"],
+        }
+        message = {"action": "getUserInfo", "payload": info}
+        await websocket.send_json(message)
+
+
 async def subscribe(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
     ok = db.subscribe(username, albumcode)
@@ -593,6 +606,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await getEmail(websocket, payload, username)
                 elif action == "getUsage":
                     await getUsage(websocket, payload, username)
+                elif action == "getUserInfo":
+                    await getUserInfo(websocket, payload, username)
                 elif action == "subscribe":
                     await subscribe(websocket, payload, username)
                 elif action == "unsubscribe":

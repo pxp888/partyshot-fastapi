@@ -19,19 +19,22 @@ async def create_checkout_session(request: Request, Authorize: AuthJWT = Depends
         Authorize.jwt_required()
         current_user = Authorize.get_jwt_subject()
 
+        # 1. Check if we already have a Stripe Customer ID for this user
+        stripe_customer_id = db.getStripeCustomerId(current_user)
+
         base_url = str(request.base_url).rstrip("/")
         return_url = f"{base_url}/basic/return?session_id={{CHECKOUT_SESSION_ID}}"
 
-        session = stripe.checkout.Session.create(
-            client_reference_id=current_user,
-            # Fix: Use strings for keys and colons for dictionary mapping
-            subscription_data={
+        # 2. Build session arguments
+        session_args = {
+            "client_reference_id": current_user,
+            "subscription_data": {
                 "metadata": {
                     "user_id": current_user,
                     "plan_type": "basic"
                 },
             },
-            line_items=[
+            "line_items": [
                 {
                     "price_data": {
                         "currency": "eur",
@@ -42,10 +45,21 @@ async def create_checkout_session(request: Request, Authorize: AuthJWT = Depends
                     "quantity": 1,
                 }
             ],
-            mode="subscription",
-            ui_mode="embedded",
-            return_url=return_url,
-        )
+            "mode": "subscription",
+            "ui_mode": "embedded",
+            "return_url": return_url,
+        }
+
+        # 3. If the customer exists, attach their ID to the session
+        if stripe_customer_id:
+            session_args["customer"] = stripe_customer_id
+        else:
+            # Pre-fill email for new customers
+            email = db.getEmail(current_user)
+            if email:
+                session_args["customer_email"] = email
+
+        session = stripe.checkout.Session.create(**session_args)
         return {"clientSecret": session.client_secret}
     except Exception as e:
         # It is helpful to print the error to your server logs for debugging
@@ -83,20 +97,11 @@ async def stripe_webhook(request: Request):
         # Invalid signature
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # Handle the event
+    # TODO: dump event to db
+    # db.dumpStripeEvent(event["id"], event) 
     
+    print('STRIPE EVENT TYPE: ', event["type"])
 
-    # if event["type"] == "checkout.session.completed":
-    #     session = event["data"]["object"]
-        
-    #     # Fulfill the purchase...
-    #     user_username = session.get("client_reference_id")
-    #     if user_username:
-    #         # Update the user's class in the database
-    #         # db.setUserData(user_username, user_class="premium")
-    #         print(f"User {user_username} upgraded to premium!")
-
-    # return {"status": "success"}
 
     if event["type"] == "invoice.paid":
         invoice = event["data"]["object"]
@@ -124,11 +129,53 @@ async def stripe_webhook(request: Request):
             # Log the event to the database with the Stripe timestamp
             db.addStripeEvent(user_id, customer, class_type, event_id, invoice_created)
             
-            # Update the user's class to premium
-            db.setUserData(user_id, user_class="premium")
+            # Update the user's class (e.g. to premium)
+            db.updateUserClass(user_id, class_type)
 
+
+    elif event["type"] == "customer.subscription.deleted":
+        subscription = event["data"]["object"]
+        metadata = subscription.get("metadata", {})
+        user_id = metadata.get("user_id")
+        customer = subscription.get("customer")
+        event_id = event.get("id")
+        created = event.get("created")
+
+
+        if user_id:
+            print(f"Subscription deleted for user: {user_id}")
+            # Log the cancellation
+            db.addStripeEvent(user_id, customer, "cancelled", event_id, created)
+            # Revert the user's class (e.g. to empty/basic)
+            db.updateUserClass(user_id, "")
+
+            # TODO later cleanup routines
 
     return {"status": "success"}
+
+
+@router.post("/create-portal-session")
+async def create_portal_session(request: Request, Authorize: AuthJWT = Depends()):
+    try:
+        Authorize.jwt_required()
+        current_user = Authorize.get_jwt_subject()
+        
+        stripe_customer_id = db.getStripeCustomerId(current_user)
+        if not stripe_customer_id:
+            raise HTTPException(status_code=400, detail="Stripe customer not found")
+
+        base_url = str(request.base_url).rstrip("/")
+        # Return to the user settings or profile page
+        return_url = f"{base_url}/user/{current_user}" 
+
+        session = stripe.billing_portal.Session.create(
+            customer=stripe_customer_id,
+            return_url=return_url,
+        )
+        return {"url": session.url}
+    except Exception as e:
+        print(f"Stripe Portal Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 

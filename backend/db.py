@@ -143,6 +143,13 @@ def init_db() -> None:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
+                CREATE TABLE IF NOT EXISTS stripedump (
+                    id SERIAL PRIMARY KEY,
+                    event_id TEXT UNIQUE,
+                    data JSONB,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
                 -- Add columns if they don't exist (primitive migration)
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS size INTEGER;
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
@@ -896,7 +903,7 @@ def setUserData(
     """Update user information (username, email, password, or class) conditionally."""
     user = getUser(username)
     if not user:
-        return False
+        return "error"
 
     update_fields = []
     params = []
@@ -1250,4 +1257,47 @@ def addStripeEvent(username: str, customer: str, plan: str, event_id: str, times
             except Exception as e:
                 conn.rollback()
                 logging.error("Error adding stripe event: %s", e)
+                return False
+
+
+def getStripeCustomerId(username: str) -> str | None:
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            # Get the most recent customer ID from stripe1 events for this user
+            cursor.execute("SELECT customer FROM stripe1 WHERE username = %s ORDER BY created_at DESC LIMIT 1", (username,))
+            row = cursor.fetchone()
+            return row[0] if row else None
+
+
+def updateUserClass(username: str, user_class: str):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute("UPDATE users SET class = %s WHERE username = %s", (user_class, username))
+                conn.commit()
+                return True
+            except Exception as e:
+                conn.rollback()
+                logging.error("Error updating user class: %s", e)
+                return False
+
+
+def dumpStripeEvent(event_id: str, data: dict):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                import json
+                cursor.execute(
+                    """
+                    INSERT INTO stripedump (event_id, data)
+                    VALUES (%s, %s)
+                    ON CONFLICT (event_id) DO NOTHING;
+                    """,
+                    (event_id, json.dumps(data)),
+                )
+                conn.commit()
+                return True
+            except Exception as e:
+                conn.rollback()
+                logging.error("Error dumping stripe event: %s", e)
                 return False
