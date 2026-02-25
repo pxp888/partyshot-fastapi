@@ -1,0 +1,12 @@
+.stripe-pricing-table-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* Ensure the table is visible and has room */
+stripe-pricing-table {
+    display: block;
+    min-height: 800px;
+}

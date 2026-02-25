@@ -113,7 +113,7 @@ function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
   });
 }
 
-const Uploader = forwardRef(({ album }, ref) => {
+const Uploader = forwardRef(({ album, disabled }, ref) => {
   const { albumcode } = useParams();
   const [totalFiles, setTotalFiles] = useState(0);
   const [completedFiles, setCompletedFiles] = useState(0);
@@ -297,7 +297,7 @@ const Uploader = forwardRef(({ album }, ref) => {
       <button
         onClick={() => document.getElementById("hiddenFileInput").click()}
         className="btn"
-        disabled={totalFiles > 0}
+        disabled={disabled || totalFiles > 0}
       >
         {totalFiles > 0 ? "Uploading..." : "Upload Files"}
       </button>

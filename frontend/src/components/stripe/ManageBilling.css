@@ -1,0 +1,39 @@
+.manage-billing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.billing-btn {
+    width: 100%;
+    max-width: 320px;
+    background-color: var(--bright-color, #e57373) !important;
+}
+
+.billing-btn:hover {
+    filter: brightness(1.1);
+}
+
+.billing-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 1rem;
+    border-radius: 12px;
+    color: #991b1b;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.fallback-text {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.fallback-text a {
+    color: var(--bright-color, #e57373);
+    text-decoration: underline;
+    font-weight: 600;
+}

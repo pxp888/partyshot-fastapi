@@ -165,11 +165,12 @@ async def create_portal_session(request: Request, Authorize: AuthJWT = Depends()
             raise HTTPException(status_code=400, detail="Stripe customer not found")
 
         base_url = str(request.base_url).rstrip("/")
-        # Return to the user settings or profile page
-        return_url = f"{base_url}/user/{current_user}" 
+        # Return to the account settings page
+        return_url = f"{base_url}/account" 
 
         session = stripe.billing_portal.Session.create(
             customer=stripe_customer_id,
+            configuration="bpc_1T4dXSL8Y0JfbCB1Q8O6Qvku",
             return_url=return_url,
         )
         return {"url": session.url}

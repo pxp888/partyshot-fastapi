@@ -16,6 +16,7 @@ import "./style/Albumview.css";
 
 function Albumview(currentUser) {
   const { albumcode } = useParams();
+  const userLoggedIn = !!currentUser.currentUser;
   const [album, setAlbum] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [totalPhotos, setTotalPhotos] = useState(0);
@@ -421,19 +422,19 @@ function Albumview(currentUser) {
 
       {selectMode && (
         <div className="albumActions">
-          <button onClick={cancelSelect} className="btn">
+          <button onClick={cancelSelect} className="btn" disabled={!userLoggedIn}>
             Cancel Selection
           </button>
-          <button onClick={selectAll} className="btn">
+          <button onClick={selectAll} className="btn" disabled={!userLoggedIn}>
             Select All
           </button>
-          <button onClick={selectNone} className="btn">
+          <button onClick={selectNone} className="btn" disabled={!userLoggedIn}>
             Select None
           </button>
-          <button onClick={downloadSelected} className="btn">
+          <button onClick={downloadSelected} className="btn" disabled={!userLoggedIn}>
             Download Selected
           </button>
-          <button onClick={deleteSelected} className="btn">
+          <button onClick={deleteSelected} className="btn" disabled={!userLoggedIn}>
             Delete Selected
           </button>
 
@@ -477,12 +478,12 @@ function Albumview(currentUser) {
 
       {!selectMode && (
         <div className="albumActions">
-          <button onClick={() => setSelectMode(true)} className="btn">
+          <button onClick={() => setSelectMode(true)} className="btn" disabled={!userLoggedIn}>
             Selection Mode
           </button>
-          <Uploader album={album} ref={uploaderRef} />
+          <Uploader album={album} ref={uploaderRef} disabled={!userLoggedIn} />
 
-          <button onClick={downloadAll} className="btn">
+          <button onClick={downloadAll} className="btn" disabled={!userLoggedIn}>
             Download All
           </button>
           {album.username === currentUser.currentUser && (
@@ -492,7 +493,7 @@ function Albumview(currentUser) {
           )}
 
           {album.username !== currentUser.currentUser && (
-            <button onClick={toggleSubscription} className="btn">
+            <button onClick={toggleSubscription} className="btn" disabled={!userLoggedIn}>
               {album.subscribed ? "Unsubscribe" : "Subscribe"}
             </button>
           )}

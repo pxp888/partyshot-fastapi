@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { receiveJson } from "./helpers";
+import StripePricingTable from "./stripe/StripePricingTable";
 import "./style/Plans.css";
 
 function Plans() {
@@ -44,99 +45,10 @@ function Plans() {
       {/* Pricing Table Section */}
       <section className="pricing-section">
         <div className="pricing-container">
-          <div className="comparison-table">
-            <div className="labels-column">
-              <div className="cell label-cell cell-header">Plan</div>
-              <div className="cell label-cell">Storage</div>
-              <div className="cell label-cell">Monthly Cost</div>
-              <div className="cell label-cell cell-footer"></div>
-            </div>
-
-            <div className="plans-scroll-area">
-              <div className="plan-column">
-                <div className="cell data-cell cell-header">
-                  <span className="plan-name">Free</span>
-                </div>
-                <div className="cell data-cell">500 MB</div>
-                <div className="cell data-cell">
-                  <span className="plan-price">Free</span>
-                </div>
-                <div className="cell data-cell cell-footer">
-                  {userInfo ? (
-                    <Link to="/" className="subscribe-button secondary">
-                      Get Started
-                    </Link>
-                  ) : (
-                    <span className="login-prompt">
-                      Login or register to get started
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="plan-column">
-                <div className="cell data-cell cell-header">
-                  <span className="plan-name">Starter</span>
-                </div>
-                <div className="cell data-cell">5 GB</div>
-                <div className="cell data-cell">
-                  <span className="plan-price">€4.99</span>
-                </div>
-                <div className="cell data-cell cell-footer">
-                  {userInfo ? (
-                    <button className="subscribe-button">Subscribe</button>
-                  ) : (
-                    <span className="login-prompt">
-                      Login or register to get started
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="plan-column">
-                <div className="cell data-cell cell-header">
-                  <span className="plan-name">Basic</span>
-                </div>
-                <div className="cell data-cell">20 GB</div>
-                <div className="cell data-cell">
-                  <span className="plan-price">€9.99</span>
-                </div>
-                <div className="cell data-cell cell-footer">
-                  {userInfo ? (
-                    <button
-                      className="subscribe-button"
-                      onClick={() => navigate("/basic")}
-                    >
-                      Subscribe
-                    </button>
-                  ) : (
-                    <span className="login-prompt">
-                      Login or register to get started
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="plan-column">
-                <div className="cell data-cell cell-header">
-                  <span className="plan-name">Pro</span>
-                </div>
-                <div className="cell data-cell">100 GB</div>
-                <div className="cell data-cell">
-                  <span className="plan-price">€19.99</span>
-                </div>
-                <div className="cell data-cell cell-footer">
-                  {userInfo ? (
-                    <button className="subscribe-button">Subscribe</button>
-                  ) : (
-                    <span className="login-prompt">
-                      Login or register to get started
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <StripePricingTable
+            userEmail={userInfo?.email}
+            userId={userInfo?.username}
+          />
         </div>
       </section>
 

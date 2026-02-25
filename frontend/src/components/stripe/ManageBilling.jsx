@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./ManageBilling.css";
 
 const ManageBilling = () => {
     const [loading, setLoading] = useState(false);
@@ -8,7 +9,7 @@ const ManageBilling = () => {
         setLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem("access_token"); // Assuming token is stored in localStorage
+            const token = localStorage.getItem("access_token");
             const response = await fetch("/api/create-portal-session", {
                 method: "POST",
                 headers: {
@@ -22,6 +23,7 @@ const ManageBilling = () => {
             }
 
             const { url } = await response.json();
+            // This URL is a direct session, no login required for the user
             window.location.href = url;
         } catch (err) {
             console.error("Error redirecting to billing portal:", err);
@@ -36,22 +38,18 @@ const ManageBilling = () => {
             <button
                 onClick={handleManageBilling}
                 disabled={loading}
-                className="manage-billing-button"
-                style={{
-                    padding: "10px 20px",
-                    backgroundColor: "#6772e5",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    fontWeight: "600",
-                    transition: "background-color 0.2s"
-                }}
+                className="account-btn billing-btn"
             >
-                {loading ? "Loading..." : "Manage Billing"}
+                {loading ? "Loading..." : "Manage Billing & Subscription"}
             </button>
-            {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+            {error && (
+                <div className="billing-error">
+                    <p>{error}</p>
+                    <p className="fallback-text">
+                        Try the <a href="https://billing.stripe.com/p/login/test_28E3cw7ZMaQu1PtdWr8Zq00" target="_blank" rel="noreferrer">Direct Portal Login</a> instead.
+                    </p>
+                </div>
+            )}
         </div>
     );
 };
