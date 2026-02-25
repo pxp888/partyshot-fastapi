@@ -9,7 +9,7 @@ const ManageBilling = () => {
         setError(null);
         try {
             const token = localStorage.getItem("access_token"); // Assuming token is stored in localStorage
-            const response = await fetch("/api/stripe/create-portal-session", {
+            const response = await fetch("/api/create-portal-session", {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,

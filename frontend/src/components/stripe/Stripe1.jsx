@@ -14,7 +14,7 @@ const stripePromise = loadStripe("pk_test_51T3cGfL8Y0JfbCB1IGvFR59EjCXSO89qjUKqq
 const Stripe1 = () => {
   const fetchClientSecret = useCallback(() => {
     // Create a Checkout Session using the auth helper
-    return sendJson("/api/stripe/create-checkout-session", {})
+    return sendJson("/api/create-checkout-session", {})
       .then((data) => data.clientSecret);
   }, []);
 
