@@ -1,0 +1,160 @@
+.pay-basic-page {
+    background-color: var(--form-color, #e5e5ea);
+    min-height: 90vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    font-family: "Inter", -apple-system, sans-serif;
+}
+
+.pay-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    max-width: 1000px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.pay-info {
+    padding: 60px;
+    background: rgba(255, 255, 255, 0.3);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.pay-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+    color: var(--plans-text, #1c1c1e);
+}
+
+.pay-title .accent-text {
+    color: var(--plans-accent, #ff7f50);
+}
+
+.pay-subtitle {
+    font-size: 1.1rem;
+    color: #8e8e93;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 40px;
+}
+
+.current-plan-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    margin-bottom: 24px;
+}
+
+.plan-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #8e8e93;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.plan-main-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f2f2f7;
+}
+
+.plan-main-info .plan-name {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.plan-main-info .plan-price {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--plans-accent, #ff7f50);
+}
+
+.plan-main-info .plan-price small {
+    font-size: 0.9rem;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.plan-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.plan-features-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 1rem;
+    color: #48484a;
+}
+
+.plan-features-list .icon {
+    color: #34c759;
+    font-weight: 800;
+}
+
+.trusted-badge {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.pay-form-wrapper {
+    background: white;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.form-inner {
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .pay-container {
+        grid-template-columns: 1fr;
+    }
+
+    .pay-info {
+        padding: 40px;
+        border-right: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .pay-form-wrapper {
+        padding: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pay-title {
+        font-size: 2rem;
+    }
+
+    .pay-info,
+    .pay-form-wrapper {
+        padding: 30px 20px;
+    }
+}

@@ -21,3 +21,18 @@ DB_PORT = "5433"  # ← your database port
 
 REDIS_URL = "redis://192.168.0.225:6379"  # for connection manager, watcher.py
 REDIS_URL2 = "192.168.0.225"  # for arq
+
+
+
+CLOUDFRONT_DOMAIN = "aosenthaoeusnth"
+CLOUDFRONT_KEY_ID = """aosenuthaoeusnth"""
+
+CLOUDFRONT_PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
+aosenuthaoeunth-----END PRIVATE KEY-----"""
+
+LOCALDEV = "True"
+
+
+STRIPE_PUB_KEY = "pk_test_aoenuthoeu"
+STRIPE_SECRET_KEY = "sk_test_aoenuthoeu"
+STRIPE_WEBHOOK_SECRET = "whsec_aoenuthoeu"

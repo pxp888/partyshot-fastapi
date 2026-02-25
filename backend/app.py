@@ -5,7 +5,7 @@ import time
 import uuid
 
 logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.WARNING, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 import aws
@@ -621,6 +621,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+
+
+import stripe_endpoint
+app.include_router(stripe_endpoint.router)
 
 
 @app.get("/{full_path:path}")

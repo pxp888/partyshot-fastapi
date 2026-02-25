@@ -1,3 +1,4 @@
+import stripe_endpoint
 import uvicorn
 from app import app
 

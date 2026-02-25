@@ -12,10 +12,10 @@ import { WebSocketProvider } from "./components/WebSocketContext";
 
 import AccountPage from "./components/AccountPage";
 import Howitworks from "./components/Howitworks";
+import PayBasic from "./components/stripe/PayBasic";
+import BackBasic from "./components/stripe/BackBasic";
 
-function About() {
-  return <h2>About this app</h2>;
-}
+
 
 function NotFound() {
   return <h2>Page not found (client‑side)</h2>;
@@ -33,6 +33,9 @@ export default function App() {
           <Route path="/" element={<Howitworks />} />
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/plans" element={<Plans />} />
+          <Route path="/basic" element={<PayBasic />} />
+          <Route path="/basic/return" element={<BackBasic />} />
+
           <Route
             path="/user/:username"
             element={<Userview currentUser={currentUser} />}
