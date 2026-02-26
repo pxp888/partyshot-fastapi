@@ -45,9 +45,6 @@ const ManageBilling = () => {
             {error && (
                 <div className="billing-error">
                     <p>{error}</p>
-                    <p className="fallback-text">
-                        Try the <a href="https://billing.stripe.com/p/login/test_28E3cw7ZMaQu1PtdWr8Zq00" target="_blank" rel="noreferrer">Direct Portal Login</a> instead.
-                    </p>
                 </div>
             )}
         </div>
