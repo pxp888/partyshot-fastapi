@@ -160,22 +160,28 @@ function Albumview(currentUser) {
         }
         break;
 
+      case "toggleOpen":
+        if (payload && payload.code === albumcode) {
+          setAlbum((prev) => ({ ...prev, ...payload }));
+        }
+        break;
+
       case "togglePublic":
         if (payload && payload.code === albumcode) {
-          setAlbum((prev) => ({ ...prev, public: payload.public }));
+          setAlbum((prev) => ({ ...prev, ...payload }));
         }
         break;
 
       case "togglePrivate":
         if (payload && payload.code === albumcode) {
-          setAlbum((prev) => ({ ...prev, private: payload.private }));
+          setAlbum((prev) => ({ ...prev, ...payload }));
         }
         break;
 
       default:
         break;
     }
-  }, [lastJsonMessage, currentUser]);
+  }, [lastJsonMessage, currentUser, albumcode]);
 
   async function handleDeleteAlbum() {
     if (!window.confirm("Are you sure you want to delete this album?")) {
@@ -311,37 +317,55 @@ function Albumview(currentUser) {
   }
 
   async function toggleOpen() {
+    // Optimistic update
+    setAlbum((prev) => ({ ...prev, open: !prev.open }));
     try {
-      await sendJson("/api/toggleOpen", { album_id: album.id });
+      const updatedAlbum = await sendJson("/api/toggleOpen", {
+        album_id: album.id,
+      });
       setAlbum((prev) => ({
         ...prev,
-        open: !prev.open,
+        ...updatedAlbum,
       }));
     } catch (error) {
+      // Revert if error
+      setAlbum((prev) => ({ ...prev, open: !prev.open }));
       console.error("Toggle lock failed : ", error);
     }
   }
 
   async function togglePublic() {
+    // Optimistic update
+    setAlbum((prev) => ({ ...prev, public: !prev.public }));
     try {
-      await sendJson("/api/togglePublic", { album_id: album.id });
+      const updatedAlbum = await sendJson("/api/togglePublic", {
+        album_id: album.id,
+      });
       setAlbum((prev) => ({
         ...prev,
-        public: !prev.public,
+        ...updatedAlbum,
       }));
     } catch (error) {
+      // Revert if error
+      setAlbum((prev) => ({ ...prev, public: !prev.public }));
       console.error("Toggle public failed : ", error);
     }
   }
 
   async function togglePrivate() {
+    // Optimistic update
+    setAlbum((prev) => ({ ...prev, private: !prev.private }));
     try {
-      await sendJson("/api/togglePrivate", { album_id: album.id });
+      const updatedAlbum = await sendJson("/api/togglePrivate", {
+        album_id: album.id,
+      });
       setAlbum((prev) => ({
         ...prev,
-        private: !prev.private,
+        ...updatedAlbum,
       }));
     } catch (error) {
+      // Revert if error
+      setAlbum((prev) => ({ ...prev, private: !prev.private }));
       console.error("Toggle private failed : ", error);
     }
   }
