@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { receiveJson } from "./helpers";
 import StripePricingTable from "./stripe/StripePricingTable";
+import ManageBilling from "./stripe/ManageBilling";
 import "./style/Plans.css";
 
 function Plans() {
@@ -42,7 +43,7 @@ function Plans() {
         </div>
       </section>
 
-      {/* Comparison Table Section */}
+      {/* Comparison Table Section - Always Visible */}
       <section className="comparison-section" style={{ marginBottom: "40px" }}>
         <div className="pricing-container">
           <div className="comparison-table">
@@ -52,7 +53,6 @@ function Plans() {
               <div className="cell label-cell">Max Photos</div>
               <div className="cell label-cell">Collaborative Albums</div>
               <div className="cell label-cell">Price</div>
-              {/* <div className="cell label-cell cell-footer"></div> */}
             </div>
             <div className="plans-scroll-area">
               {[
@@ -106,35 +106,40 @@ function Plans() {
         </div>
       </section>
 
-      {/* Pricing Table Section */}
-      <section className="pricing-section">
-        <div className="pricing-container">
-          {userInfo ? (
-            <StripePricingTable
-              userEmail={userInfo?.email}
-              userId={userInfo?.username}
-            />
-          ) : (
-            <div className="login-required-overlay">
-              <div className="auth-card">
-                <div className="auth-icon">🔒</div>
-                <h3>Authentication Required</h3>
-                <p>Please log in or create an account to view our premium plans and secure your subscription.</p>
-                <div className="auth-actions">
+      {/* Conditional pricing actions based on user status */}
+      {(!userInfo || userInfo?.class?.toLowerCase() === "free") ? (
+        <section className="pricing-section">
+          <div className="pricing-container">
+            {userInfo ? (
+              <StripePricingTable
+                userEmail={userInfo?.email}
+                userId={userInfo?.username}
+              />
+            ) : (
+              <div className="login-required-overlay">
+                <div className="auth-card">
                   <Link to="/" className="subscribe-button">
-                    Get Started / Login
+                    Log in or Register to get started
                   </Link>
                 </div>
-                <p className="auth-note">It only takes 30 seconds to set up your account.</p>
               </div>
+            )}
+          </div>
+        </section>
+      ) : (
+        <section className="pricing-section">
+          <div className="pricing-container" style={{ textAlign: "center", padding: "40px" }}>
+            <div className="auth-card">
+              <h3>Subscription Active</h3>
+              <p>You are currently on the <strong>{userInfo.class}</strong> plan. You can manage your subscription and billing details below.</p>
+              <ManageBilling />
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       <footer className="welcome-footer">
         <nav className="footer-nav">
-          <Link to="/how-it-works">How It Works</Link>
           <Link to="/contact">Contact</Link>
           <a
             href="https://github.com/pxp888/partyshot-fastapi"
