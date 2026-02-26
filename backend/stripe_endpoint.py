@@ -139,6 +139,12 @@ async def stripe_webhook(request: Request):
         db.updateUserPlan(customer_id, "free", event["id"])
         
 
+    # elif event["type"] == "customer.subscription.updated":
+    #     customer_id = event["data"]["object"]["customer"]
+    #     cancelled_at = event["data"]["object"]["cancelled_at"]
+    #     if cancelled_at:
+    #         db.updateUserPlan(customer_id, "free", event["id"])
+
 
 @router.post("/create-portal-session")
 async def create_portal_session(request: Request, Authorize: AuthJWT = Depends()):
