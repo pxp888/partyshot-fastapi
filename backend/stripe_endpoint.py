@@ -147,6 +147,38 @@ async def stripe_webhook(request: Request):
     #         db.updateUserPlan(customer_id, "free", event["id"])
 
 
+@router.post("/create-customer-session")
+async def create_customer_session(Authorize: AuthJWT = Depends()):
+    try:
+        Authorize.jwt_required()
+        current_user = Authorize.get_jwt_subject()
+        
+        # 1. Check for existing Stripe customer ID
+        stripe_customer_id = db.getStripeCustomerId(current_user)
+        
+        # 2. If no customer ID exists, create one and update the database
+        if not stripe_customer_id:
+            email = db.getEmail(current_user)
+            customer = stripe.Customer.create(
+                email=email,
+                metadata={"user_id": current_user, "username": current_user}
+            )
+            stripe_customer_id = customer.id
+            db.updateUserStripeCustomerId(current_user, stripe_customer_id)
+            print(f"Created new Stripe customer {stripe_customer_id} for user {current_user}")
+
+        # 3. Create a Customer Session for the pricing table
+        session = stripe.CustomerSession.create(
+            customer=stripe_customer_id,
+            components={"pricing_table": {"enabled": True}}
+        )
+        
+        return {"client_secret": session.client_secret}
+    except Exception as e:
+        print(f"Stripe Customer Session Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("/create-portal-session")
 async def create_portal_session(request: Request, Authorize: AuthJWT = Depends()):
     try:
