@@ -12,6 +12,7 @@ import env
 import psycopg2
 from arq.connections import RedisSettings
 from psycopg2.pool import ThreadedConnectionPool
+import json
 
 # --------------------------------------------------------------------------- #
 # Database connection helpers
@@ -97,8 +98,9 @@ def init_db() -> None:
                     email TEXT,
                     passhash TEXT NOT NULL,
                     salt TEXT NOT NULL,
-                    class TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    class TEXT DEFAULT 'free',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    stripe_customer_id TEXT
                 );
 
                 CREATE TABLE IF NOT EXISTS albums (
@@ -135,9 +137,7 @@ def init_db() -> None:
 
                 CREATE TABLE IF NOT EXISTS stripe1 (
                     id SERIAL PRIMARY KEY,
-                    user_id INTEGER,
-                    username TEXT,
-                    customer TEXT,
+                    customer_id TEXT,
                     plan TEXT,
                     event_id TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -145,6 +145,7 @@ def init_db() -> None:
 
                 CREATE TABLE IF NOT EXISTS stripedump (
                     id SERIAL PRIMARY KEY,
+                    customer_id TEXT,
                     event_id TEXT UNIQUE,
                     data JSONB,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -155,7 +156,9 @@ def init_db() -> None:
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS mid_key TEXT;
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS mid_size INTEGER;
-                ALTER TABLE users ADD COLUMN IF NOT EXISTS class TEXT;
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS class TEXT DEFAULT 'free';
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+                UPDATE users SET class = 'free' WHERE class IS NULL;
                 """
             )
             conn.commit()
@@ -164,7 +167,6 @@ def init_db() -> None:
 
     # create admin user if it doesn't exist
     if getUser(env.ADMIN_USERNAME) is None:
-        logging.info("Creating admin user: %s", env.ADMIN_USERNAME)
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD, "admin")
     setUserData(env.ADMIN_USERNAME, user_class="admin")
 
@@ -174,7 +176,7 @@ def init_db() -> None:
 # --------------------------------------------------------------------------- #
 
 
-def setUser(username: str, email: str, password: str, user_class: str = None) -> None:
+def setUser(username: str, email: str, password: str, user_class: str = "free") -> None:
     """Insert a new user into the database."""
     salt = random.randbytes(16).hex()
     passhash = hashlib.sha256((password + salt).encode()).hexdigest()
@@ -1236,86 +1238,101 @@ def uncountedPhotos() -> list:
             return cursor.fetchall()
 
 
-
-
-
-
-
-
-
-
-
-def addStripeEvent(username: str, customer: str, plan: str, event_id: str, timestamp: int = None):
-    user = getUser(username)
-    user_id = user["id"] if user else None
-    
-    event_time = datetime.datetime.fromtimestamp(timestamp) if timestamp else datetime.datetime.now()
-
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            try:
-                cursor.execute(
-                    """
-                    INSERT INTO stripe1 (user_id, username, customer, plan, event_id, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s);
-                    """,
-                    (user_id, username, customer, plan, event_id, event_time),
-                )
-                conn.commit()
-                return True
-            except Exception as e:
-                conn.rollback()
-                logging.error("Error adding stripe event: %s", e)
-                return False
+# --------------------------------------------------------------------------- #
+# Stripe helpers
+# --------------------------------------------------------------------------- #
 
 
 def getStripeCustomerId(username: str) -> str | None:
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            # Get the most recent customer ID from stripe1 events for this user
-            cursor.execute("SELECT customer FROM stripe1 WHERE username = %s ORDER BY created_at DESC LIMIT 1", (username,))
-            row = cursor.fetchone()
-            return row[0] if row else None
-
-
-def getUsernameByStripeCustomerId(customer: str) -> str | None:
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            # Get the most recent username for this customer ID
-            cursor.execute("SELECT username FROM stripe1 WHERE customer = %s ORDER BY created_at DESC LIMIT 1", (customer,))
-            row = cursor.fetchone()
-            return row[0] if row else None
-
-
-def updateUserClass(username: str, user_class: str):
+    """Retrieve the Stripe customer ID for a given username."""
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                cursor.execute("UPDATE users SET class = %s WHERE username = %s", (user_class, username))
-                conn.commit()
-                return True
+                cursor.execute(
+                    "SELECT stripe_customer_id FROM users WHERE username = %s",
+                    (username,),
+                )
+                row = cursor.fetchone()
+                return row[0] if row else None
             except Exception as e:
-                conn.rollback()
-                logging.error("Error updating user class: %s", e)
-                return False
+                logging.error("Error getting stripe customer id for %s: %s", username, e)
+                return None
 
 
-def dumpStripeEvent(event_id: str, data: dict):
+def updateUserStripeCustomerId(username: str, customer_id: str) -> None:
+    """Update the Stripe customer ID for a given username."""
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                import json
                 cursor.execute(
                     """
-                    INSERT INTO stripedump (event_id, data)
-                    VALUES (%s, %s)
-                    ON CONFLICT (event_id) DO NOTHING;
+                    UPDATE users
+                    SET stripe_customer_id = %s
+                    WHERE username = %s;
                     """,
-                    (event_id, json.dumps(data)),
+                    (customer_id, username),
                 )
                 conn.commit()
-                return True
             except Exception as e:
+                logging.error(
+                    "Error updating stripe customer id for %s: %s", username, e
+                )
                 conn.rollback()
-                logging.error("Error dumping stripe event: %s", e)
-                return False
+
+
+def updateUserPlan(customer_id: str, plan: str, event_id: str = None) -> None:
+    """Update the user's plan (class) based on their Stripe customer ID and log the event."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                # Update users table (the 'class' column represents the plan level)
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET class = %s
+                    WHERE stripe_customer_id = %s;
+                    """,
+                    (plan, customer_id),
+                )
+
+                # Log to stripe1 table for transaction/plan history
+                cursor.execute(
+                    """
+                    INSERT INTO stripe1 (customer_id, plan, event_id)
+                    VALUES (%s, %s, %s);
+                    """,
+                    (customer_id, plan, event_id),
+                )
+                conn.commit()
+            except Exception as e:
+                logging.error("Error updating plan for customer %s: %s", customer_id, e)
+                conn.rollback()
+
+
+def dumpStripeEvent(event_id: str, event: dict) -> None:
+    """Store the raw Stripe event data in the stripedump table."""
+    customer_id = event.get("data", {}).get("object", {}).get("customer")
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO stripedump (event_id, customer_id, data)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (event_id) DO NOTHING;
+                    """,
+                    (event_id, customer_id, json.dumps(event)),
+                )
+                conn.commit()
+            except Exception as e:
+                logging.error("Error dumping stripe event %s: %s", event_id, e)
+                conn.rollback()
+
+
+
+
+
+
+
+
+

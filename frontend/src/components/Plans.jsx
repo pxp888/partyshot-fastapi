@@ -51,6 +51,7 @@ function Plans() {
               <div className="cell label-cell">Total Storage</div>
               <div className="cell label-cell">Max Photos</div>
               <div className="cell label-cell">Collaborative Albums</div>
+              <div className="cell label-cell">Price</div>
               {/* <div className="cell label-cell cell-footer"></div> */}
             </div>
             <div className="plans-scroll-area">
@@ -60,28 +61,28 @@ function Plans() {
                   storage: "1 GB",
                   photos: "200",
                   albums: "3 Albums",
-                  support: "Community",
+                  price: "Free",
                 },
                 {
                   name: "Starter",
                   storage: "10 GB",
                   photos: "2,000",
                   albums: "Unlimited",
-                  support: "Email Support",
+                  price: "50 SEK/mo",
                 },
                 {
                   name: "Basic",
                   storage: "50 GB",
                   photos: "10,000",
                   albums: "Unlimited",
-                  support: "Priority Email",
+                  price: "100 SEK/mo",
                 },
                 {
                   name: "Pro",
                   storage: "250 GB",
                   photos: "50,000",
                   albums: "Unlimited",
-                  support: "24/7 Priority",
+                  price: "200 SEK/mo",
                 },
               ].map((plan, idx) => (
                 <div
@@ -97,6 +98,7 @@ function Plans() {
                   <div className="cell data-cell">{plan.storage}</div>
                   <div className="cell data-cell">{plan.photos}</div>
                   <div className="cell data-cell">{plan.albums}</div>
+                  <div className="cell data-cell">{plan.price}</div>
                 </div>
               ))}
             </div>
