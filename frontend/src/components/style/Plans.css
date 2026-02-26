@@ -89,7 +89,7 @@
 }
 
 .labels-column {
-    flex: 0 0 160px;
+    flex: 0 0 140px;
     background: rgba(242, 242, 247, 0.5);
     border-right: 1px solid var(--border-soft);
     display: flex;
@@ -111,7 +111,7 @@
 
 .plan-column {
     flex: 1;
-    min-width: 180px;
+    min-width: 150px;
     display: flex;
     flex-direction: column;
     border-right: 1px solid var(--border-soft);
@@ -155,11 +155,11 @@
 }
 
 .cell {
-    padding: 24px 15px;
+    padding: 16px 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 80px;
+    min-height: 60px;
     text-align: center;
     border-bottom: 1px solid var(--border-soft);
 }
@@ -167,14 +167,14 @@
 
 .label-cell {
     justify-content: flex-start;
-    padding-left: 20px;
+    padding-left: 15px;
     font-weight: 600;
     color: #636366;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .cell-header {
-    min-height: 120px;
+    min-height: 90px;
     background: rgba(255, 255, 255, 0.2);
 }
 
@@ -210,6 +210,8 @@
 
 /* Subscribe Button */
 .subscribe-button {
+    display: inline-block;
+    box-sizing: border-box;
     width: 100%;
     max-width: 140px;
     padding: 12px 20px;
@@ -275,6 +277,21 @@
         padding: 10px 12px;
         font-size: 0.8rem;
     }
+
+    .login-required-overlay {
+        padding: 40px 15px;
+        min-height: 300px;
+    }
+
+    .auth-card {
+        padding: 40px 20px;
+    }
+
+    .auth-card .subscribe-button {
+        padding: 14px 25px;
+        font-size: 1rem;
+        width: 100%;
+    }
 }
 
 
@@ -312,6 +329,7 @@
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
     max-width: 500px;
     width: 100%;
+    box-sizing: border-box;
     text-align: center;
     border: 1px solid var(--border-soft);
 }

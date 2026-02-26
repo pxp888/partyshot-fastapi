@@ -117,6 +117,16 @@ function Howitworks() {
         </div>
       </section>
 
+      {/* CTA Section */}
+      <section className="hiw-cta">
+        <h2>Start your collection today.</h2>
+        <p>Join thousands of users sharing their best moments on shareShot.</p>
+        <Link to="/plans" className="hiw-button">
+          Check which plan suits you best
+        </Link>
+      </section>
+
+
       {/* General Mechanics Section */}
       <section className="hiw-features">
         <h2>General Mechanics</h2>
@@ -171,14 +181,7 @@ function Howitworks() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="hiw-cta">
-        <h2>Start your collection today.</h2>
-        <p>Join thousands of users sharing their best moments on shareShot.</p>
-        <Link to="/plans" className="hiw-button">
-          Check which plan suits you best
-        </Link>
-      </section>
+
 
       <footer className="welcome-footer">
         <nav className="footer-nav">

@@ -50,8 +50,9 @@ function Plans() {
             <div className="labels-column">
               <div className="cell label-cell cell-header">Plans & Specs</div>
               <div className="cell label-cell">Total Storage</div>
-              <div className="cell label-cell">Max Photos</div>
-              <div className="cell label-cell">Collaborative Albums</div>
+              <div className="cell label-cell">Public Albums</div>
+              <div className="cell label-cell">Hidden Albums</div>
+              <div className="cell label-cell">Private Albums</div>
               <div className="cell label-cell">Price</div>
             </div>
             <div className="plans-scroll-area">
@@ -59,29 +60,33 @@ function Plans() {
                 {
                   name: "Free",
                   storage: "1 GB",
-                  photos: "200",
-                  albums: "3 Albums",
+                  publicAlbums: "Yes",
+                  hiddenAlbums: "Yes",
+                  privateAlbums: "No",
                   price: "Free",
                 },
                 {
                   name: "Starter",
                   storage: "10 GB",
-                  photos: "2,000",
-                  albums: "Unlimited",
+                  publicAlbums: "Yes",
+                  hiddenAlbums: "Yes",
+                  privateAlbums: "Yes",
                   price: "50 SEK/mo",
                 },
                 {
                   name: "Basic",
                   storage: "50 GB",
-                  photos: "10,000",
-                  albums: "Unlimited",
+                  publicAlbums: "Yes",
+                  hiddenAlbums: "Yes",
+                  privateAlbums: "Yes",
                   price: "100 SEK/mo",
                 },
                 {
                   name: "Pro",
                   storage: "250 GB",
-                  photos: "50,000",
-                  albums: "Unlimited",
+                  publicAlbums: "Yes",
+                  hiddenAlbums: "Yes",
+                  privateAlbums: "Yes",
                   price: "200 SEK/mo",
                 },
               ].map((plan, idx) => (
@@ -96,8 +101,9 @@ function Plans() {
                     <div className="plan-name">{plan.name}</div>
                   </div>
                   <div className="cell data-cell">{plan.storage}</div>
-                  <div className="cell data-cell">{plan.photos}</div>
-                  <div className="cell data-cell">{plan.albums}</div>
+                  <div className="cell data-cell">{plan.publicAlbums}</div>
+                  <div className="cell data-cell">{plan.hiddenAlbums}</div>
+                  <div className="cell data-cell">{plan.privateAlbums}</div>
                   <div className="cell data-cell">{plan.price}</div>
                 </div>
               ))}
