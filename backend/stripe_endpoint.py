@@ -116,10 +116,10 @@ async def stripe_webhook(request: Request):
     
 
     if event["type"] == "checkout.session.completed":
-        # associate the stripe customer id with the user
         customer_id = event["data"]["object"]["customer"]
         username = event["data"]["object"]["client_reference_id"]
         db.updateUserStripeCustomerId(username, customer_id)
+        print("WEBHOOK: checkout.session.completed - customer: {customer_id}, username: {username}")
         
     elif event["type"] == "invoice.paid":
         customer_id = event["data"]["object"]["customer"]
@@ -133,6 +133,7 @@ async def stripe_webhook(request: Request):
             raise HTTPException(status_code=400, detail="Invalid product ID")
         
         db.updateUserPlan(customer_id, plan, event["id"])
+        print("WEBHOOK: invoice.paid - customer: {customer_id}, plan: {plan}")
         
     elif event["type"] == "customer.subscription.deleted":
         customer_id = event["data"]["object"]["customer"]
