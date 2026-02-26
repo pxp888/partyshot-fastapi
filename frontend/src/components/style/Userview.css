@@ -5,7 +5,7 @@
     display: grid;
     /* Show 1 column on mobile, grow to 2‑3 columns on larger viewports */
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
+    /* gap: 1rem; */
     margin: 0 2rem;
     padding: 0.5rem 0;
     /* added a little vertical padding */
