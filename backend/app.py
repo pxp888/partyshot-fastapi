@@ -67,6 +67,10 @@ class TogglePublicRequest(BaseModel):
     album_id: int
 
 
+class TogglePrivateRequest(BaseModel):
+    album_id: int
+
+
 @AuthJWT.load_config
 def get_config():
     return Settings()
@@ -359,6 +363,28 @@ async def toggle_public(
         await redis_client.publish(
             f"album-{updated_album['code']}",
             json.dumps({"action": "togglePublic", "payload": updated_album}),
+        )
+    except Exception:
+        pass
+    return updated_album
+
+
+@app.post("/api/togglePrivate")
+async def toggle_private(
+    payload: TogglePrivateRequest,
+    Authorize: AuthJWT = Depends(),
+):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    updated_album = db.togglePrivate(payload.album_id, current_user)
+    if not updated_album:
+        raise HTTPException(
+            status_code=404, detail="Album not found or permission denied"
+        )
+    try:
+        await redis_client.publish(
+            f"album-{updated_album['code']}",
+            json.dumps({"action": "togglePrivate", "payload": updated_album}),
         )
     except Exception:
         pass

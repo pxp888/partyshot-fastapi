@@ -12,7 +12,7 @@ function AlbumItem({ album, isOtherUser }) {
 
   return (
     <div
-      className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.public ? "not-public" : ""}`}
+      className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.public ? "not-public" : ""} ${album.private ? "is-private" : ""}`}
       onClick={handleClick}
       style={{ cursor: "pointer" }}
     >
@@ -29,8 +29,10 @@ function AlbumItem({ album, isOtherUser }) {
         <p>{album.username} </p>
         <label className="hideMobile">open</label>
         <p className="hideMobile">{album.open ? "Yes" : "No"}</p>
-        <label className="hideMobile">public</label>
+        <label className="hideMobile">profile</label>
         <p className="hideMobile">{album.public ? "Yes" : "No"}</p>
+        <label className="hideMobile">private</label>
+        <p className="hideMobile">{album.private ? "Yes" : "No"}</p>
         <label className="hideMobile">created</label>
         <p className="hideMobile">
           {new Date(album.created_at).toLocaleString()}

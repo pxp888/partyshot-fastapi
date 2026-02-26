@@ -160,6 +160,18 @@ function Albumview(currentUser) {
         }
         break;
 
+      case "togglePublic":
+        if (payload && payload.code === albumcode) {
+          setAlbum((prev) => ({ ...prev, public: payload.public }));
+        }
+        break;
+
+      case "togglePrivate":
+        if (payload && payload.code === albumcode) {
+          setAlbum((prev) => ({ ...prev, private: payload.private }));
+        }
+        break;
+
       default:
         break;
     }
@@ -322,6 +334,18 @@ function Albumview(currentUser) {
     }
   }
 
+  async function togglePrivate() {
+    try {
+      await sendJson("/api/togglePrivate", { album_id: album.id });
+      setAlbum((prev) => ({
+        ...prev,
+        private: !prev.private,
+      }));
+    } catch (error) {
+      console.error("Toggle private failed : ", error);
+    }
+  }
+
   function handleRename(newName) {
     sendJsonMessage({
       action: "setAlbumName",
@@ -404,9 +428,15 @@ function Albumview(currentUser) {
             </p>
           </div>
           <div className="infoItem">
-            <label>public </label>
+            <label>profile </label>
             <p onClick={togglePublic} className="clickable">
               {album.public ? "Yes" : "No"}
+            </p>
+          </div>
+          <div className="infoItem">
+            <label>private </label>
+            <p onClick={togglePrivate} className="clickable">
+              {album.private ? "Yes" : "No"}
             </p>
           </div>
           <div className="infoItem">

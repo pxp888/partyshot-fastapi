@@ -19,6 +19,10 @@
     background-color: #402427;
 }
 
+.album-item.is-private {
+    background-color: #242740;
+}
+
 .album-item img {
     object-fit: cover;
     width: 100%;
