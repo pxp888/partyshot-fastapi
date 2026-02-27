@@ -436,7 +436,7 @@ async def deleteAlbum(username: str, code: str) -> str:
                 )
 
                 conn.commit()
-                return "ok"
+                return code
             except Exception as e:
                 conn.rollback()
                 logging.error("Error deleting album: %s", e)

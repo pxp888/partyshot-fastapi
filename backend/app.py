@@ -352,7 +352,7 @@ async def deleteAlbum(websocket, data, username):
     message = {"action": "deleteAlbum", "payload": result}
     await websocket.send_json(message)
 
-    if result == "ok":
+    if result == albumcode:
         message = {"action": "newAlbum", "payload": {"type": "update"}}
         await redis_client.publish(f"user-{username}", json.dumps(message))
 
@@ -537,6 +537,8 @@ async def toggleOpen(websocket, data, username):
         await redis_client.publish(
             f"album-{updated_album['code']}", json.dumps(message)
         )
+        message = {"action": "newAlbum", "payload": {"type": "update"}}
+        await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
 async def toggleProfile(websocket, data, username):
@@ -547,6 +549,8 @@ async def toggleProfile(websocket, data, username):
         await redis_client.publish(
             f"album-{updated_album['code']}", json.dumps(message)
         )
+        message = {"action": "newAlbum", "payload": {"type": "update"}}
+        await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
 async def togglePrivate(websocket, data, username):
@@ -557,6 +561,8 @@ async def togglePrivate(websocket, data, username):
         await redis_client.publish(
             f"album-{updated_album['code']}", json.dumps(message)
         )
+        message = {"action": "newAlbum", "payload": {"type": "update"}}
+        await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
 @app.websocket("/ws")

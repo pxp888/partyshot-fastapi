@@ -133,7 +133,7 @@ function Albumview(currentUser) {
       }
 
       case "deleteAlbum":
-        if (payload === "ok") {
+        if (payload === albumcode) {
           window.location.href = `/user/${currentUser.currentUser}`;
         } else {
           alert(`Album deletion failed: ${payload}`);
