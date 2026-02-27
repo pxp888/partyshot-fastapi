@@ -192,5 +192,47 @@ def get_cloudfront_signed_cookies(resource_url, expiration=86400):
         return None
 
 
+
+def get_bucket_size_from_cloudwatch(bucket_name=BUCKET_NAME):
+    """
+    Get the bucket size using CloudWatch metrics.
+    CloudWatch storage metrics are reported once a day.
+    """
+    # Initialize CloudWatch client
+    cw = boto3.client("cloudwatch", region_name=REGION)
+
+    # We check the last 48 hours to ensure we catch the latest data point.
+    end_time = datetime.datetime.now(datetime.timezone.utc)
+    start_time = end_time - datetime.timedelta(days=2)
+
+    response = cw.get_metric_statistics(
+        Namespace="AWS/S3",
+        MetricName="BucketSizeBytes",
+        Dimensions=[
+            {"Name": "BucketName", "Value": bucket_name},
+            {"Name": "StorageType", "Value": "StandardStorage"},  # Or 'AllStorageTypes'
+        ],
+        StartTime=start_time,
+        EndTime=end_time,
+        Period=86400,  # 24 hours in seconds
+        Statistics=["Average"],
+    )
+
+    # Check if we got data back
+    if not response["Datapoints"]:
+        return "No data found. Note: CloudWatch metrics can take 24-48 hours to appear for new buckets."
+
+    # Sort by timestamp to get the most recent point
+    latest_datapoint = sorted(response["Datapoints"], key=lambda x: x["Timestamp"])[-1]
+
+    bytes_size = latest_datapoint["Average"]
+    gb_size = bytes_size / (1024**3)
+
+    return f"Bucket: {bucket_name}\nSize: {gb_size:.2f} GB ({int(bytes_size)} bytes)"
+
+
+
+
+
 if env.LOCALDEV == "True":
     get_cloudfront_url = create_cloudfront_signed_url

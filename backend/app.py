@@ -325,6 +325,15 @@ def space_used(Authorize: AuthJWT = Depends()):
     return db.spaceUsed()
 
 
+@app.get("/api/cloudwatch-bucket-size")
+def cloudwatch_bucket_size(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    if current_user != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    return {"size": aws.get_bucket_size_from_cloudwatch()}
+
+
 async def createAlbum(websocket, data, username):
     album_name = data["payload"]["album_name"]
 
