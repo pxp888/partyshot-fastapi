@@ -279,14 +279,13 @@ async def add_photo_metadata(
     )
 
     if photo_resp:
-        # Enqueue background task to check sizes (expires in 10 minutes)
         await app.state.redis.enqueue_job(
             "check_photo_sizes",
             photo_resp["id"],
             payload["s3_key"],
             payload.get("thumb_key"),
             payload.get("mid_key"),
-            _expires=600,
+            _expires=3600,
         )
 
     message = {"action": "addPhoto", "payload": photo_resp}
