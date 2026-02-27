@@ -153,9 +153,8 @@ def init_db() -> None:
                 );
 
                 CREATE TABLE IF NOT EXISTS spaceused (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    space INTEGER
+                    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                    space BIGINT DEFAULT 0
                 );
 
                 """
@@ -423,8 +422,10 @@ async def deleteAlbum(username: str, code: str) -> str:
                         """
                         INSERT INTO spaceused (user_id, space)
                         VALUES (%s, %s)
+                        ON CONFLICT (user_id) DO UPDATE 
+                        SET space = spaceused.space - EXCLUDED.space;
                         """,
-                        (user["id"], -total_size),
+                        (user["id"], total_size),
                     )
 
                 # 7. Delete photo records
@@ -592,8 +593,10 @@ async def deletePhoto(id: str, username: str) -> bool:
                         """
                         INSERT INTO spaceused (user_id, space)
                         VALUES (%s, %s)
+                        ON CONFLICT (user_id) DO UPDATE 
+                        SET space = spaceused.space - EXCLUDED.space;
                         """,
-                        (album_owner_id, -photo_size),
+                        (album_owner_id, photo_size),
                     )
                 # If DELETE affected a row, commit
                 if cursor.rowcount == 0:
@@ -1109,12 +1112,13 @@ def getUsage(username: str) -> dict | None:
             )
             total_size_albums = cursor.fetchone()[0] or 0
 
-            # total space used from spaceused table
+            # total space used from spaceused table (single row per user)
             cursor.execute(
-                "SELECT SUM(space) FROM spaceused WHERE user_id = %s",
+                "SELECT space FROM spaceused WHERE user_id = %s",
                 (user_id,),
             )
-            space_used_table = cursor.fetchone()[0] or 0
+            row = cursor.fetchone()
+            space_used_table = row[0] if row else 0
 
             return {
                 "number of photos": num_photos,
@@ -1330,6 +1334,12 @@ def updatePhotoSizes(
                 
                 owner_id, current_size = row
 
+                # If the new size is 0 or None, and we don't have a size yet, 
+                # don't update the record so it can be picked up later.
+                if (size is None or size <= 0) and current_size is None:
+                    conn.rollback()
+                    return
+
                 cursor.execute(query, tuple(params))
 
                 # Only log to spaceused if we are transitioning from NULL size to a known size
@@ -1339,6 +1349,8 @@ def updatePhotoSizes(
                         """
                         INSERT INTO spaceused (user_id, space)
                         VALUES (%s, %s)
+                        ON CONFLICT (user_id) DO UPDATE 
+                        SET space = spaceused.space + EXCLUDED.space;
                         """,
                         (owner_id, size),
                     )
@@ -1354,7 +1366,12 @@ def addSpaceUsed(user_id: int, space: int):
         with conn.cursor() as cursor:
             try:
                 cursor.execute(
-                    "INSERT INTO spaceused (user_id, space) VALUES (%s, %s)",
+                    """
+                    INSERT INTO spaceused (user_id, space) 
+                    VALUES (%s, %s)
+                    ON CONFLICT (user_id) DO UPDATE 
+                    SET space = spaceused.space + EXCLUDED.space;
+                    """,
                     (user_id, space),
                 )
                 conn.commit()

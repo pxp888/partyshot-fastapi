@@ -272,7 +272,7 @@ async def add_photo_metadata(
             "s3_key": payload["s3_key"],
             "thumb_key": payload.get("thumb_key"),
             "mid_key": payload.get("mid_key"),
-            "size": payload.get("size"),
+            "size": None,
             "thumb_size": payload.get("thumb_size"),
             "mid_size": payload.get("mid_size"),
         }
