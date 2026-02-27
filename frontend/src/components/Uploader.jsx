@@ -117,6 +117,16 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
   const { albumcode } = useParams();
   const [totalFiles, setTotalFiles] = useState(0);
   const [completedFiles, setCompletedFiles] = useState(0);
+  const [spaceRemaining, setSpaceRemaining] = useState(null);
+
+  const formatBytes = (bytes) => {
+    if (bytes === null || bytes === undefined) return "";
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
 
   /**
    * Uploads the original file and its thumbnail.
@@ -136,6 +146,15 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
         album_code: album.code,
       }),
     });
+    if (!presignRes.ok) {
+      const errData = await presignRes.json();
+      if (presignRes.status === 403) {
+        alert(errData.detail || "Storage limit reached.");
+        throw new Error("QUOTA_EXCEEDED");
+      }
+      throw new Error(`Presigned request failed: ${presignRes.status}`);
+    }
+
     const {
       s3_key,
       presigned,
@@ -143,7 +162,9 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
       thumb_presigned,
       mid_key: m_key,
       mid_presigned,
+      space_remaining,
     } = await presignRes.json();
+    setSpaceRemaining(space_remaining);
 
     // 2️⃣  Build the form exactly as the bucket expects and POST to S3
     const formData = new FormData();
@@ -264,16 +285,20 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
     for (const file of fileArray) {
       try {
         await uploadFile(file);
+        setCompletedFiles((prev) => prev + 1);
       } catch (err) {
         console.error("Upload failed for file:", file.name, err);
+        if (err.message === "QUOTA_EXCEEDED") {
+          break; // Stop further uploads in this batch
+        }
       }
-      setCompletedFiles((prev) => prev + 1);
     }
 
     // Reset progress after a delay
     setTimeout(() => {
       setTotalFiles(0);
       setCompletedFiles(0);
+      setSpaceRemaining(null);
     }, 3000);
   };
 
@@ -309,6 +334,11 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
               {completedFiles === totalFiles
                 ? "All files uploaded!"
                 : `Uploading ${completedFiles + 1} of ${totalFiles}...`}
+              {spaceRemaining !== null && (
+                <div className="uploader-space-text" style={{ fontSize: "0.8em", marginTop: "4px" }}>
+                  Remaining Storage: {formatBytes(spaceRemaining)}
+                </div>
+              )}
             </div>
             <div className="uploader-progress-track">
               <div

@@ -40,8 +40,16 @@ redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
 manager = watcher.Watcher()
 
-
 app = FastAPI()
+
+
+userlimits = {
+    "free":    100000000,
+    "starter": 500000000,
+    "basic":  1000000000,
+    "pro":    2000000000,
+}
+
 
 
 class User(BaseModel):
@@ -209,11 +217,27 @@ async def get_presigned(
     album = db.getAlbum(album_code)
     if not album:
         return
+    
+    # Calculate space remaining for the album owner
+    owner_username = album["username"]
+    owner_usage = db.getUsage(owner_username) or {}
+    owner_details = db.getUser(owner_username) or {}
+    
+    owner_class = owner_details.get("class", "free").lower()
+    owner_limit = userlimits.get(owner_class, userlimits["free"])
+    space_used = owner_usage.get("spaceused_table", 0)
+    space_remaining = max(0, owner_limit - space_used)
+
+    if space_remaining <= 0:
+        raise HTTPException(
+            status_code=403, 
+            detail="Storage limit reached for this album owner. Please upgrade or delete some photos."
+        )
+
     if not album["open"]:
         if album["user_id"] != user["id"]:
             logging.info("get_presigned - not allowed")
             raise HTTPException(status_code=403, detail="Not Allowed")
-            return
 
     file_id = uuid.uuid4().hex
     s3_key = f"{album_code}/{file_id}"
@@ -250,6 +274,7 @@ async def get_presigned(
         "thumb_presigned": thumb_presigned,
         "mid_key": mid_key,
         "mid_presigned": mid_presigned,
+        "space_remaining": space_remaining,
     }
 
 
