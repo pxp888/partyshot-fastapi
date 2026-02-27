@@ -152,22 +152,12 @@ def init_db() -> None:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
-                -- Add columns if they don't exist (primitive migration)
-                ALTER TABLE photos ADD COLUMN IF NOT EXISTS size INTEGER;
-                ALTER TABLE photos ADD COLUMN IF NOT EXISTS thumb_size INTEGER;
-                ALTER TABLE photos ADD COLUMN IF NOT EXISTS mid_key TEXT;
-                ALTER TABLE photos ADD COLUMN IF NOT EXISTS mid_size INTEGER;
-                ALTER TABLE users ADD COLUMN IF NOT EXISTS class TEXT DEFAULT 'free';
-                ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
-                ALTER TABLE albums ADD COLUMN IF NOT EXISTS private BOOLEAN DEFAULT FALSE;
-                -- Rename albums.public to albums.profile
-                DO $$
-                BEGIN
-                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='albums' AND column_name='public') THEN
-                        ALTER TABLE albums RENAME COLUMN public TO profile;
-                    END IF;
-                END $$;
-                UPDATE users SET class = 'free' WHERE class IS NULL;
+                CREATE TABLE IF NOT EXISTS spaceused (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    space INTEGER
+                );
+
                 """
             )
             conn.commit()
@@ -417,7 +407,27 @@ async def deleteAlbum(username: str, code: str) -> str:
                     if mid_key:
                         await enqueue_delete_key(mid_key)
 
-                # 5. Delete photo records
+                # 5. Get total size of all original photos in the album
+                cursor.execute(
+                    """
+                    SELECT SUM(size) FROM photos
+                    WHERE album_id = %s
+                    """,
+                    (album_id,),
+                )
+                total_size = cursor.fetchone()[0] or 0
+
+                # 6. Remove that space from spaceused for the album owner
+                if total_size > 0:
+                    cursor.execute(
+                        """
+                        INSERT INTO spaceused (user_id, space)
+                        VALUES (%s, %s)
+                        """,
+                        (user["id"], -total_size),
+                    )
+
+                # 7. Delete photo records
                 cursor.execute(
                     """
                     DELETE FROM photos
@@ -525,10 +535,10 @@ async def deletePhoto(id: str, username: str) -> bool:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                # Fetch photo details including S3 keys
+                # Fetch photo details including S3 keys and size
                 cursor.execute(
                     """
-                    SELECT user_id, album_id, s3_key, thumb_key, mid_key
+                    SELECT user_id, album_id, s3_key, thumb_key, mid_key, size
                     FROM photos
                     WHERE id = %s;
                     """,
@@ -538,7 +548,7 @@ async def deletePhoto(id: str, username: str) -> bool:
                 if not photo_row:
                     return False
 
-                photo_owner_id, album_id, s3_key, thumb_key, mid_key = photo_row
+                photo_owner_id, album_id, s3_key, thumb_key, mid_key, photo_size = photo_row
 
                 # Fetch album owner
                 cursor.execute(
@@ -575,6 +585,16 @@ async def deletePhoto(id: str, username: str) -> bool:
                     """,
                     (photo_id,),
                 )
+
+                # Update spaceused: subtract the original photo size from the album owner's total
+                if photo_size and photo_size > 0:
+                    cursor.execute(
+                        """
+                        INSERT INTO spaceused (user_id, space)
+                        VALUES (%s, %s)
+                        """,
+                        (album_owner_id, -photo_size),
+                    )
                 # If DELETE affected a row, commit
                 if cursor.rowcount == 0:
                     conn.rollback()
@@ -1089,12 +1109,20 @@ def getUsage(username: str) -> dict | None:
             )
             total_size_albums = cursor.fetchone()[0] or 0
 
+            # total space used from spaceused table
+            cursor.execute(
+                "SELECT SUM(space) FROM spaceused WHERE user_id = %s",
+                (user_id,),
+            )
+            space_used_table = cursor.fetchone()[0] or 0
+
             return {
                 "number of photos": num_photos,
                 "number of albums": num_albums,
                 "number of other peoples photos in users albums": num_other_photos,
                 "total size of photos": int(total_size_photos),
                 "total size in user albums": int(total_size_albums),
+                "spaceused_table": int(space_used_table),
             }
 
 
@@ -1286,11 +1314,53 @@ def updatePhotoSizes(
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
+                # Get album owner and current size BEFORE updating
+                cursor.execute(
+                    """
+                    SELECT a.user_id, p.size
+                    FROM photos p 
+                    JOIN albums a ON p.album_id = a.id 
+                    WHERE p.id = %s
+                    """,
+                    (photo_id,),
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return
+                
+                owner_id, current_size = row
+
                 cursor.execute(query, tuple(params))
+
+                # Only log to spaceused if we are transitioning from NULL size to a known size
+                # This ensures we only count each photo once, even if the task is retried.
+                if current_size is None and size > 0:
+                    cursor.execute(
+                        """
+                        INSERT INTO spaceused (user_id, space)
+                        VALUES (%s, %s)
+                        """,
+                        (owner_id, size),
+                    )
+
                 conn.commit()
             except Exception as e:
                 conn.rollback()
                 logging.error("Error updating photo sizes for %s: %s", photo_id, e)
+
+
+def addSpaceUsed(user_id: int, space: int):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(
+                    "INSERT INTO spaceused (user_id, space) VALUES (%s, %s)",
+                    (user_id, space),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logging.error("Error adding space used for %s: %s", user_id, e)
 
 
 def uncountedPhotos() -> list:
