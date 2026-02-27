@@ -98,14 +98,14 @@ function Welcomepage() {
             <p>You can close an album, which means only you can modify them.</p>
           </div>
           <div className="step">
-            <span className="step-number">Public</span>
-            {/* <h4>Public</h4>*/}
+            <span className="step-number">Profile</span>
+            {/* <h4>Profile</h4>*/}
             <p>
-              Albums are marked as <strong>Public</strong> by default. They will
+              Albums are marked as <strong>Profile</strong> by default. They will be
               visible on your profile.
             </p>
             <p>
-              If an album is not marked public, it is still accessible to people
+              If an album is not marked profile, it is still accessible to people
               who have the URL, but it will not show up on your profile.
             </p>
           </div>

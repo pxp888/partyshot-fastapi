@@ -166,7 +166,7 @@ function Albumview(currentUser) {
         }
         break;
 
-      case "togglePublic":
+      case "toggleProfile":
         if (payload && payload.code === albumcode) {
           setAlbum((prev) => ({ ...prev, ...payload }));
         }
@@ -334,11 +334,11 @@ function Albumview(currentUser) {
     }
   }
 
-  async function togglePublic() {
+  async function toggleProfile() {
     // Optimistic update
-    setAlbum((prev) => ({ ...prev, public: !prev.public }));
+    setAlbum((prev) => ({ ...prev, profile: !prev.profile }));
     try {
-      const updatedAlbum = await sendJson("/api/togglePublic", {
+      const updatedAlbum = await sendJson("/api/toggleProfile", {
         album_id: album.id,
       });
       setAlbum((prev) => ({
@@ -347,8 +347,8 @@ function Albumview(currentUser) {
       }));
     } catch (error) {
       // Revert if error
-      setAlbum((prev) => ({ ...prev, public: !prev.public }));
-      console.error("Toggle public failed : ", error);
+      setAlbum((prev) => ({ ...prev, profile: !prev.profile }));
+      console.error("Toggle profile failed : ", error);
     }
   }
 
@@ -453,8 +453,8 @@ function Albumview(currentUser) {
           </div>
           <div className="infoItem">
             <label>profile </label>
-            <p onClick={togglePublic} className="clickable">
-              {album.public ? "Yes" : "No"}
+            <p onClick={toggleProfile} className="clickable">
+              {album.profile ? "Yes" : "No"}
             </p>
           </div>
           <div className="infoItem">

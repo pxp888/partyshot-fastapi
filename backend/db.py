@@ -109,7 +109,7 @@ def init_db() -> None:
                     name TEXT NOT NULL,
                     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     open BOOLEAN DEFAULT TRUE,
-                    public BOOLEAN DEFAULT TRUE,
+                    profile BOOLEAN DEFAULT TRUE,
                     private BOOLEAN DEFAULT FALSE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
@@ -160,6 +160,13 @@ def init_db() -> None:
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS class TEXT DEFAULT 'free';
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
                 ALTER TABLE albums ADD COLUMN IF NOT EXISTS private BOOLEAN DEFAULT FALSE;
+                -- Rename albums.public to albums.profile
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='albums' AND column_name='public') THEN
+                        ALTER TABLE albums RENAME COLUMN public TO profile;
+                    END IF;
+                END $$;
                 UPDATE users SET class = 'free' WHERE class IS NULL;
                 """
             )
@@ -240,7 +247,7 @@ def getAlbum(code: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.private, a.created_at, u.username,
+                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
                        (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
@@ -257,7 +264,7 @@ def getAlbum(code: str) -> dict | None:
             "name": row[2],
             "user_id": row[3],
             "open": bool(row[4]),
-            "public": bool(row[5]),
+            "profile": bool(row[5]),
             "private": bool(row[6]),
             "thumb_key": aws.get_cloudfront_url(row[9]) if row[9] else None,
             "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
@@ -271,7 +278,7 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, a.public, a.private, a.created_at, u.username,
+                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
                        (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1),
                        EXISTS(
                            SELECT 1 FROM subscription s
@@ -293,7 +300,7 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             "name": row[2],
             "user_id": row[3],
             "open": bool(row[4]),
-            "public": bool(row[5]),
+            "profile": bool(row[5]),
             "private": bool(row[6]),
             "thumb_key": aws.get_cloudfront_url(row[9]) if row[9] else None,
             "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
@@ -591,7 +598,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 # Include owned and subscribed albums (owned by the user whose profile is being viewed)
                 cursor.execute(
                     """
-                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.public, a.private, a.created_at, u.username,
+                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
                            (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
@@ -611,13 +618,13 @@ def getAlbums(username: str, authuser: str) -> dict | None:
 
     albums = []
     for row in rows:
-        # Check permissions: if not admin or owner, only show public albums
+        # Check permissions: if not admin or owner, only show profile albums
         # If private, only show if owner
         is_owner = authuser == username
-        is_public = bool(row[5])
+        is_profile = bool(row[5])
         is_private = bool(row[6])
 
-        if not is_owner and not is_public:
+        if not is_owner and not is_profile:
             continue
         if is_private and authuser != row[8]:
             continue
@@ -635,7 +642,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "name": row[2],
                 "username": row[8],
                 "open": bool(row[4]),
-                "public": is_public,
+                "profile": is_profile,
                 "private": is_private,
                 "thumb_key": aws.get_cloudfront_url(thumb_key) if thumb_key else None,
                 "created_at": created_at,
@@ -788,7 +795,7 @@ def toggleOpen(id: str, username: str) -> dict | None:
                 return None
 
 
-def togglePublic(id: str, username: str) -> dict | None:
+def toggleProfile(id: str, username: str) -> dict | None:
     user = getUser(username)
     if user is None:
         return None
@@ -804,7 +811,7 @@ def togglePublic(id: str, username: str) -> dict | None:
                 # Grab the album's current state and ownership.
                 cursor.execute(
                     """
-                    SELECT user_id, code, public
+                    SELECT user_id, code, profile
                     FROM albums
                     WHERE id = %s;
                     """,
@@ -814,22 +821,22 @@ def togglePublic(id: str, username: str) -> dict | None:
                 if row is None:
                     return None
 
-                album_owner_id, album_code, current_public = row
+                album_owner_id, album_code, current_profile = row
 
                 # Ensure the requesting user owns the album.
                 if user["id"] != album_owner_id:
                     return None
 
-                # Toggle the `public` flag.
-                new_public = not current_public
+                # Toggle the `profile` flag.
+                new_profile = not current_profile
                 cursor.execute(
                     """
                     UPDATE albums
-                    SET public = %s
+                    SET profile = %s
                     WHERE id = %s
-                    RETURNING id, code, public;
+                    RETURNING id, code, profile;
                     """,
-                    (new_public, album_id),
+                    (new_profile, album_id),
                 )
                 updated_row = cursor.fetchone()
                 if updated_row is None:

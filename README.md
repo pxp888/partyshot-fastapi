@@ -26,7 +26,7 @@
 - **🔐 Secure Authentication**: JWT-based user accounts with persistent sessions and authorized WebSocket connections.
 - **📁 Collaborative Albums**: Create albums with granular permissions:
   - **Open**: Allow anyone to contribute photos to your event.
-  - **Public**: Showcase your best work on your public profile.
+  - **Profile**: Showcase your best work on your profile.
 - **☁️ Direct S3 Uploads**: Files bypass the server and go straight to AWS S3 via presigned URLs, ensuring maximum performance and minimal server load.
 - **⚡ Real-time Updates**: Instant UI refreshes across all devices using Redis Pub/Sub and WebSockets.
 - **🖼️ Smart Metadata**: Automatic tracking of photo sizes and dimensions via background workers.

@@ -50,7 +50,7 @@ function Plans() {
             <div className="labels-column">
               <div className="cell label-cell cell-header">Plans & Specs</div>
               <div className="cell label-cell">Total Storage</div>
-              <div className="cell label-cell">Public Albums</div>
+              <div className="cell label-cell">Profile Albums</div>
               <div className="cell label-cell">Hidden Albums</div>
               <div className="cell label-cell">Private Albums</div>
               <div className="cell label-cell">Price</div>
@@ -60,7 +60,7 @@ function Plans() {
                 {
                   name: "Free",
                   storage: "1 GB",
-                  publicAlbums: "Yes",
+                  profileAlbums: "Yes",
                   hiddenAlbums: "Yes",
                   privateAlbums: "No",
                   price: "Free",
@@ -68,7 +68,7 @@ function Plans() {
                 {
                   name: "Starter",
                   storage: "10 GB",
-                  publicAlbums: "Yes",
+                  profileAlbums: "Yes",
                   hiddenAlbums: "Yes",
                   privateAlbums: "Yes",
                   price: "50 SEK/mo",
@@ -76,7 +76,7 @@ function Plans() {
                 {
                   name: "Basic",
                   storage: "50 GB",
-                  publicAlbums: "Yes",
+                  profileAlbums: "Yes",
                   hiddenAlbums: "Yes",
                   privateAlbums: "Yes",
                   price: "100 SEK/mo",
@@ -84,7 +84,7 @@ function Plans() {
                 {
                   name: "Pro",
                   storage: "250 GB",
-                  publicAlbums: "Yes",
+                  profileAlbums: "Yes",
                   hiddenAlbums: "Yes",
                   privateAlbums: "Yes",
                   price: "200 SEK/mo",
@@ -101,7 +101,7 @@ function Plans() {
                     <div className="plan-name">{plan.name}</div>
                   </div>
                   <div className="cell data-cell">{plan.storage}</div>
-                  <div className="cell data-cell">{plan.publicAlbums}</div>
+                  <div className="cell data-cell">{plan.profileAlbums}</div>
                   <div className="cell data-cell">{plan.hiddenAlbums}</div>
                   <div className="cell data-cell">{plan.privateAlbums}</div>
                   <div className="cell data-cell">{plan.price}</div>

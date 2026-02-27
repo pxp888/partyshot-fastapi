@@ -44,7 +44,7 @@ function Howitworks() {
             <h2>Create Your Album</h2>
             <p>Just choose a name, and click create. It's that simple.</p>
             <p>
-              Set your album to <strong>Public</strong> to show it on your
+              Set your album to <strong>Profile</strong> to show it on your
               profile, or keep it unlisted for private sharing.
             </p>
             <p>
@@ -156,9 +156,9 @@ function Howitworks() {
           </div>
 
           <div className="hiw-feature-card">
-            <h3>Public Profiles</h3>
+            <h3>Profiles</h3>
             <p>
-              Showcase your best work. Any album set to public will
+              Showcase your best work. Any album set to profile will
               automatically appear on your shareShot profile.
             </p>
           </div>
@@ -172,9 +172,9 @@ function Howitworks() {
           </div>
 
           <div className="hiw-feature-card">
-            <h3>Public Albums</h3>
+            <h3>Profile Albums</h3>
             <p>
-              Albums that are marked as public will appear on your profile, and
+              Albums that are marked as profile will appear on your profile, and
               other users can view and subscribe to them.
             </p>
           </div>
