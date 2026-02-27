@@ -343,7 +343,12 @@ async def getAlbums(websocket, data, username):
     result = db.getAlbums(target, username)
     message = {"action": "getAlbums", "payload": result}
     await websocket.send_json(message)
+    # Subscribe to the user's personal channel
     await manager.subscribe(websocket, f"user-{target}")
+    # Subscribe to each individual album channel
+    if result and "albums" in result:
+        for album in result["albums"]:
+            await manager.subscribe(websocket, f"album-{album['code']}")
 
 
 async def deleteAlbum(websocket, data, username):
@@ -537,8 +542,6 @@ async def toggleOpen(websocket, data, username):
         await redis_client.publish(
             f"album-{updated_album['code']}", json.dumps(message)
         )
-        message = {"action": "newAlbum", "payload": {"type": "update"}}
-        await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
 async def toggleProfile(websocket, data, username):
@@ -623,6 +626,9 @@ async def websocket_endpoint(websocket: WebSocket):
                     await toggleProfile(websocket, payload, username)
                 elif action == "togglePrivate":
                     await togglePrivate(websocket, payload, username)
+                elif action == "keepAlive":
+                    subjects = payload.get("payload", {}).get("subjects", [])
+                    await manager.keep_alive(websocket, subjects)
                 else:
                     logging.error("websocket - unknown action")
                     await websocket.close(code=1008)

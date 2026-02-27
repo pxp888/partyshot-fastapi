@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 import env
 import redis.asyncio as redis
@@ -8,22 +9,40 @@ redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 
 
 class Watcher:
-    """Simple Pub/Sub manager for WebSocket connections.
+    """Pub/Sub manager for WebSocket connections.
 
-    Each WebSocket is associated with exactly one *subject* – the channel
-    name it is subscribed to.  When a message is published to that subject
-    on Redis, it is forwarded to the WebSocket.  The manager keeps track of
-    which WebSocket belongs to which subject so that a connection can change
-    its subject (e.g. from ``albums-{username}`` to ``album-{code}``).
+    Each WebSocket can be associated with multiple *subjects*.
+    When a message is published to any of those subjects on Redis,
+    it is forwarded to the WebSocket.
+    Subscriptions have a 10-minute expiration by default.
     """
 
     def __init__(self):
-        # Map a websocket to the subject it is currently listening on.
-        self._websocket_subject: dict[WebSocket, str] = {}
+        # Map websocket -> { subject: expiration_timestamp }
+        self._websocket_subscriptions: dict[WebSocket, dict[str, float]] = {}
         # Map subject -> set of websockets.
         self._subject_targets: dict[str, set[WebSocket]] = {}
         # Map subject -> listener task.
         self._subject_listeners: dict[str, asyncio.Task] = {}
+        # Background task for cleanup
+        self._cleanup_task = None
+
+    async def _cleanup_loop(self) -> None:
+        """Periodic task to remove expired subscriptions."""
+        while True:
+            try:
+                await asyncio.sleep(60)
+                now = time.time()
+                # Iterate over a copy of the keys because we'll be modifying the dict.
+                for ws in list(self._websocket_subscriptions.keys()):
+                    subs = self._websocket_subscriptions.get(ws, {})
+                    expired_subjects = [s for s, expire in subs.items() if expire < now]
+                    for subject in expired_subjects:
+                        await self.unsubscribe(ws, subject)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print(f"Error in Watcher cleanup loop: {e}")
 
     async def _listener(self, subject: str) -> None:
         """Internal task that listens to Redis for *subject* and forwards
@@ -33,55 +52,80 @@ class Watcher:
         try:
             async for message in pubsub.listen():
                 if message["type"] == "message":
-                    # Forward to all websockets subscribed to this subject.
-                    for ws in list(self._subject_targets.get(subject, set())):
+                    # Forward to all websockets currently subscribed to this subject.
+                    targets = list(self._subject_targets.get(subject, set()))
+                    for ws in targets:
                         try:
-                            await ws.send_text(message["data"])
-                        except Exception as exc:  # pragma: no cover - defensive
-                            # If sending fails (e.g., closed connection), clean up.
+                            # Verify it hasn't expired since the last check
+                            subs = self._websocket_subscriptions.get(ws, {})
+                            if subject in subs and subs[subject] > time.time():
+                                await ws.send_text(message["data"])
+                            elif subject in subs:
+                                # Connection still exists but this sub expired
+                                await self.unsubscribe(ws, subject)
+                        except Exception as exc:
                             await self.unsubscribe(ws)
                             print(f"Error sending to websocket: {exc}")
         finally:
             await pubsub.unsubscribe(subject)
-            # Remove the listener task reference.
             self._subject_listeners.pop(subject, None)
 
     async def subscribe(self, websocket: WebSocket, subject: str) -> None:
-        """Subscribe *websocket* to *subject*.
+        """Subscribe *websocket* to *subject* with a 10-minute expiration."""
+        if self._cleanup_task is None:
+            self._cleanup_task = asyncio.create_task(self._cleanup_loop())
 
-        If the websocket was previously subscribed to another subject it is
-        moved to the new one."""
-        # Remove from old subject if present.
-        old_subject = self._websocket_subject.get(websocket)
-        if old_subject and old_subject != subject:
-            await self.unsubscribe(websocket, old_subject)
+        now = time.time()
+        expiration = now + 600  # 10 minutes
 
-        # Register new subject.
-        self._websocket_subject[websocket] = subject
+        subs = self._websocket_subscriptions.setdefault(websocket, {})
+        subs[subject] = expiration
+
         targets = self._subject_targets.setdefault(subject, set())
         targets.add(websocket)
 
-        # Ensure a listener task exists for the subject.
         if subject not in self._subject_listeners:
             self._subject_listeners[subject] = asyncio.create_task(
                 self._listener(subject)
             )
 
+    async def keep_alive(self, websocket: WebSocket, subjects: list[str]) -> None:
+        """Refresh specified subscriptions for this websocket for another 10 minutes."""
+        subs = self._websocket_subscriptions.get(websocket)
+        if subs:
+            now = time.time()
+            for subject in subjects:
+                if subject in subs:
+                    subs[subject] = now + 600
+
     async def unsubscribe(
         self, websocket: WebSocket, subject: str | None = None
     ) -> None:
-        """Unsubscribe *websocket* from *subject* (or from its current subject
-        if *subject* is None)."""
+        """Unsubscribe *websocket* from *subject* (or from ALL if *subject* is None)."""
         if subject is None:
-            subject = self._websocket_subject.get(websocket)
-        if not subject:
+            # Unsubscribe from ALL subjects for this websocket
+            subs = self._websocket_subscriptions.pop(websocket, {})
+            for sub in list(subs.keys()):
+                targets = self._subject_targets.get(sub)
+                if targets:
+                    targets.discard(websocket)
+                    if not targets:
+                        task = self._subject_listeners.pop(sub, None)
+                        if task and not task.done():
+                            task.cancel()
             return
+
+        # Unsubscribe from a specific subject
+        subs = self._websocket_subscriptions.get(websocket)
+        if subs:
+            subs.pop(subject, None)
+            if not subs:
+                self._websocket_subscriptions.pop(websocket, None)
+
         targets = self._subject_targets.get(subject)
-        if targets and websocket in targets:
+        if targets:
             targets.discard(websocket)
-        self._websocket_subject.pop(websocket, None)
-        # If no websockets left for a subject, cancel its listener.
-        if targets is not None and not targets:
-            task = self._subject_listeners.pop(subject, None)
-            if task and not task.done():
-                task.cancel()
+            if not targets:
+                task = self._subject_listeners.pop(subject, None)
+                if task and not task.done():
+                    task.cancel()

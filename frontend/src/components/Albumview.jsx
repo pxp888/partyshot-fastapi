@@ -56,7 +56,19 @@ function Albumview(currentUser) {
       action: "getAlbum",
       payload: { albumcode: albumcode },
     });
-  }, [albumcode]);
+  }, [albumcode, sendJsonMessage]);
+
+  useEffect(() => {
+    if (!albumcode) return;
+    const keepAliveInterval = setInterval(() => {
+      sendJsonMessage({
+        action: "keepAlive",
+        payload: { subjects: [`album-${albumcode}`] },
+      });
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(keepAliveInterval);
+  }, [albumcode, sendJsonMessage]);
 
   useEffect(() => {
     setPhotos([]);

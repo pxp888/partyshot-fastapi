@@ -2,12 +2,39 @@ import { useNavigate } from "react-router-dom";
 import "./style/AlbumItem.css";
 import blankImage from "../assets/blank.jpg";
 
-function AlbumItem({ album, isOtherUser }) {
+function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
   const navigate = useNavigate();
 
   function handleClick(event) {
     event.preventDefault();
     navigate(`/album/${album.code}`);
+  }
+
+  function handleToggleOpen(event) {
+    event.stopPropagation();
+    if (isOtherUser) return;
+    sendJsonMessage({
+      action: "toggleOpen",
+      payload: { album_id: album.id },
+    });
+  }
+
+  function handleToggleProfile(event) {
+    event.stopPropagation();
+    if (isOtherUser) return;
+    sendJsonMessage({
+      action: "toggleProfile",
+      payload: { album_id: album.id },
+    });
+  }
+
+  function handleTogglePrivate(event) {
+    event.stopPropagation();
+    if (isOtherUser) return;
+    sendJsonMessage({
+      action: "togglePrivate",
+      payload: { album_id: album.id },
+    });
   }
 
   return (
@@ -28,17 +55,31 @@ function AlbumItem({ album, isOtherUser }) {
         <label>user</label>
         <p>{album.username} </p>
         <label className="hideMobile">open</label>
-        <p className="hideMobile">{album.open ? "Yes" : "No"}</p>
+        <p
+          className={`hideMobile ${!isOtherUser ? "clickable" : ""}`}
+          onClick={handleToggleOpen}
+        >
+          {album.open ? "Yes" : "No"}
+        </p>
         <label className="hideMobile">profile</label>
-        <p className="hideMobile">{album.profile ? "Yes" : "No"}</p>
+        <p
+          className={`hideMobile ${!isOtherUser ? "clickable" : ""}`}
+          onClick={handleToggleProfile}
+        >
+          {album.profile ? "Yes" : "No"}
+        </p>
         <label className="hideMobile">private</label>
-        <p className="hideMobile">{album.private ? "Yes" : "No"}</p>
+        <p
+          className={`hideMobile ${!isOtherUser ? "clickable" : ""}`}
+          onClick={handleTogglePrivate}
+        >
+          {album.private ? "Yes" : "No"}
+        </p>
         <label className="hideMobile">created</label>
         <p className="hideMobile">
           {new Date(album.created_at).toLocaleString()}
         </p>
       </div>
-      {/* <p>Code: {album.code}</p> */}
     </div>
   );
 }

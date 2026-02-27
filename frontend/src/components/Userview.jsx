@@ -23,6 +23,24 @@ function Userview({ currentUser }) {
     });
   }, [username, sendJsonMessage]);
 
+  // 2️⃣ Keep Alive Heartbeat (every 2 minutes)
+  useEffect(() => {
+    if (!username) return;
+
+    const keepAliveInterval = setInterval(() => {
+      const subjects = [
+        `user-${username}`,
+        ...albums.map((a) => `album-${a.code}`),
+      ];
+      sendJsonMessage({
+        action: "keepAlive",
+        payload: { subjects },
+      });
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(keepAliveInterval);
+  }, [username, albums, sendJsonMessage]);
+
   // --------------------------------------------------------
   // 2️⃣  React to messages that come from the WS
   // --------------------------------------------------------
@@ -49,6 +67,26 @@ function Userview({ currentUser }) {
       case "createAlbum":
         if (payload) {
           navigate(`/album/${payload}`);
+        }
+        break;
+      case "toggleOpen":
+      case "toggleProfile":
+      case "togglePrivate":
+        if (payload && payload.code) {
+          setAlbums((prev) =>
+            prev.map((a) =>
+              a.code === payload.code ? { ...a, ...payload } : a
+            )
+          );
+        }
+        break;
+      case "setAlbumName":
+        if (payload && payload.albumcode) {
+          setAlbums((prev) =>
+            prev.map((a) =>
+              a.code === payload.albumcode ? { ...a, name: payload.name } : a
+            )
+          );
         }
         break;
       default:
@@ -134,6 +172,7 @@ function Userview({ currentUser }) {
               key={album.id}
               album={album}
               isOtherUser={album.username !== currentUser}
+              sendJsonMessage={sendJsonMessage}
             />
           ))
         ) : (
