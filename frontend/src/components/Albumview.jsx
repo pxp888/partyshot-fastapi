@@ -1,6 +1,5 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { sendJson } from "./helpers";
 import { useSocket } from "./WebSocketContext"; // ← NEW
 import JSZip from "jszip";
 import { useNavigate } from "react-router-dom";
@@ -316,58 +315,25 @@ function Albumview(currentUser) {
     });
   }
 
-  async function toggleOpen() {
-    // Optimistic update
-    setAlbum((prev) => ({ ...prev, open: !prev.open }));
-    try {
-      const updatedAlbum = await sendJson("/api/toggleOpen", {
-        album_id: album.id,
-      });
-      setAlbum((prev) => ({
-        ...prev,
-        ...updatedAlbum,
-      }));
-    } catch (error) {
-      // Revert if error
-      setAlbum((prev) => ({ ...prev, open: !prev.open }));
-      console.error("Toggle lock failed : ", error);
-    }
+  function toggleOpen() {
+    sendJsonMessage({
+      action: "toggleOpen",
+      payload: { album_id: album.id },
+    });
   }
 
-  async function toggleProfile() {
-    // Optimistic update
-    setAlbum((prev) => ({ ...prev, profile: !prev.profile }));
-    try {
-      const updatedAlbum = await sendJson("/api/toggleProfile", {
-        album_id: album.id,
-      });
-      setAlbum((prev) => ({
-        ...prev,
-        ...updatedAlbum,
-      }));
-    } catch (error) {
-      // Revert if error
-      setAlbum((prev) => ({ ...prev, profile: !prev.profile }));
-      console.error("Toggle profile failed : ", error);
-    }
+  function toggleProfile() {
+    sendJsonMessage({
+      action: "toggleProfile",
+      payload: { album_id: album.id },
+    });
   }
 
-  async function togglePrivate() {
-    // Optimistic update
-    setAlbum((prev) => ({ ...prev, private: !prev.private }));
-    try {
-      const updatedAlbum = await sendJson("/api/togglePrivate", {
-        album_id: album.id,
-      });
-      setAlbum((prev) => ({
-        ...prev,
-        ...updatedAlbum,
-      }));
-    } catch (error) {
-      // Revert if error
-      setAlbum((prev) => ({ ...prev, private: !prev.private }));
-      console.error("Toggle private failed : ", error);
-    }
+  function togglePrivate() {
+    sendJsonMessage({
+      action: "togglePrivate",
+      payload: { album_id: album.id },
+    });
   }
 
   function handleRename(newName) {

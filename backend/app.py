@@ -325,72 +325,6 @@ def space_used(Authorize: AuthJWT = Depends()):
     return db.spaceUsed()
 
 
-@app.post("/api/toggleOpen")
-async def toggle_open(
-    payload: ToggleOpenRequest,
-    Authorize: AuthJWT = Depends(),
-):
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    updated_album = db.toggleOpen(payload.album_id, current_user)
-    if not updated_album:
-        raise HTTPException(
-            status_code=404, detail="Album not found or permission denied"
-        )
-    try:
-        await redis_client.publish(
-            f"album-{updated_album['code']}",
-            json.dumps({"action": "toggleOpen", "payload": updated_album}),
-        )
-    except Exception:
-        pass
-    return updated_album
-
-
-@app.post("/api/toggleProfile")
-async def toggle_profile(
-    payload: ToggleProfileRequest,
-    Authorize: AuthJWT = Depends(),
-):
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    updated_album = db.toggleProfile(payload.album_id, current_user)
-    if not updated_album:
-        raise HTTPException(
-            status_code=404, detail="Album not found or permission denied"
-        )
-    try:
-        await redis_client.publish(
-            f"album-{updated_album['code']}",
-            json.dumps({"action": "toggleProfile", "payload": updated_album}),
-        )
-    except Exception:
-        pass
-    return updated_album
-
-
-@app.post("/api/togglePrivate")
-async def toggle_private(
-    payload: TogglePrivateRequest,
-    Authorize: AuthJWT = Depends(),
-):
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    updated_album = db.togglePrivate(payload.album_id, current_user)
-    if not updated_album:
-        raise HTTPException(
-            status_code=404, detail="Album not found or permission denied"
-        )
-    try:
-        await redis_client.publish(
-            f"album-{updated_album['code']}",
-            json.dumps({"action": "togglePrivate", "payload": updated_album}),
-        )
-    except Exception:
-        pass
-    return updated_album
-
-
 async def createAlbum(websocket, data, username):
     album_name = data["payload"]["album_name"]
 
@@ -595,6 +529,36 @@ async def unsubscribe(websocket, data, username):
     await websocket.send_json(message)
 
 
+async def toggleOpen(websocket, data, username):
+    album_id = data["payload"]["album_id"]
+    updated_album = db.toggleOpen(album_id, username)
+    if updated_album:
+        message = {"action": "toggleOpen", "payload": updated_album}
+        await redis_client.publish(
+            f"album-{updated_album['code']}", json.dumps(message)
+        )
+
+
+async def toggleProfile(websocket, data, username):
+    album_id = data["payload"]["album_id"]
+    updated_album = db.toggleProfile(album_id, username)
+    if updated_album:
+        message = {"action": "toggleProfile", "payload": updated_album}
+        await redis_client.publish(
+            f"album-{updated_album['code']}", json.dumps(message)
+        )
+
+
+async def togglePrivate(websocket, data, username):
+    album_id = data["payload"]["album_id"]
+    updated_album = db.togglePrivate(album_id, username)
+    if updated_album:
+        message = {"action": "togglePrivate", "payload": updated_album}
+        await redis_client.publish(
+            f"album-{updated_album['code']}", json.dumps(message)
+        )
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -647,6 +611,12 @@ async def websocket_endpoint(websocket: WebSocket):
                     await subscribe(websocket, payload, username)
                 elif action == "unsubscribe":
                     await unsubscribe(websocket, payload, username)
+                elif action == "toggleOpen":
+                    await toggleOpen(websocket, payload, username)
+                elif action == "toggleProfile":
+                    await toggleProfile(websocket, payload, username)
+                elif action == "togglePrivate":
+                    await togglePrivate(websocket, payload, username)
                 else:
                     logging.error("websocket - unknown action")
                     await websocket.close(code=1008)
