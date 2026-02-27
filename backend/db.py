@@ -29,6 +29,22 @@ async def enqueue_delete_key(key: str):
     await _pool.enqueue_job("delete_s3_object", key)
 
 
+async def enqueue_record_atomic_photo(
+    photo_id: int,
+    user_id: int,
+    album_id: int,
+    size: int,
+    filename: str,
+    action: str,
+):
+    global _pool
+    if _pool is None:
+        _pool = await arq.create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
+    await _pool.enqueue_job(
+        "record_atomic_photo", photo_id, user_id, album_id, size, filename, action
+    )
+
+
 def init_pool():
     global _db_pool
     if _db_pool is None:
@@ -155,6 +171,17 @@ def init_db() -> None:
                 CREATE TABLE IF NOT EXISTS spaceused (
                     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
                     space BIGINT DEFAULT 0
+                );
+
+                CREATE TABLE IF NOT EXISTS photos_atomic (
+                    id SERIAL PRIMARY KEY,
+                    photo_id INTEGER,
+                    user_id INTEGER,
+                    album_id INTEGER,
+                    size BIGINT,
+                    filename TEXT,
+                    action TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
                 """
@@ -409,12 +436,13 @@ async def deleteAlbum(username: str, code: str) -> str:
                 # 5. Get total size of all original photos in the album
                 cursor.execute(
                     """
-                    SELECT SUM(size) FROM photos
+                    SELECT id, user_id, size, filename FROM photos
                     WHERE album_id = %s
                     """,
                     (album_id,),
                 )
-                total_size = cursor.fetchone()[0] or 0
+                photo_records = cursor.fetchall()
+                total_size = sum(r[2] or 0 for r in photo_records)
 
                 # 6. Remove that space from spaceused for the album owner
                 if total_size > 0:
@@ -427,6 +455,13 @@ async def deleteAlbum(username: str, code: str) -> str:
                         """,
                         (user["id"], total_size),
                     )
+
+                # Record atomic deletions in background
+                for pid, uid, size, fname in photo_records:
+                    if size and size > 0:
+                        await enqueue_record_atomic_photo(
+                            pid, uid, album_id, -size, fname, "delete"
+                        )
 
                 # 7. Delete photo records
                 cursor.execute(
@@ -539,7 +574,7 @@ async def deletePhoto(id: str, username: str) -> bool:
                 # Fetch photo details including S3 keys and size
                 cursor.execute(
                     """
-                    SELECT user_id, album_id, s3_key, thumb_key, mid_key, size
+                    SELECT user_id, album_id, s3_key, thumb_key, mid_key, size, filename
                     FROM photos
                     WHERE id = %s;
                     """,
@@ -549,7 +584,7 @@ async def deletePhoto(id: str, username: str) -> bool:
                 if not photo_row:
                     return False
 
-                photo_owner_id, album_id, s3_key, thumb_key, mid_key, photo_size = photo_row
+                photo_owner_id, album_id, s3_key, thumb_key, mid_key, photo_size, filename = photo_row
 
                 # Fetch album owner
                 cursor.execute(
@@ -597,6 +632,12 @@ async def deletePhoto(id: str, username: str) -> bool:
                         SET space = spaceused.space - EXCLUDED.space;
                         """,
                         (album_owner_id, photo_size),
+                    )
+                    
+                    # Record atomic deletion in background
+                    # Note: db.py is synchronous mostly, but deletePhoto is async.
+                    await enqueue_record_atomic_photo(
+                        photo_id, photo_owner_id, album_id, -photo_size, filename, "delete"
                     )
                 # If DELETE affected a row, commit
                 if cursor.rowcount == 0:
@@ -1318,10 +1359,10 @@ def updatePhotoSizes(
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                # Get album owner and current size BEFORE updating
+                # Get metadata BEFORE updating
                 cursor.execute(
                     """
-                    SELECT a.user_id, p.size
+                    SELECT a.user_id, p.size, a.id, p.filename
                     FROM photos p 
                     JOIN albums a ON p.album_id = a.id 
                     WHERE p.id = %s
@@ -1332,7 +1373,7 @@ def updatePhotoSizes(
                 if not row:
                     return
                 
-                owner_id, current_size = row
+                owner_id, current_size, album_id, filename = row
 
                 # If the new size is 0 or None, and we don't have a size yet, 
                 # don't update the record so it can be picked up later.
@@ -1342,9 +1383,10 @@ def updatePhotoSizes(
 
                 cursor.execute(query, tuple(params))
 
-                # Only log to spaceused if we are transitioning from NULL size to a known size
+                # Only log to spaceused and photos_atomic if we are transitioning from NULL size to a known size
                 # This ensures we only count each photo once, even if the task is retried.
                 if current_size is None and size > 0:
+                    # Update spaceused for album owner
                     cursor.execute(
                         """
                         INSERT INTO spaceused (user_id, space)
@@ -1353,6 +1395,15 @@ def updatePhotoSizes(
                         SET space = spaceused.space + EXCLUDED.space;
                         """,
                         (owner_id, size),
+                    )
+                    
+                    # Record atomic transaction (append-only)
+                    cursor.execute(
+                        """
+                        INSERT INTO photos_atomic (photo_id, user_id, album_id, size, filename, action)
+                        VALUES (%s, %s, %s, %s, %s, %s);
+                        """,
+                        (photo_id, owner_id, album_id, size, filename, "add"),
                     )
 
                 conn.commit()
@@ -1378,6 +1429,31 @@ def addSpaceUsed(user_id: int, space: int):
             except Exception as e:
                 conn.rollback()
                 logging.error("Error adding space used for %s: %s", user_id, e)
+
+
+def recordAtomicPhoto(
+    photo_id: int,
+    user_id: int,
+    album_id: int,
+    size: int,
+    filename: str,
+    action: str,
+) -> None:
+    """Record a photo transaction in the append-only photos_atomic table."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO photos_atomic (photo_id, user_id, album_id, size, filename, action)
+                    VALUES (%s, %s, %s, %s, %s, %s);
+                    """,
+                    (photo_id, user_id, album_id, size, filename, action),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logging.error("Error recording atomic photo %s: %s", photo_id, e)
 
 
 def uncountedPhotos() -> list:

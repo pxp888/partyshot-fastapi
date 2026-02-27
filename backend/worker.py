@@ -73,6 +73,22 @@ async def delete_s3_object(ctx, key: str):
     return True
 
 
+async def record_atomic_photo(
+    ctx,
+    photo_id: int,
+    user_id: int,
+    album_id: int,
+    size: int,
+    filename: str,
+    action: str,
+):
+    """Background task to record atomic photo transactions."""
+    await asyncio.to_thread(
+        db.recordAtomicPhoto, photo_id, user_id, album_id, size, filename, action
+    )
+    return True
+
+
 async def startup(ctx):
     db.init_pool()
 
@@ -83,7 +99,14 @@ async def shutdown(ctx):
 
 # 2. Worker settings
 class WorkerSettings:
-    functions = [say_hello, check_photo_sizes, recount_missing_sizes, delete_s3_object, db.cleanup2]
+    functions = [
+        say_hello,
+        check_photo_sizes,
+        recount_missing_sizes,
+        delete_s3_object,
+        db.cleanup2,
+        record_atomic_photo,
+    ]
     # Connect to the Redis Docker container we set up earlier
     redis_settings = RedisSettings(host=env.REDIS_URL2, port=6379)
     on_startup = startup
