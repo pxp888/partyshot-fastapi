@@ -286,10 +286,6 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             )
             row = cursor.fetchone()
 
-    if row[6]:
-        if authuser != row[8]:
-            return None 
-
     if row:
         return {
             "id": row[0],
@@ -308,16 +304,12 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
 
 
 def getPhotos(
-    album_code: str,
+    album_id: int,
     limit: int = 100,
     offset: int = 0,
     sort_field: str = "created_at",
     sort_order: str = "desc",
 ) -> dict | None:
-    album = getAlbum(album_code)
-    if album is None:
-        return None
-    album_id = album["id"]
 
     # Whitelist sort fields/orders to prevent SQL injection
     allowed_fields = {
@@ -625,9 +617,10 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         is_public = bool(row[5])
         is_private = bool(row[6])
 
-        if not is_owner:
-            if is_private or not is_public:
-                continue
+        if not is_owner and not is_public:
+            continue
+        if is_private and authuser != row[8]:
+            continue
 
         created_at = row[7]
         if isinstance(created_at, datetime.datetime):

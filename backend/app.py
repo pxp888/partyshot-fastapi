@@ -471,8 +471,16 @@ async def getPhotos(websocket, data, username):
     sort_field = data["payload"].get("sortField", "created_at")
     sort_order = data["payload"].get("sortOrder", "desc")
 
+    album = db.getAlbum(albumcode)
+    if not album:
+        logging.info("getPhotos - no album found")
+        return
+    if album["private"] and album["username"] != username:
+        logging.info("getPhotos - not allowed")
+        return
+
     photos_data = db.getPhotos(
-        albumcode,
+        album["id"],
         limit=limit,
         offset=offset,
         sort_field=sort_field,
