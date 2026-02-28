@@ -14,8 +14,16 @@ const FileItem = forwardRef(({
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [aspectRatio, setAspectRatio] = useState(1);
-  const internalRef = useRef();
-  const domRef = ref || internalRef;
+  const localRef = useRef();
+
+  const setRefs = (node) => {
+    localRef.current = node;
+    if (typeof ref === "function") {
+      ref(node);
+    } else if (ref) {
+      ref.current = node;
+    }
+  };
 
   const isSelected = selected.includes(file.id);
 
@@ -28,20 +36,20 @@ const FileItem = forwardRef(({
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          observer.unobserve(domRef.current);
+          observer.unobserve(localRef.current);
         }
       });
     }, {
       rootMargin: '100px',
     });
 
-    if (domRef.current) {
-      observer.observe(domRef.current);
+    if (localRef.current) {
+      observer.observe(localRef.current);
     }
 
     return () => {
-      if (domRef.current) {
-        observer.unobserve(domRef.current);
+      if (localRef.current) {
+        observer.unobserve(localRef.current);
       }
     };
   }, []);
@@ -61,7 +69,7 @@ const FileItem = forwardRef(({
 
   return (
     <div
-      ref={domRef}
+      ref={setRefs}
       className={`fileItem ${isSelected ? "selected" : ""}`}
       onClick={handleClick}
       style={{ "--ar": aspectRatio }}

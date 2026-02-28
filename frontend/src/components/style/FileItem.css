@@ -8,7 +8,9 @@
     position: relative;
     overflow: hidden;
     height: auto;
-    flex: var(--ar, 1) 1 calc(180px * var(--ar, 1));
+    min-height: 150px;
+    aspect-ratio: var(--ar, 1);
+    flex: var(--ar, 1) 1 auto;
 }
 
 .fileItem:hover {
@@ -37,13 +39,13 @@
 
 .thumbnail {
     width: 100%;
-    height: auto;
+    height: 100%;
     background-color: #000;
 }
 
 .thumbnail img {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     object-fit: cover;
     opacity: 0;
