@@ -1,7 +1,11 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "./style/Contactpage.css";
 
 function Contactpage() {
+  const [searchParams] = useSearchParams();
+  const sourceUrl = searchParams.get("from") || "Direct Nav";
+
   const [formData, setFormData] = useState({
     email: "",
     subject: "",
@@ -26,7 +30,7 @@ function Contactpage() {
 
       const response = await fetch("http://51.20.201.88:8000/partyShotsContact", {
         method: "POST",
-        body: `From: ${formData.email}\nSubject: ${formData.subject}\n\n${formData.body}`,
+        body: `From: ${formData.email}\nSubject: ${formData.subject}\nSource: ${sourceUrl}\n\n${formData.body}`,
         headers: {
           "Title": `Contact Form: ${formData.subject}`,
           "Tags": "email,mailbox_with_mail",
@@ -52,6 +56,7 @@ function Contactpage() {
       <div className="contact-container">
         <h1>Get in Touch</h1>
         <p>Have a question or feedback? We'd love to hear from you.</p>
+        <p className="source-info">Reporting from: {sourceUrl}</p>
 
         <form className="contact-form" onSubmit={handleSubmit}>
           <div className="form-group">

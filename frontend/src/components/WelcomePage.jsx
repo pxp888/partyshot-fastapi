@@ -162,7 +162,6 @@ function Welcomepage() {
           >
             GitHub
           </a>
-          <Link to="/contact">Contact</Link>
         </nav>
         <p className="footer-copy">
           &copy; {new Date().getFullYear()} partyShots

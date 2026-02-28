@@ -146,7 +146,6 @@ function Plans() {
 
       <footer className="welcome-footer">
         <nav className="footer-nav">
-          <Link to="/contact">Contact</Link>
           <a
             href="https://github.com/pxp888/partyshot-fastapi"
             target="_blank"

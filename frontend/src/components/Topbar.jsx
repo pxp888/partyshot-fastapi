@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { sendJson, receiveJson } from "./helpers";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 import Searchbar from "./Searchbar";
 import "./style/Topbar.css";
@@ -13,6 +13,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [userInfo, setUserInfo] = useState(null);
   const [userClass, setUserClass] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     console.log("topbar protect test");
@@ -102,6 +103,9 @@ function Topbar({ currentUser, setCurrentUser }) {
         {currentUser ? (
           <div className="userInfo">
 
+            <Link to={`/contact?from=${location.pathname}${location.search}`} className="plans-link">
+              Contact
+            </Link>
             <Link to="/plans" className="plans-link">
               Plans
             </Link>
@@ -123,6 +127,9 @@ function Topbar({ currentUser, setCurrentUser }) {
           </div>
         ) : (
           <div className="nav">
+            <Link to={`/contact?from=${location.pathname}${location.search}`} className="plans-link">
+              Contact
+            </Link>
             <Link to="/plans" className="plans-link">
               Plans
             </Link>

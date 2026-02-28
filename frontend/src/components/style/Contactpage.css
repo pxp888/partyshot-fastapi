@@ -150,6 +150,19 @@
     animation: slideUp 0.4s ease-out;
 }
 
+.source-info {
+    font-size: 0.85rem;
+    color: #888 !important;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    display: block;
+    width: fit-content;
+    margin: 0 auto 1.5rem auto !important;
+    border: 1px dashed #ddd;
+    text-align: center;
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;
