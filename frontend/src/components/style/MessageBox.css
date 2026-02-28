@@ -1,0 +1,114 @@
+.messagebox-back {
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20000;
+    animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.messagebox-container {
+    background-color: var(--form-color);
+    padding: 3rem;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    color: var(--text-primary);
+    animation: slideUpBox 0.4s ease-out;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+@keyframes slideUpBox {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.messagebox-container h2 {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    color: var(--bright-color);
+    text-align: center;
+    margin-top: 0;
+}
+
+.messagebox-content {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.messagebox-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.messagebox-container .btn {
+    flex: 1;
+    margin: 0;
+    background-color: #444;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.messagebox-container .btn:hover {
+    background-color: var(--bright-color);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(250, 128, 114, 0.3);
+}
+
+.messagebox-container .btn.outline {
+    background-color: transparent;
+    border: 1px solid #ccc;
+    color: #444;
+}
+
+.messagebox-container .btn.outline:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: #999;
+}
+
+@media (max-width: 480px) {
+    .messagebox-container {
+        padding: 2rem 1.5rem;
+        width: 85%;
+        border-radius: 16px;
+    }
+}

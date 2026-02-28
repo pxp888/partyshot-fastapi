@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSocket } from "./WebSocketContext"; // ← NEW
+import { useSocket } from "./WebSocketContext";
+import { useMessage } from "./MessageBoxContext";
 import JSZip from "jszip";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
@@ -48,7 +49,8 @@ function Albumview(currentUser) {
     },
     [isFetching, hasMore],
   );
-  const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← NEW
+  const { sendJsonMessage, lastJsonMessage } = useSocket();
+  const { showMessage, showConfirm } = useMessage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -148,7 +150,7 @@ function Albumview(currentUser) {
         if (payload === albumcode) {
           window.location.href = `/user/${currentUser.currentUser}`;
         } else {
-          alert(`Album deletion failed: ${payload}`);
+          showMessage(`Album deletion failed: ${payload}`, "Error");
         }
         break;
 
@@ -195,19 +197,17 @@ function Albumview(currentUser) {
   }, [lastJsonMessage, currentUser, albumcode]);
 
   async function handleDeleteAlbum() {
-    if (!window.confirm("Are you sure you want to delete this album?")) {
-      return;
-    }
-
-    sendJsonMessage({
-      action: "deleteAlbum",
-      payload: { albumcode: albumcode },
+    showConfirm("Are you sure you want to delete this album?", "Delete Album", () => {
+      sendJsonMessage({
+        action: "deleteAlbum",
+        payload: { albumcode: albumcode },
+      });
     });
   }
 
   const startZipProcess = async (photosToZip) => {
     if (!photosToZip || photosToZip.length === 0) {
-      alert("No photos available to download.");
+      showMessage("No photos available to download.", "Download");
       return;
     }
 
@@ -232,7 +232,7 @@ function Albumview(currentUser) {
       saveAs(zipBlob, zipName);
     } catch (err) {
       console.error("Error while creating ZIP:", err);
-      alert("An error occurred while preparing the ZIP file.");
+      showMessage("An error occurred while preparing the ZIP file.", "Error");
     } finally {
       setSelectMode(false);
     }
@@ -240,16 +240,15 @@ function Albumview(currentUser) {
 
   function downloadAll(e) {
     e.preventDefault();
-    if (!window.confirm("Download the full album?")) {
-      return;
-    }
-    if (photos.length >= totalPhotos && totalPhotos > 0) {
-      // Already have all photos, just ZIP them
-      startZipProcess(photos);
-    } else {
-      setIsDownloadingAll(true);
-      fetchPhotos(0, 5000);
-    }
+    showConfirm("Download the full album?", "Download Album", () => {
+      if (photos.length >= totalPhotos && totalPhotos > 0) {
+        // Already have all photos, just ZIP them
+        startZipProcess(photos);
+      } else {
+        setIsDownloadingAll(true);
+        fetchPhotos(0, 5000);
+      }
+    });
   }
 
   function selectAll() {
@@ -268,7 +267,7 @@ function Albumview(currentUser) {
 
   function downloadSelected() {
     if (selected.length === 0) {
-      return alert("No files selected for download.");
+      return showMessage("No files selected for download.", "Download");
     }
 
     const zip = new JSZip();
@@ -293,7 +292,7 @@ function Albumview(currentUser) {
         saveAs(zipBlob, zipName);
       } catch (err) {
         console.error("Error while creating ZIP:", err);
-        alert("An error occurred while preparing the ZIP file.");
+        showMessage("An error occurred while preparing the ZIP file.", "Error");
       }
     })();
   }
@@ -311,19 +310,16 @@ function Albumview(currentUser) {
 
   function deleteSelected() {
     if (selected.length === 0) {
-      return alert("No files selected for deletion.");
+      return showMessage("No files selected for deletion.", "Delete Files");
     }
 
-    if (
-      !window.confirm("Are you sure you want to delete the selected files?")
-    ) {
-      return;
-    }
-    const idsToDelete = [...selected];
-    setSelected([]);
+    showConfirm("Are you sure you want to delete the selected files?", "Delete Files", () => {
+      const idsToDelete = [...selected];
+      setSelected([]);
 
-    idsToDelete.forEach(async (id) => {
-      deletedPhoto(id);
+      idsToDelete.forEach(async (id) => {
+        deletedPhoto(id);
+      });
     });
   }
 

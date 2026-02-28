@@ -1,4 +1,5 @@
-import { useState, useImperativeHandle, forwardRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useContext } from "react";
+import { useMessage } from "./MessageBoxContext";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import "./style/Uploader.css";
@@ -114,6 +115,7 @@ function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
 }
 
 const Uploader = forwardRef(({ album, disabled }, ref) => {
+  const { showMessage } = useMessage();
   const { albumcode } = useParams();
   const [totalFiles, setTotalFiles] = useState(0);
   const [completedFiles, setCompletedFiles] = useState(0);
@@ -149,7 +151,7 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
     if (!presignRes.ok) {
       const errData = await presignRes.json();
       if (presignRes.status === 403) {
-        alert(errData.detail || "Storage limit reached.");
+        showMessage(errData.detail || "Storage limit reached.", "Error");
         throw new Error("QUOTA_EXCEEDED");
       }
       throw new Error(`Presigned request failed: ${presignRes.status}`);

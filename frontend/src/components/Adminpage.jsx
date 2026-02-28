@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useMessage } from "./MessageBoxContext";
 import "./style/Adminpage.css";
 
 function Adminpage({ currentUser }) {
+  const { showMessage, showConfirm } = useMessage();
   const [spaceUsed, setSpaceUsed] = useState(null);
   const [cloudwatchSize, setCloudwatchSize] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,32 +57,30 @@ function Adminpage({ currentUser }) {
   }, [currentUser]);
 
   const handleCleanup = async () => {
-    if (!window.confirm("Are you sure you want to perform cleanup? This will remove orphan files from S3.")) {
-      return;
-    }
+    showConfirm("Are you sure you want to perform cleanup? This will remove orphan files from S3.", "Cleanup", async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const response = await fetch("/api/cleanup", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-    try {
-      const token = localStorage.getItem("access_token");
-      const response = await fetch("/api/cleanup", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+        if (!response.ok) {
+          const error = await response.json();
+          showMessage("Cleanup failed: " + (error.detail || response.statusText), "Error");
+          return;
+        }
 
-      if (!response.ok) {
-        const error = await response.json();
-        alert("Cleanup failed: " + (error.detail || response.statusText));
-        return;
+        showMessage("Cleanup performed successfully.", "Success");
+        fetchSpaceUsed();
+      } catch (err) {
+        console.error(err);
+        showMessage("Error performing cleanup", "Error");
       }
-
-      alert("Cleanup performed successfully.");
-      fetchSpaceUsed();
-    } catch (err) {
-      console.error(err);
-      alert("Error performing cleanup");
-    }
+    });
   };
 
   const handleRecountSizes = async () => {
@@ -96,14 +96,14 @@ function Adminpage({ currentUser }) {
 
       if (!response.ok) {
         const error = await response.json();
-        alert("Recount task failed: " + (error.detail || response.statusText));
+        showMessage("Recount task failed: " + (error.detail || response.statusText), "Error");
         return;
       }
 
-      alert("Recount task enqueued. Sizes will be updated in the background.");
+      showMessage("Recount task enqueued. Sizes will be updated in the background.", "Success");
     } catch (err) {
       console.error(err);
-      alert("Error enqueuing recount task");
+      showMessage("Error enqueuing recount task", "Error");
     }
   };
 
