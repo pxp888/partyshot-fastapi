@@ -166,7 +166,7 @@
 @media (max-width: 768px) {
     .fileList {
         margin: 0 var(--gap-sm);
-        gap: 6px;
+        gap: var(--gap-sm);
     }
 
     .infoItem {
