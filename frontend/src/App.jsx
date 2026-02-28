@@ -13,6 +13,7 @@ import { WebSocketProvider } from "./components/WebSocketContext";
 import AccountPage from "./components/AccountPage";
 import Howitworks from "./components/Howitworks";
 import { MessageBoxProvider } from "./components/MessageBoxContext";
+import CookieConsent from "./components/CookieConsent";
 
 
 
@@ -27,6 +28,7 @@ export default function App() {
     <MessageBoxProvider>
       <WebSocketProvider>
         <Router>
+          <CookieConsent />
           <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
           <Routes>

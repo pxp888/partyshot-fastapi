@@ -12,13 +12,13 @@ export const MessageBoxProvider = ({ children }) => {
         onConfirm: null,
     });
 
-    const showMessage = (message, title = "Alert") => {
+    const showMessage = (message, title = "Alert", onConfirm = null) => {
         setModal({
             show: true,
             message,
             title,
             type: "alert",
-            onConfirm: null,
+            onConfirm,
         });
     };
 

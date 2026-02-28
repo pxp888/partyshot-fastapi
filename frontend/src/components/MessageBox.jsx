@@ -20,7 +20,7 @@ const MessageBox = ({ message, onClose, title = "Alert", type = "alert", onConfi
                     <button
                         className="btn"
                         onClick={() => {
-                            if (type === "confirm" && onConfirm) {
+                            if (onConfirm) {
                                 onConfirm();
                             }
                             onClose();
