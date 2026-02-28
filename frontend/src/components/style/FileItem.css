@@ -8,9 +8,10 @@
     position: relative;
     overflow: hidden;
     height: auto;
-    min-height: 150px;
+    min-height: 100px;
+    /* Baseline min height */
     aspect-ratio: var(--ar, 1);
-    flex: var(--ar, 1) 1 auto;
+    flex: var(--ar, 1) 1 calc(200px * var(--ar, 1));
 }
 
 .fileItem:hover {
