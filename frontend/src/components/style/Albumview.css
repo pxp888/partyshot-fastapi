@@ -187,20 +187,31 @@
     }
 
     .albumActions {
-        position: sticky;
-        top: 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
         display: grid;
         grid-template-columns: 1fr 1fr;
         padding: 0.6rem 0.75rem;
         gap: var(--gap-sm);
         white-space: normal;
         overflow-x: visible;
+        border-bottom: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .sortControls {
         margin-left: 0;
         grid-column: 1 / -1;
         justify-content: center;
+    }
+
+    .albumFiles,
+    .albumListview {
+        padding-bottom: 120px;
+        /* Space for the fixed action bar */
     }
 }
 

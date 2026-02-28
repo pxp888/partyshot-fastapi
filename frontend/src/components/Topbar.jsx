@@ -102,28 +102,31 @@ function Topbar({ currentUser, setCurrentUser }) {
         <Searchbar className="search" />
         {currentUser ? (
           <div className="userInfo">
-
-            <Link to={`/contact?from=${location.pathname}${location.search}`} className="plans-link">
-              Contact
-            </Link>
-            <Link to="/plans" className="plans-link">
-              Plans
-            </Link>
-            <button
-              className="btn"
-              onClick={() => (window.location.href = `/user/${currentUser}`)}
-            >
-              {currentUser} home
-            </button>
-            <button
-              className="btn"
-              onClick={() => (window.location.href = "/account")}
-            >
-              Account
-            </button>
-            <button className="btn" onClick={handleLogout}>
-              Logout
-            </button>
+            <div>
+              <Link to={`/contact?from=${location.pathname}${location.search}`} className="plans-link">
+                Contact
+              </Link>
+              <Link to="/plans" className="plans-link">
+                Plans
+              </Link>
+            </div>
+            <div>
+              <button
+                className="btn"
+                onClick={() => (window.location.href = `/user/${currentUser}`)}
+              >
+                {currentUser} home
+              </button>
+              <button
+                className="btn"
+                onClick={() => (window.location.href = "/account")}
+              >
+                Account
+              </button>
+              <button className="btn" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
           </div>
         ) : (
           <div className="nav">
