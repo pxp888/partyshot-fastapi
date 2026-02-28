@@ -14,6 +14,13 @@
     flex: var(--ar, 1) 1 calc(200px * var(--ar, 1));
 }
 
+@media (max-width: 768px) {
+    .fileItem {
+        min-height: 50px;
+        flex: var(--ar, 1) 1 calc(100px * var(--ar, 1));
+    }
+}
+
 .fileItem:hover {
     transform: scale(1.05);
     transition: transform 0.3s ease;
