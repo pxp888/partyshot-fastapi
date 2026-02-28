@@ -45,16 +45,16 @@ function Iconlist({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selec
                     {sortedPhotos.map((file, index) => {
                         if (sortedPhotos.length === index + 1) {
                             return (
-                                <div ref={lastPhotoElementRef} key={file.id}>
-                                    <FileItem
-                                        index={index}
-                                        file={file}
-                                        selectMode={selectMode}
-                                        selected={selected}
-                                        setSelected={setSelected}
-                                        setFocus={setFocus}
-                                    />
-                                </div>
+                                <FileItem
+                                    ref={lastPhotoElementRef}
+                                    key={file.id}
+                                    index={index}
+                                    file={file}
+                                    selectMode={selectMode}
+                                    selected={selected}
+                                    setSelected={setSelected}
+                                    setFocus={setFocus}
+                                />
                             );
                         } else {
                             return (

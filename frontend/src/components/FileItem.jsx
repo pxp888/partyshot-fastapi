@@ -1,19 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 import "./style/FileItem.css";
 import blankImage from '../assets/blank.jpg';
 import videoImage from '../assets/video.webp';
 
-function FileItem({
+const FileItem = forwardRef(({
   index,
   file,
   selectMode,
   selected,
   setSelected,
   setFocus,
-}) {
+}, ref) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const domRef = useRef();
+  const [aspectRatio, setAspectRatio] = useState(1);
+  const internalRef = useRef();
+  const domRef = ref || internalRef;
 
   const isSelected = selected.includes(file.id);
 
@@ -62,6 +64,7 @@ function FileItem({
       ref={domRef}
       className={`fileItem ${isSelected ? "selected" : ""}`}
       onClick={handleClick}
+      style={{ "--ar": aspectRatio }}
     >
       <div className="thumbnail">
         {/* Actual Image - falls back to black background while loading, then fades in */}
@@ -70,7 +73,12 @@ function FileItem({
             src={file.thumb_key || placeholder}
             alt={`${file.filename}`}
             className={isLoaded ? "loaded" : ""}
-            onLoad={() => setIsLoaded(true)}
+            onLoad={(e) => {
+              setIsLoaded(true);
+              if (e.target.naturalWidth && e.target.naturalHeight) {
+                setAspectRatio(e.target.naturalWidth / e.target.naturalHeight);
+              }
+            }}
             onError={(e) => {
               e.target.src = placeholder;
               setIsLoaded(true);
@@ -94,6 +102,6 @@ function FileItem({
       </div>
     </div>
   );
-}
+});
 
 export default FileItem;

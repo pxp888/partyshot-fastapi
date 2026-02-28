@@ -3,7 +3,7 @@
  * ------------------------------------ */
 
 :root {
-    --gap-sm: 0.5rem;
+    --gap-sm: 2px;
     --gap-md: 1rem;
     --gap-lg: 2rem;
     --action-bg: var(--form-color, #f9f9f9);
@@ -13,12 +13,17 @@
 
 /* ----- File list ----------------------------------------------------- */
 .fileList {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--gap-sm);
     padding: var(--gap-sm) 0;
     margin: 0 var(--gap-md);
     box-sizing: border-box;
+}
+
+.fileList::after {
+    content: "";
+    flex-grow: 10000;
 }
 
 /* ----- Album details ----------------------------------------------- */
@@ -160,7 +165,6 @@
 /* ----- Responsive tweaks ------------------------------------------- */
 @media (max-width: 768px) {
     .fileList {
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
         margin: 0 var(--gap-sm);
         gap: 6px;
     }
@@ -201,7 +205,7 @@
 }
 
 .fetchingStatus {
-    grid-column: 1 / -1;
+    width: 100%;
     text-align: center;
     padding: var(--gap-lg);
     color: var(--text-muted);
