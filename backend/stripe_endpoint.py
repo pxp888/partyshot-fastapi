@@ -1,4 +1,6 @@
 import datetime
+import logging 
+
 import env2 as env
 import stripe
 import db
@@ -104,11 +106,12 @@ async def stripe_webhook(request: Request):
             payload, sig_header, endpoint_secret
         )
     except ValueError as e:
-        # Invalid payload
+        # Invalid payload   
+        logging.error("Invalid payload: %s", e)
         raise HTTPException(status_code=400, detail="Invalid payload")
     except stripe.error.SignatureVerificationError as e:
         # Invalid signature
-        print(f"⚠️ Signature verification failed! Check your secret. Error: {e}")
+        logging.error("Invalid signature: %s", e)
         raise HTTPException(status_code=400, detail="Invalid signature")
 
 
