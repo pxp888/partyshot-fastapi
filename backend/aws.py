@@ -45,8 +45,7 @@ def create_presigned_url(object_name, expiration=86400):
     Generate a presigned URL to SHARE/VIEW an object.
     :param expiration: Time in seconds (default 1 hour)
     """
-    if not env.LOCALDEV:
-        return f"https://media.shareshot.eu/{object_name}"
+    return f"https://media.shareshot.eu/{object_name}"
 
     if object_name is None:
         return None
