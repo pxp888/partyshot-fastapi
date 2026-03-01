@@ -117,10 +117,7 @@ function Topbar({ currentUser, setCurrentUser }) {
               >
                 Account
               </button>
-              <button className="btn" onClick={async () => {
-                await handleLogout();
-                navigate("/");
-              }}>
+              <button className="btn" onClick={handleLogout}>
                 Logout
               </button>
             </div>
