@@ -642,13 +642,13 @@ async def deletePhoto(id: str, username: str) -> bool:
                 # If DELETE affected a row, commit
                 if cursor.rowcount == 0:
                     conn.rollback()
-                    return False
+                    return None
 
                 conn.commit()
-                return True
+                return {"id": photo_id, "album_id": album_id}
             except Exception:
                 conn.rollback()
-                return False
+                return None
 
 
 def getAlbums(username: str, authuser: str) -> dict | None:

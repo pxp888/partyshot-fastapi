@@ -34,6 +34,7 @@ export default {
             const headers = new Headers();
             object.writeHttpMetadata(headers);
             headers.set("etag", object.httpEtag);
+            headers.set("Cache-Control", "public, s-maxage=604800, max-age=86400");
             return new Response(object.body, { headers });
 
         } catch (e) {

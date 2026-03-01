@@ -41,11 +41,13 @@ def upload_bytes_to_s3(bytes_data, object_name):
 
 
 def create_presigned_url(object_name, expiration=86400):
-    return f"https://media.shareshot.eu/{object_name}"
     """
     Generate a presigned URL to SHARE/VIEW an object.
     :param expiration: Time in seconds (default 1 hour)
     """
+    if not env.LOCALDEV:
+        return f"https://media.shareshot.eu/{object_name}"
+
     if object_name is None:
         return None
     s3_client = get_s3_client()

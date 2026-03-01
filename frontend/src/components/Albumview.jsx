@@ -128,21 +128,25 @@ function Albumview(currentUser) {
       }
 
       case "addPhoto":
-        setPhotos((prev) => {
-          if (sortOrder === "desc") {
-            return [payload, ...prev];
-          } else {
-            return [...prev, payload];
-          }
-        });
-        setTotalPhotos((prev) => prev + 1);
-        console.log("Photo added:", payload);
+        if (payload && payload.album_id === album?.id) {
+          setPhotos((prev) => {
+            if (sortOrder === "desc") {
+              return [payload, ...prev];
+            } else {
+              return [...prev, payload];
+            }
+          });
+          setTotalPhotos((prev) => prev + 1);
+          console.log("Photo added to current album:", payload);
+        }
         break;
 
       case "deletePhoto": {
-        const deletedId = payload;
-        setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
-        setSelected((prev) => prev.filter((id) => id !== deletedId));
+        if (payload && payload.album_id === album?.id) {
+          const deletedId = payload.id;
+          setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
+          setSelected((prev) => prev.filter((id) => id !== deletedId));
+        }
         break;
       }
 

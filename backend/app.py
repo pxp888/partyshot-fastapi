@@ -316,8 +316,9 @@ async def add_photo_metadata(
             _expires=3600,
         )
 
-    message = {"action": "addPhoto", "payload": photo_resp}
-    await redis_client.publish(f"album-{payload['albumcode']}", json.dumps(message))
+    if photo_resp:
+        message = {"action": "addPhoto", "payload": photo_resp}
+        await redis_client.publish(f"album-{payload['albumcode']}", json.dumps(message))
     return {"photo_id": photo_resp}
 
 
@@ -463,9 +464,9 @@ async def getPhotos(websocket, data, username):
 async def deletePhoto(websocket, data, username):
     albumcode = data["payload"]["album_code"]
     photo_id = data["payload"]["photo_id"]
-    ok = await db.deletePhoto(photo_id, username)
-    if ok:
-        message = {"action": "deletePhoto", "payload": photo_id}
+    result = await db.deletePhoto(photo_id, username)
+    if result:
+        message = {"action": "deletePhoto", "payload": result}
         await redis_client.publish(f"album-{albumcode}", json.dumps(message))
     else:
         logging.info("not deleted %s", photo_id)
