@@ -80,7 +80,7 @@ function Topbar({ currentUser, setCurrentUser }) {
     // Clear JWT cookies
     document.cookie = "access_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.shareshot.eu";
     document.cookie = "refresh_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.shareshot.eu";
-    window.location.reload();
+    // window.location.reload();
     // navigate("/");
   }
 
