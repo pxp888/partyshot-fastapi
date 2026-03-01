@@ -93,8 +93,8 @@
     cursor: pointer;
     /* color: var(--bright-color) !important; */
     color: white;
-    /* text-decoration: underline rgba(255, 127, 80, 0.3); */
-    text-decoration: underline;
+    text-decoration: underline rgba(255, 255, 255, 0.3);
+    /* text-decoration: underline; */
 }
 
 .clickable:hover {
