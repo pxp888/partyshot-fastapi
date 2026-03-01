@@ -71,26 +71,26 @@ function Topbar({ currentUser, setCurrentUser }) {
     return () => clearInterval(intervalId);
   }, []); // Only once on mount
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } catch (e) {
+      console.warn("Backend logout failed", e);
+    }
     setCurrentUser(null);
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("wssecret");
     localStorage.removeItem("user");
-    // Clear JWT cookies
-    document.cookie = "access_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.shareshot.eu";
-    document.cookie = "refresh_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.shareshot.eu";
-    // window.location.reload();
-    // navigate("/");
   }
 
   return (
     <>
       <div className="topbar">
         <div className="topLeft">
-          <a href="/">
+          <Link to="/">
             shareShot<span className="title-suffix">.eu</span>
-          </a>
+          </Link>
         </div>
 
         <Searchbar className="search" />
@@ -107,17 +107,20 @@ function Topbar({ currentUser, setCurrentUser }) {
             <div>
               <button
                 className="btn"
-                onClick={() => (window.location.href = `/user/${currentUser}`)}
+                onClick={() => navigate(`/user/${currentUser}`)}
               >
                 {currentUser} home
               </button>
               <button
                 className="btn"
-                onClick={() => (window.location.href = "/account")}
+                onClick={() => navigate("/account")}
               >
                 Account
               </button>
-              <button className="btn" onClick={handleLogout}>
+              <button className="btn" onClick={async () => {
+                await handleLogout();
+                navigate("/");
+              }}>
                 Logout
               </button>
             </div>

@@ -1,12 +1,9 @@
-// You'll set this 'JWT_SECRET' in your Worker's Settings -> Variables
-
 export default {
-    async fetch(request, env) {
+    async fetch(request, env, ctx) {
         const url = new URL(request.url);
         const cookieHeader = request.headers.get("Cookie") || "";
 
-        // 1. Extract the JWT from your cookie string
-        // Assumes your cookie is named 'token' (e.g., token=xxxxx.yyyyy.zzzzz)
+        // 1. Extract the JWT from the access_token_cookie
         const match = cookieHeader.match(/access_token_cookie="?([^;"]+)"?/);
         const token = match ? match[1] : null;
 
@@ -15,27 +12,44 @@ export default {
         }
 
         try {
-            // 2. Validate the JWT (Self-contained check)
-            // This is where you verify the signature and expiry
+            // 2. Validate the JWT signature and expiry
             const isValid = await verifyJWT(token, env.JWT_SECRET);
 
             if (!isValid) {
                 return new Response("Unauthorized: Invalid or Expired Token", { status: 403 });
             }
 
-            // 3. Fetch from R2 if valid
-            const key = url.pathname.slice(1);
-            const object = await env.MY_BUCKET.get(key);
+            // 3. Cache Logic: Check if the Edge already has this file
+            const cache = caches.default;
+            let response = await cache.match(request);
 
-            if (object === null) {
-                return new Response("Object Not Found", { status: 404 });
+            if (!response) {
+                // Cache MISS: We must fetch from R2
+                const key = url.pathname.slice(1);
+                const object = await env.MY_BUCKET.get(key);
+
+                if (object === null) {
+                    return new Response("Object Not Found", { status: 404 });
+                }
+
+                // Construct headers from R2 metadata
+                const headers = new Headers();
+                object.writeHttpMetadata(headers);
+                headers.set("etag", object.httpEtag);
+
+                // Explicitly allow the CDN to cache this for 1 week (s-maxage)
+                // and the browser to cache for 1 day (max-age)
+                headers.set("Cache-Control", "public, s-maxage=604800, max-age=86400");
+
+                // Create the response object
+                response = new Response(object.body, { headers });
+
+                // Store a clone of the response in the cache for future requests
+                // ctx.waitUntil ensures the task finishes even after the response is sent
+                ctx.waitUntil(cache.put(request, response.clone()));
             }
 
-            const headers = new Headers();
-            object.writeHttpMetadata(headers);
-            headers.set("etag", object.httpEtag);
-            headers.set("Cache-Control", "public, s-maxage=604800, max-age=86400");
-            return new Response(object.body, { headers });
+            return response;
 
         } catch (e) {
             return new Response(`Internal Error: ${e.message}`, { status: 500 });
@@ -43,7 +57,9 @@ export default {
     }
 };
 
-// Simplified helper for HS256 verification (using Web Crypto API)
+/**
+ * JWT Verification Logic (HS256)
+ */
 async function verifyJWT(token, secret) {
     const parts = token.split('.');
     if (parts.length !== 3) return false;
@@ -52,29 +68,32 @@ async function verifyJWT(token, secret) {
     const encoder = new TextEncoder();
     const data = encoder.encode(`${headerB64}.${payloadB64}`);
 
-    // Import the secret key
-    const key = await crypto.subtle.importKey(
-        "raw", encoder.encode(secret),
-        { name: "HMAC", hash: "SHA-256" },
-        false, ["verify"]
-    );
-
-    // Verify the signature (base64url to Uint8Array)
-    const signature = base64UrlToUint8Array(signatureB64);
-    const verified = await crypto.subtle.verify("HMAC", key, signature, data);
-    if (!verified) return false;
-
-    // Check Expiry (exp)
     try {
+        const key = await crypto.subtle.importKey(
+            "raw",
+            encoder.encode(secret),
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["verify"]
+        );
+
+        const signature = base64UrlToUint8Array(signatureB64);
+        const verified = await crypto.subtle.verify("HMAC", key, signature, data);
+        if (!verified) return false;
+
+        // Verify Expiry
         const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(payloadB64)));
         if (payload.exp && Date.now() / 1000 > payload.exp) return false;
+
+        return true;
     } catch (e) {
         return false;
     }
-
-    return true;
 }
 
+/**
+ * Helper to convert Base64URL to Uint8Array
+ */
 function base64UrlToUint8Array(base64Url) {
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const pad = base64.length % 4;

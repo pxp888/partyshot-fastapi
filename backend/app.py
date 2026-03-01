@@ -178,6 +178,12 @@ def refresh(Authorize: AuthJWT = Depends()):
     return {"access_token": new_access_token}
 
 
+@app.post("/api/logout")
+def logout(response: Response, Authorize: AuthJWT = Depends()):
+    Authorize.unset_jwt_cookies(response=response)
+    return {"msg": "Successfully logged out"}
+
+
 @app.get("/api/protected")
 def protected(Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
