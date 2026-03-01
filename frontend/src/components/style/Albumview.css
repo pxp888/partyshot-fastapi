@@ -26,6 +26,15 @@
     flex-grow: 10000;
 }
 
+.helptext {
+    margin: 0 var(--gap-md);
+    padding: var(--gap-lg) 0;
+    /* color: var(--text-muted); */
+    color: white;
+    font-style: italic;
+    text-align: center;
+}
+
 /* ----- Album details ----------------------------------------------- */
 .albumDetails {
     display: flex;

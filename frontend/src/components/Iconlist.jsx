@@ -39,7 +39,7 @@ function Iconlist({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selec
                 </div>
             )}
             {photos.length === 0 ? (
-                <p>Drop files here to get started.</p>
+                <p className="helptext">Drop files here to get started.</p>
             ) : (
                 <div className="fileList">
                     {sortedPhotos.map((file, index) => {
