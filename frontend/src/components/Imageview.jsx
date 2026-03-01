@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./style/Imageview.css";
+import MessageBox from "./MessageBox";
 import blankImage from "../assets/blank.jpg";
 import videoImage from "../assets/video.webp";
 
@@ -7,6 +8,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   // Reference to the container so we can compute click position
   const containerRef = useRef(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const lastFocus = useRef(focus);
 
   const updateUrl = (newFocus, mode = "replace") => {
@@ -97,6 +99,10 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     if (focus === -1 || !files) return;
 
     const handler = (e) => {
+      if (showDeleteConfirm) {
+        if (e.key === "Escape") setShowDeleteConfirm(false);
+        return;
+      }
       switch (e.key) {
         case "ArrowRight":
           next();
@@ -113,12 +119,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           break;
         case "Delete":
         case "Backspace":
-          if (window.confirm("Are you sure you want to delete this file?")) {
-            deletedPhoto(files[focus].id);
-            if (focus >= files.length - 1) {
-              setFocus(focus - 1);
-            }
-          }
+          setShowDeleteConfirm(true);
           break;
         default:
           return;
@@ -127,7 +128,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [focus, files, setFocus, deletedPhoto, next, previous, hide]);
+  }, [focus, files, setFocus, deletedPhoto, next, previous, hide, showDeleteConfirm]);
 
   // Handle temporary visibility of file details when image changes
   useEffect(() => {
@@ -215,6 +216,20 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           </span>
         </div>
       </div>
+      {showDeleteConfirm && (
+        <MessageBox
+          title="Delete photo"
+          message="Are you sure you want to delete this file?"
+          type="confirm"
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => {
+            deletedPhoto(files[focus].id);
+            if (focus >= files.length - 1) {
+              setFocus(focus - 1);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

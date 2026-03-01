@@ -12,6 +12,7 @@
     /* Baseline min height */
     aspect-ratio: var(--ar, 1);
     flex: var(--ar, 1) 1 calc(200px * var(--ar, 1));
+    max-width: 300px;
 }
 
 @media (max-width: 768px) {
@@ -22,7 +23,7 @@
 }
 
 .fileItem:hover {
-    transform: scale(1.05);
+    /* transform: scale(1.05); */
     transition: transform 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     z-index: 50;
