@@ -12,7 +12,7 @@
     /* Baseline min height */
     aspect-ratio: var(--ar, 1);
     flex: var(--ar, 1) 1 calc(200px * var(--ar, 1));
-    max-width: 300px;
+    /* max-width: 300px; */
 }
 
 @media (max-width: 768px) {
