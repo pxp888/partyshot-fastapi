@@ -37,7 +37,7 @@ export default {
             return new Response(object.body, { headers });
 
         } catch (e) {
-            return new Response("Internal Error", { status: 500 });
+            return new Response(`Internal Error: ${e.message}`, { status: 500 });
         }
     }
 };

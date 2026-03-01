@@ -113,11 +113,13 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
     access_token = Authorize.create_access_token(subject=user.username)
     refresh_token = Authorize.create_refresh_token(subject=user.username)
 
+    # Ensure tokens are strings (handle potential bytes return)
+    if isinstance(access_token, bytes): access_token = access_token.decode('utf-8')
+    if isinstance(refresh_token, bytes): refresh_token = refresh_token.decode('utf-8')
+
     # Set JWT cookies for Cloudflare Worker
     Authorize.set_access_cookies(access_token, response=response)
     Authorize.set_refresh_cookies(refresh_token, response=response)
-
-    cookie(response)
 
     return {
         "access_token": access_token,
@@ -145,11 +147,13 @@ def register(
     access_token = Authorize.create_access_token(subject=request.username)
     refresh_token = Authorize.create_refresh_token(subject=request.username)
 
+    # Ensure tokens are strings
+    if isinstance(access_token, bytes): access_token = access_token.decode('utf-8')
+    if isinstance(refresh_token, bytes): refresh_token = refresh_token.decode('utf-8')
+
     # Set JWT cookies for Cloudflare Worker
     Authorize.set_access_cookies(access_token, response=response)
     Authorize.set_refresh_cookies(refresh_token, response=response)
-
-    cookie(response)
 
     return {
         "access_token": access_token,

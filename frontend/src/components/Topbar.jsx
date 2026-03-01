@@ -32,15 +32,6 @@ function Topbar({ currentUser, setCurrentUser }) {
       });
   }, [setCurrentUser]); // Test protected route on mount
 
-  useEffect(() => {
-    fetch("/api/cookie", { method: "GET" })
-      .then(() => {
-        console.log("CloudFront cookie set");
-      })
-      .catch((err) => {
-        console.error("Failed to set CloudFront cookie:", err);
-      });
-  }, []);
 
   /* ---- Keep‑alive logic ---- */
   useEffect(() => {
