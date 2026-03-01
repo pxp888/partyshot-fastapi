@@ -66,6 +66,8 @@ class RegisterRequest(BaseModel):
 class Settings(BaseModel):
     authjwt_secret_key: str = env.AUTH_JWT_SECRET_KEY
     authjwt_cookie_domain: str = ".shareshot.eu"
+    authjwt_token_location: set = {"headers", "cookies"}
+    authjwt_cookie_csrf_protect: bool = False  # Set to True in production if needed
 
 class ToggleOpenRequest(BaseModel):
     album_id: int
@@ -111,6 +113,10 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
     access_token = Authorize.create_access_token(subject=user.username)
     refresh_token = Authorize.create_refresh_token(subject=user.username)
 
+    # Set JWT cookies for Cloudflare Worker
+    Authorize.set_access_cookies(access_token, response=response)
+    Authorize.set_refresh_cookies(refresh_token, response=response)
+
     cookie(response)
 
     return {
@@ -138,6 +144,10 @@ def register(
     logging.info("Registering user: %s, email: %s, ", request.username, request.email)
     access_token = Authorize.create_access_token(subject=request.username)
     refresh_token = Authorize.create_refresh_token(subject=request.username)
+
+    # Set JWT cookies for Cloudflare Worker
+    Authorize.set_access_cookies(access_token, response=response)
+    Authorize.set_refresh_cookies(refresh_token, response=response)
 
     cookie(response)
 

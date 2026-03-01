@@ -86,6 +86,9 @@ function Topbar({ currentUser, setCurrentUser }) {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("wssecret");
     localStorage.removeItem("user");
+    // Clear JWT cookies
+    document.cookie = "access_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.shareshot.eu";
+    document.cookie = "refresh_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.shareshot.eu";
     window.location.reload();
     // navigate("/");
   }

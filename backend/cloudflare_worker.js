@@ -1,5 +1,4 @@
 // You'll set this 'JWT_SECRET' in your Worker's Settings -> Variables
-const JWT_SECRET = "AEd5zQKOkmHLReq6l4az8e0zq/8JHhAlgy+um+Y4MQKBgQDgbmepejE";
 
 export default {
     async fetch(request, env) {
@@ -45,25 +44,44 @@ export default {
 
 // Simplified helper for HS256 verification (using Web Crypto API)
 async function verifyJWT(token, secret) {
-    const [headerB64, payloadB64, signatureB64] = token.split('.');
-    if (!signatureB64) return false;
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const [headerB64, payloadB64, signatureB64] = parts;
 
     const encoder = new TextEncoder();
     const data = encoder.encode(`${headerB64}.${payloadB64}`);
+
+    // Import the secret key
     const key = await crypto.subtle.importKey(
         "raw", encoder.encode(secret),
         { name: "HMAC", hash: "SHA-256" },
         false, ["verify"]
     );
 
-    // Check signature
-    const signature = Uint8Array.from(atob(signatureB64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    // Verify the signature (base64url to Uint8Array)
+    const signature = base64UrlToUint8Array(signatureB64);
     const verified = await crypto.subtle.verify("HMAC", key, signature, data);
     if (!verified) return false;
 
     // Check Expiry (exp)
-    const payload = JSON.parse(atob(payloadB64));
-    if (payload.exp && Date.now() / 1000 > payload.exp) return false;
+    try {
+        const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(payloadB64)));
+        if (payload.exp && Date.now() / 1000 > payload.exp) return false;
+    } catch (e) {
+        return false;
+    }
 
     return true;
+}
+
+function base64UrlToUint8Array(base64Url) {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
 }
