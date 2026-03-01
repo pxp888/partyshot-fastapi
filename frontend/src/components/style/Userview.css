@@ -3,13 +3,11 @@
  * ------------------------------------------------------------------ */
 .album-list {
     display: grid;
-    /* Show 1 column on mobile, grow to 2‑3 columns on larger viewports */
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    /* gap: 1rem; */
-    margin: 0 2rem;
-    padding: 0.5rem 0;
-    /* added a little vertical padding */
-    /* Prevent items from bleeding outside the container */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
     box-sizing: border-box;
 }
 
@@ -197,16 +195,10 @@
     }
 
     .album-list {
-        display: grid;
-        /* Show 1 column on mobile, grow to 2‑3 columns on larger viewports */
         grid-template-columns: 1fr 1fr;
         gap: 1px;
-        margin: 0rem;
-        padding: 0.5rem 0;
-        padding-bottom: 120px;
-        /* Space for fixed action bar */
-        /* added a little vertical padding */
-        /* Prevent items from bleeding outside the container */
-        box-sizing: border-box;
+        padding: 0.5rem;
+        padding-bottom: 140px;
+        margin: 0;
     }
 }

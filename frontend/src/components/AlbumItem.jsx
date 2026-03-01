@@ -41,44 +41,51 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
     <div
       className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.profile ? "not-profile" : ""} ${album.private ? "is-private" : ""}`}
       onClick={handleClick}
-      style={{ cursor: "pointer" }}
     >
-      <img
-        src={album.thumb_key || blankImage}
-        alt={album.name}
-        onError={(e) => {
-          e.target.src = blankImage;
-        }}
-      />
+      <div className="thumbnail-container">
+        <img
+          src={album.thumb_key || blankImage}
+          alt={album.name}
+          onError={(e) => {
+            e.target.src = blankImage;
+          }}
+        />
+      </div>
       <div className="info">
         <h3>{album.name}</h3>
-        <label>user</label>
-        <p>{album.username} </p>
-        <label className="hideMobile">open</label>
-        <p
-          className={`hideMobile ${!isOtherUser ? "clickable" : ""}`}
-          onClick={handleToggleOpen}
-        >
-          {album.open ? "Yes" : "No"}
-        </p>
-        <label className="hideMobile">profile</label>
-        <p
-          className={`hideMobile ${!isOtherUser ? "clickable" : ""}`}
-          onClick={handleToggleProfile}
-        >
-          {album.profile ? "Yes" : "No"}
-        </p>
-        <label className="hideMobile">private</label>
-        <p
-          className={`hideMobile ${!isOtherUser ? "clickable" : ""}`}
-          onClick={handleTogglePrivate}
-        >
-          {album.private ? "Yes" : "No"}
-        </p>
-        <label className="hideMobile">created</label>
-        <p className="hideMobile">
-          {new Date(album.created_at).toLocaleString()}
-        </p>
+        <div className="album-details">
+          <label>user</label>
+          <p>{album.username}</p>
+
+          <label className="hideMobile">open</label>
+          <p
+            className={`hideMobile status-badge ${!isOtherUser ? "clickable" : ""}`}
+            onClick={handleToggleOpen}
+          >
+            {album.open ? "Yes" : "No"}
+          </p>
+
+          <label className="hideMobile">profile</label>
+          <p
+            className={`hideMobile status-badge ${!isOtherUser ? "clickable" : ""}`}
+            onClick={handleToggleProfile}
+          >
+            {album.profile ? "Yes" : "No"}
+          </p>
+
+          <label className="hideMobile">private</label>
+          <p
+            className={`hideMobile status-badge ${!isOtherUser ? "clickable" : ""}`}
+            onClick={handleTogglePrivate}
+          >
+            {album.private ? "Yes" : "No"}
+          </p>
+
+          <label className="hideMobile">created</label>
+          <p className="hideMobile">
+            {new Date(album.created_at).toLocaleDateString()}
+          </p>
+        </div>
       </div>
     </div>
   );
