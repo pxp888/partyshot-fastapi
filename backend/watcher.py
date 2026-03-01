@@ -1,7 +1,7 @@
 import asyncio
 import time
 
-import env
+import env2 as env
 import redis.asyncio as redis
 from fastapi import WebSocket
 

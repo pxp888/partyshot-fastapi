@@ -10,7 +10,7 @@ logging.basicConfig(
 
 import aws
 import db
-import env
+import env2 as env
 import redis.asyncio as redis
 import watcher
 from arq import create_pool
@@ -90,20 +90,9 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 
 def cookie(response):
-    # Set CloudFront Signed Cookies
-    resource_url = f"https://{env.CLOUDFRONT_DOMAIN}/*"
-    cookies = aws.get_cloudfront_signed_cookies(resource_url)
-    if cookies:
-        for name, value in cookies.items():
-            response.set_cookie(
-                key=name,
-                value=value,
-                httponly=True,
-                secure=True,
-                samesite="none",
-                domain=getattr(env, "COOKIE_DOMAIN", None),
-                path="/",
-            )
+    """Placeholder for cookie logic (CloudFront was removed)"""
+    return
+
 
 
 @app.get("/api/cookie")
@@ -246,22 +235,22 @@ async def get_presigned(
 
     s3_client = aws.get_s3_client()
     try:
-        # Generate presigned POST for original
-        original_presigned = s3_client.generate_presigned_post(
-            Bucket=aws.BUCKET_NAME,
-            Key=s3_key,
+        # Generate presigned PUT for original
+        original_presigned = s3_client.generate_presigned_url(
+            ClientMethod="put_object",
+            Params={"Bucket": aws.BUCKET_NAME, "Key": s3_key},
             ExpiresIn=3600,
         )
-        # Generate presigned POST for thumbnail
-        thumb_presigned = s3_client.generate_presigned_post(
-            Bucket=aws.BUCKET_NAME,
-            Key=thumb_key,
+        # Generate presigned PUT for thumbnail
+        thumb_presigned = s3_client.generate_presigned_url(
+            ClientMethod="put_object",
+            Params={"Bucket": aws.BUCKET_NAME, "Key": thumb_key},
             ExpiresIn=3600,
         )
-        # Generate presigned POST for mid-sized
-        mid_presigned = s3_client.generate_presigned_post(
-            Bucket=aws.BUCKET_NAME,
-            Key=mid_key,
+        # Generate presigned PUT for mid-sized
+        mid_presigned = s3_client.generate_presigned_url(
+            ClientMethod="put_object",
+            Params={"Bucket": aws.BUCKET_NAME, "Key": mid_key},
             ExpiresIn=3600,
         )
     except ClientError as e:
@@ -349,13 +338,13 @@ def space_used(Authorize: AuthJWT = Depends()):
     return db.spaceUsed()
 
 
-@app.get("/api/cloudwatch-bucket-size")
-def cloudwatch_bucket_size(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    if current_user != "admin":
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    return {"size": aws.get_bucket_size_from_cloudwatch()}
+# @app.get("/api/cloudwatch-bucket-size")
+# def cloudwatch_bucket_size(Authorize: AuthJWT = Depends()):
+#     Authorize.jwt_required()
+#     current_user = Authorize.get_jwt_subject()
+#     if current_user != "admin":
+#         raise HTTPException(status_code=403, detail="Unauthorized")
+#     return {"size": aws.get_bucket_size_from_cloudwatch()}
 
 
 async def createAlbum(websocket, data, username):
@@ -411,27 +400,18 @@ async def getAlbum(websocket, data, username):
 
 async def attach_presigned_urls(photos_data: dict):
     """
-    Generate CloudFront signed URLs for the photos.
+    Generate Cloudflare R2 presigned URLs for the photos.
     """
     if not photos_data or "photos" not in photos_data or not photos_data["photos"]:
         return photos_data
 
-    # if localdev, create signed urls
-    if env.LOCALDEV == "True":
-        photos = photos_data["photos"]
-        for p in photos:
-            for key_type in ["s3_key", "thumb_key", "mid_key"]:
-                s3_key = p.get(key_type)
-                if s3_key:
-                    p[key_type] = aws.create_cloudfront_signed_url(s3_key)
-    else:
-        cf_domain = env.CLOUDFRONT_DOMAIN
-        photos = photos_data["photos"]
-        for p in photos:
-            for key_type in ["s3_key", "thumb_key", "mid_key"]:
-                s3_key = p.get(key_type)
-                if s3_key:
-                    p[key_type] = f"https://{cf_domain}/{s3_key}"
+    photos = photos_data["photos"]
+    for p in photos:
+        for key_type in ["s3_key", "thumb_key", "mid_key"]:
+            s3_key = p.get(key_type)
+            if s3_key:
+                # Use R2 presigned URLs for retrieval
+                p[key_type] = aws.create_presigned_url(s3_key, expiration=3600)
 
     return photos_data
 

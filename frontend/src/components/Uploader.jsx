@@ -168,19 +168,18 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
     } = await presignRes.json();
     setSpaceRemaining(space_remaining);
 
-    // 2️⃣  Build the form exactly as the bucket expects and POST to S3
-    const formData = new FormData();
-    Object.entries(presigned.fields).forEach(([k, v]) => formData.append(k, v));
-    formData.append("file", file); // key must be "file"
-
-    const s3Res = await fetch(presigned.url, {
-      method: "POST",
-      body: formData,
+    // 2️⃣  POST to Cloudflare R2 via PUT (R2 prefers PUT for presigned URLs)
+    const s3Res = await fetch(presigned, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
     });
 
     if (!s3Res.ok) {
       const errText = await s3Res.text();
-      throw new Error(`S3 upload failed: ${s3Res.status} ${errText}`);
+      throw new Error(`Upload failed: ${s3Res.status} ${errText}`);
     }
 
     // 3️⃣ Create a thumbnail and mid-sized image and upload them
@@ -193,15 +192,12 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
     try {
       thumbnailBlob = await resizeImage(file, 300, 300, 0.8);
       if (thumbnailBlob) {
-        const thumbForm = new FormData();
-        Object.entries(thumb_presigned.fields).forEach(([k, v]) =>
-          thumbForm.append(k, v),
-        );
-        thumbForm.append("file", thumbnailBlob);
-
-        const thumbS3Res = await fetch(thumb_presigned.url, {
-          method: "POST",
-          body: thumbForm,
+        const thumbS3Res = await fetch(thumb_presigned, {
+          method: "PUT",
+          body: thumbnailBlob,
+          headers: {
+            "Content-Type": "image/webp",
+          },
         });
 
         if (thumbS3Res.ok) {
@@ -223,15 +219,12 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
         // Fail gracefully: only upload if generation succeeded and size is reasonable
         if (midBlob) {
           if (midBlob.size <= file.size / 2) {
-            const midForm = new FormData();
-            Object.entries(mid_presigned.fields).forEach(([k, v]) =>
-              midForm.append(k, v),
-            );
-            midForm.append("file", midBlob);
-
-            const midS3Res = await fetch(mid_presigned.url, {
-              method: "POST",
-              body: midForm,
+            const midS3Res = await fetch(mid_presigned, {
+              method: "PUT",
+              body: midBlob,
+              headers: {
+                "Content-Type": "image/webp",
+              },
             });
 
             if (midS3Res.ok) {

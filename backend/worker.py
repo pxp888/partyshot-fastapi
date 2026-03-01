@@ -3,7 +3,7 @@ import logging
 
 import aws
 import db
-import env
+import env2 as env
 from arq.connections import RedisSettings
 from PIL import Image
 

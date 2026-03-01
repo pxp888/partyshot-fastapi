@@ -8,7 +8,7 @@ from contextlib import contextmanager
 
 import arq
 import aws
-import env
+import env2 as env
 import psycopg2
 from arq.connections import RedisSettings
 from psycopg2.pool import ThreadedConnectionPool
@@ -282,7 +282,7 @@ def getAlbum(code: str) -> dict | None:
             "open": bool(row[4]),
             "profile": bool(row[5]),
             "private": bool(row[6]),
-            "thumb_key": aws.get_cloudfront_url(row[9]) if row[9] else None,
+            "thumb_key": aws.create_presigned_url(row[9]) if row[9] else None,
             "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
             "username": row[8],
         }
@@ -318,7 +318,7 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             "open": bool(row[4]),
             "profile": bool(row[5]),
             "private": bool(row[6]),
-            "thumb_key": aws.get_cloudfront_url(row[9]) if row[9] else None,
+            "thumb_key": aws.create_presigned_url(row[9]) if row[9] else None,
             "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
             "username": row[8],
             "subscribed": bool(row[10]),
@@ -546,9 +546,9 @@ def addPhoto(data: dict) -> dict | None:
         "id": row[0],
         "user_id": row[1],
         "album_id": row[2],
-        "s3_key": aws.get_cloudfront_url(row[3]),
-        "thumb_key": aws.get_cloudfront_url(row[4]),
-        "mid_key": aws.get_cloudfront_url(row[5]),
+        "s3_key": aws.create_presigned_url(row[3]),
+        "thumb_key": aws.create_presigned_url(row[4]),
+        "mid_key": aws.create_presigned_url(row[5]),
         "filename": row[6],
         "created_at": created_at,
         "size": row[8],
@@ -708,7 +708,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "open": bool(row[4]),
                 "profile": is_profile,
                 "private": is_private,
-                "thumb_key": aws.get_cloudfront_url(thumb_key) if thumb_key else None,
+                "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
                 "created_at": created_at,
             }
         )
