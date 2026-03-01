@@ -65,7 +65,7 @@ class RegisterRequest(BaseModel):
 
 class Settings(BaseModel):
     authjwt_secret_key: str = env.AUTH_JWT_SECRET_KEY
-
+    authjwt_cookie_domain: str = ".shareshot.eu"
 
 class ToggleOpenRequest(BaseModel):
     album_id: int
