@@ -5,29 +5,8 @@ import "./style/Adminpage.css";
 function Adminpage({ currentUser }) {
   const { showMessage, showConfirm } = useMessage();
   const [spaceUsed, setSpaceUsed] = useState(null);
-  const [cloudwatchSize, setCloudwatchSize] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [cwLoading, setCwLoading] = useState(true);
 
-  const fetchCloudwatchSize = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-      const response = await fetch("/api/cloudwatch-bucket-size", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCloudwatchSize(data.size);
-      }
-    } catch (err) {
-      console.error("Error fetching cloudwatch size:", err);
-    } finally {
-      setCwLoading(false);
-    }
-  };
 
   const fetchSpaceUsed = async () => {
     try {
@@ -52,7 +31,6 @@ function Adminpage({ currentUser }) {
   useEffect(() => {
     if (currentUser === "admin") {
       fetchSpaceUsed();
-      fetchCloudwatchSize();
     }
   }, [currentUser]);
 
@@ -169,21 +147,6 @@ function Adminpage({ currentUser }) {
               )}
             </div>
 
-            <div className="space-usage-card cloudwatch-card">
-              <h3>AWS CloudWatch Metrics</h3>
-              {cwLoading ? (
-                <p>Fetching CloudWatch metrics...</p>
-              ) : cloudwatchSize ? (
-                <div className="cloudwatch-content">
-                  <pre className="cw-raw-text">{cloudwatchSize}</pre>
-                  <p className="cw-hint">
-                    Note: CloudWatch storage metrics are typically reported once every 24 hours.
-                  </p>
-                </div>
-              ) : (
-                <p>Unable to retrieve CloudWatch data.</p>
-              )}
-            </div>
 
             <div className="action-section">
               <button className="recount-button" onClick={handleRecountSizes}>
