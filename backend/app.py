@@ -44,12 +44,11 @@ app = FastAPI()
 
 
 userlimits = {
-    "free":    100000000,
+    "free": 100000000,
     "starter": 500000000,
-    "basic":  1000000000,
-    "pro":    2000000000,
+    "basic": 1000000000,
+    "pro": 2000000000,
 }
-
 
 
 class User(BaseModel):
@@ -68,6 +67,7 @@ class Settings(BaseModel):
     authjwt_cookie_domain: str = ".shareshot.eu"
     authjwt_token_location: set = {"headers", "cookies"}
     authjwt_cookie_csrf_protect: bool = False  # Set to True in production if needed
+
 
 class ToggleOpenRequest(BaseModel):
     album_id: int
@@ -96,7 +96,6 @@ def cookie(response):
     return
 
 
-
 @app.get("/api/cookie")
 async def setCookie():
     resp = Response(status_code=204)
@@ -114,8 +113,10 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
     refresh_token = Authorize.create_refresh_token(subject=user.username)
 
     # Ensure tokens are strings (handle potential bytes return)
-    if isinstance(access_token, bytes): access_token = access_token.decode('utf-8')
-    if isinstance(refresh_token, bytes): refresh_token = refresh_token.decode('utf-8')
+    if isinstance(access_token, bytes):
+        access_token = access_token.decode("utf-8")
+    if isinstance(refresh_token, bytes):
+        refresh_token = refresh_token.decode("utf-8")
 
     # Set JWT cookies for Cloudflare Worker
     Authorize.set_access_cookies(access_token, response=response)
@@ -148,8 +149,10 @@ def register(
     refresh_token = Authorize.create_refresh_token(subject=request.username)
 
     # Ensure tokens are strings
-    if isinstance(access_token, bytes): access_token = access_token.decode('utf-8')
-    if isinstance(refresh_token, bytes): refresh_token = refresh_token.decode('utf-8')
+    if isinstance(access_token, bytes):
+        access_token = access_token.decode("utf-8")
+    if isinstance(refresh_token, bytes):
+        refresh_token = refresh_token.decode("utf-8")
 
     # Set JWT cookies for Cloudflare Worker
     Authorize.set_access_cookies(access_token, response=response)
@@ -226,12 +229,12 @@ async def get_presigned(
     album = db.getAlbum(album_code)
     if not album:
         return
-    
+
     # Calculate space remaining for the album owner
     owner_username = album["username"]
     owner_usage = db.getUsage(owner_username) or {}
     owner_details = db.getUser(owner_username) or {}
-    
+
     owner_class = owner_details.get("class", "free").lower()
     owner_limit = userlimits.get(owner_class, userlimits["free"])
     space_used = owner_usage.get("spaceused_table", 0)
@@ -239,8 +242,8 @@ async def get_presigned(
 
     if space_remaining <= 0:
         raise HTTPException(
-            status_code=403, 
-            detail="Storage limit reached for this album owner. Please upgrade or delete some photos."
+            status_code=403,
+            detail="Storage limit reached for this album owner. Please upgrade or delete some photos.",
         )
 
     if not album["open"]:
@@ -292,7 +295,7 @@ async def get_album_thumbnail_endpoint(
     album_code: str,
     Authorize: AuthJWT = Depends(),
 ):
-    # Optional JWT: if it's there, we can check privacy. 
+    # Optional JWT: if it's there, we can check privacy.
     # If not, we only show if not private.
     try:
         Authorize.jwt_optional()
@@ -384,8 +387,6 @@ def space_used(Authorize: AuthJWT = Depends()):
     return db.spaceUsed()
 
 
-
-
 async def createAlbum(websocket, data, username):
     album_name = data["payload"]["album_name"]
 
@@ -434,6 +435,8 @@ async def getAlbum(websocket, data, username):
         return
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
+    if album["private"] and album["username"] != username:
+        return
     await manager.subscribe(websocket, f"album-{albumcode}")
 
 
@@ -708,6 +711,7 @@ app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
 
 
 import stripe_endpoint
+
 app.include_router(stripe_endpoint.router)
 
 
