@@ -1,9 +1,33 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { receiveJson } from "../helpers";
 import "./AlbumItem.css";
 import blankImage from "../../assets/blank.jpg";
 
 function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
   const navigate = useNavigate();
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchThumbnail = async () => {
+      try {
+        const data = await receiveJson(`/api/album-thumbnail/${album.code}`);
+        if (isMounted) {
+          setThumbnailUrl(data.thumbnail);
+        }
+      } catch (error) {
+        console.error("Error fetching thumbnail:", error);
+      }
+    };
+
+    fetchThumbnail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [album.code]);
 
   function handleClick(event) {
     event.preventDefault();
@@ -44,7 +68,7 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
     >
       <div className="thumbnail-container">
         <img
-          src={album.thumb_key || blankImage}
+          src={thumbnailUrl || blankImage}
           alt={album.name}
           onError={(e) => {
             e.target.src = blankImage;

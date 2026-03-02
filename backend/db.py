@@ -263,8 +263,7 @@ def getAlbum(code: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
-                       (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
+                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
                 WHERE a.code = %s;
@@ -282,7 +281,6 @@ def getAlbum(code: str) -> dict | None:
             "open": bool(row[4]),
             "profile": bool(row[5]),
             "private": bool(row[6]),
-            "thumb_key": aws.create_presigned_url(row[9]) if row[9] else None,
             "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
             "username": row[8],
         }
@@ -295,7 +293,6 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             cursor.execute(
                 """
                 SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
-                       (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1),
                        EXISTS(
                            SELECT 1 FROM subscription s
                            JOIN users su ON s.user_id = su.id
@@ -318,10 +315,9 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             "open": bool(row[4]),
             "profile": bool(row[5]),
             "private": bool(row[6]),
-            "thumb_key": aws.create_presigned_url(row[9]) if row[9] else None,
             "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
             "username": row[8],
-            "subscribed": bool(row[10]),
+            "subscribed": bool(row[9]),
         }
     return None
 
@@ -662,8 +658,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 # Include owned and subscribed albums (owned by the user whose profile is being viewed)
                 cursor.execute(
                     """
-                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
-                           (SELECT thumb_key FROM photos WHERE album_id = a.id AND thumb_key IS NOT NULL ORDER BY created_at ASC LIMIT 1)
+                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
                     LEFT JOIN subscription s ON a.id = s.album_id
@@ -697,8 +692,6 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
 
-        thumb_key = row[9]
-
         albums.append(
             {
                 "id": row[0],
@@ -708,11 +701,31 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "open": bool(row[4]),
                 "profile": is_profile,
                 "private": is_private,
-                "thumb_key": aws.create_presigned_url(thumb_key) if thumb_key else None,
                 "created_at": created_at,
             }
         )
     return {"albums": albums}
+
+
+def get_album_thumbnail(album_code: str) -> str | None:
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT thumb_key 
+                FROM photos p
+                JOIN albums a ON p.album_id = a.id
+                WHERE a.code = %s AND p.thumb_key IS NOT NULL 
+                ORDER BY p.created_at ASC 
+                LIMIT 1
+                """,
+                (album_code,),
+            )
+            row = cursor.fetchone()
+
+    if row and row[0]:
+        return aws.create_presigned_url(row[0])
+    return None
 
 
 def createAlbum(username: str, album_name: str) -> str | None:

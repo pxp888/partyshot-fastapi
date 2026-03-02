@@ -287,6 +287,31 @@ async def get_presigned(
     }
 
 
+@app.get("/api/album-thumbnail/{album_code}")
+async def get_album_thumbnail_endpoint(
+    album_code: str,
+    Authorize: AuthJWT = Depends(),
+):
+    # Optional JWT: if it's there, we can check privacy. 
+    # If not, we only show if not private.
+    try:
+        Authorize.jwt_optional()
+        current_user = Authorize.get_jwt_subject()
+    except Exception:
+        current_user = None
+
+    album = db.getAlbum(album_code)
+    if not album:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    if album["private"]:
+        if not current_user or album["username"] != current_user:
+            raise HTTPException(status_code=403, detail="Not Allowed")
+
+    thumb_url = db.get_album_thumbnail(album_code)
+    return {"thumbnail": thumb_url}
+
+
 @app.post("/api/add-photo-metadata")
 async def add_photo_metadata(
     payload: dict,
