@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     z-index: 1000;
-    background: var(--bg-glass);
+    background: #000;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-glass);
@@ -24,7 +24,7 @@
     /*font-weight: 900;*/
     font-style: italic;
     letter-spacing: -1px;
-    color: var(--accent);
+    color: #bbb;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: inline-block;
 }
@@ -52,7 +52,7 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     padding: 0.5rem 1rem;
-    color: var(--text-primary);
+    color: #bbb;
     outline: none;
     font-size: 0.9rem;
     transition: all 0.3s ease;
@@ -72,9 +72,9 @@
     font-size: 0.9rem;
     border-radius: 6px;
     padding: 0.5rem 1rem;
-    background: var(--btn-bg);
-    border: none;
-    color: var(--btn-text);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #bbb;
     transition: all 0.2s ease;
     cursor: pointer;
 }
@@ -91,6 +91,7 @@
 .userInfo .btn {
     background: rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #bbb;
 }
 
 .userInfo .btn:hover {
@@ -141,13 +142,12 @@
     }
 }
 
-
 .plans-link {
     text-decoration: none;
-    color: var(--text-primary);
+    color: #bbb;
     font-size: 0.9rem;
     font-weight: 500;
-    margin-right: 10px;
+    margin: 0 1rem;
     transition: color 0.2s ease;
 }
 
