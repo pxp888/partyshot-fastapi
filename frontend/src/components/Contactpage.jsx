@@ -29,7 +29,7 @@ function Contactpage() {
       console.log("Submitting contact form to ntfy:", formData);
 
       const response = await fetch(
-        "https://shareshot.eu:8000/partyShotsContact",
+        "/ntfy/partyShotsContact",
         {
           method: "POST",
           body: `From: ${formData.email}\nSubject: ${formData.subject}\nSource: ${sourceUrl}\n\n${formData.body}`,
