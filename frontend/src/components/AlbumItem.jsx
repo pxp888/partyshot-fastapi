@@ -54,9 +54,9 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
       <div className="info">
         <h3>{album.name}</h3>
         <div className="album-details">
-          <label>user</label>
+          {/* <label>user</label> */}
           <p>{album.username}</p>
-          <label className="hideMobile">created</label>
+          {/* <label className="hideMobile">created</label> */}
           <p className="hideMobile">
             {new Date(album.created_at).toLocaleDateString()}
           </p>

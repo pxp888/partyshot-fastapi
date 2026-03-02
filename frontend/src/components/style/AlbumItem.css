@@ -9,7 +9,6 @@
     position: relative;
     height: 100%;
     cursor: pointer;
-    margin-bottom: 1rem;
 }
 
 .album-item:hover {
@@ -70,21 +69,19 @@
     padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
     flex-grow: 1;
 }
 
 .album-item h3 {
-    margin: 1rem;
-    /*font-size: 1.25rem;*/
+    font-size: 1.2rem;
+    font-weight: 300;
+    text-align: left;
     overflow-wrap: break-word;
+    color: white;
 }
 
 .album-details {
-    display: grid;
-    grid-template-columns: 1fr 3fr;
-    gap: 0.4rem 0.8rem;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .album-details label {
@@ -97,6 +94,7 @@
     margin: 0;
     color: gainsboro;
     text-align: left;
+    margin: .5rem 0;
 }
 
 .clickable {
@@ -123,8 +121,8 @@
 .album-actions {
     display: flex;
     gap: 1.2rem;
-    /*padding: 0.5rem 0;*/
-    margin: 1rem;
+    margin-top: auto;
+    padding-top: 1rem;
     justify-content: center;
 }
 
