@@ -28,14 +28,17 @@ function Contactpage() {
     try {
       console.log("Submitting contact form to ntfy:", formData);
 
-      const response = await fetch("http://172.17.0.1:8000/partyShotsContact", {
-        method: "POST",
-        body: `From: ${formData.email}\nSubject: ${formData.subject}\nSource: ${sourceUrl}\n\n${formData.body}`,
-        headers: {
-          Title: `Contact Form: ${formData.subject}`,
-          Tags: "email,mailbox_with_mail",
+      const response = await fetch(
+        "https://shareshot.eu:8000/partyShotsContact",
+        {
+          method: "POST",
+          body: `From: ${formData.email}\nSubject: ${formData.subject}\nSource: ${sourceUrl}\n\n${formData.body}`,
+          headers: {
+            Title: `Contact Form: ${formData.subject}`,
+            Tags: "email,mailbox_with_mail",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
