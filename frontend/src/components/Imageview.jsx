@@ -59,7 +59,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
   const hide = () => {
     setFocus(-1);
-    updateUrl(-1);
+    window.history.back();
   };
 
   /* ----------------------------------------------
@@ -128,7 +128,16 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [focus, files, setFocus, deletedPhoto, next, previous, hide, showDeleteConfirm]);
+  }, [
+    focus,
+    files,
+    setFocus,
+    deletedPhoto,
+    next,
+    previous,
+    hide,
+    showDeleteConfirm,
+  ]);
 
   // Handle temporary visibility of file details when image changes
   useEffect(() => {
