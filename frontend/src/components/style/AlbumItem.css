@@ -1,7 +1,7 @@
 .album-item {
     display: flex;
     flex-direction: column;
-    background-color: #212122;
+    background-color: var(--form-color);
     color: var(--text-primary);
     border: 1px solid rgba(255, 255, 255, 0.05);
     /* border-radius: 12px; */
@@ -15,19 +15,37 @@
 .album-item:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
-    background-color: #0a0a0a;
+    background-color: var(--form-color);
 }
 
 .album-item.other-user {
-    background-color: #25282a;
+    background-color: var(--form-color);
 }
 
 .album-item.not-profile {
-    background-color: #292931;
+    background-color: #434343;
+    color: white;
+}
+
+.album-item.not-profile p {
+    color: white;
+}
+
+.album-item.not-profile .clickable {
+    color: white;
 }
 
 .album-item.is-private {
     background-color: black;
+    color: gainsboro;
+}
+
+.album-item.is-private p {
+    color: gainsboro;
+}
+
+.album-item.is-private .clickable {
+    color: white;
 }
 
 .thumbnail-container {
@@ -58,60 +76,51 @@
 }
 
 .album-item h3 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--bright-color);
+    margin: 1rem;
+    font-size: 1.25rem;
     overflow-wrap: break-word;
-    /* Ensure long words break */
 }
+
 
 .album-details {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 60px 1fr;
     gap: 0.4rem 0.8rem;
-    font-size: 0.85rem;
     align-items: center;
 }
 
 .album-details label {
     color: gray;
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    letter-spacing: 0.05em;
-    font-weight: 700;
+    text-align: right;
+    margin: 0.25rem 0;
 }
 
 .album-details p {
     margin: 0;
-    /* color: var(--text-primary); */
-    color: white;
-    font-weight: 500;
+    color: var(--text-primary);
+    text-align: left;
 }
 
 .clickable {
     cursor: pointer;
-    /* color: var(--bright-color) !important; */
     color: white;
     text-decoration: underline rgba(255, 255, 255, 0.3);
-    /* text-decoration: underline; */
 }
 
 .clickable:hover {
     filter: brightness(1.2);
 }
 
-.status-badge {
+/* .status-badge {
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.75rem;
     background: rgba(255, 255, 255, 0.05);
-}
+} */
 
 @media (max-width: 768px) {
     .album-item {
         border-radius: 0px;
-        /* Sharp corners like original for tighter grid */
     }
 
     .album-item .info {
@@ -124,6 +133,7 @@
 
     .album-item h3 {
         font-size: 1rem;
+        margin: 5px;
     }
 
     .hideMobile {
