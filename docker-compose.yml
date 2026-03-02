@@ -25,7 +25,6 @@ services:
       - "8000"
     volumes:
       - ./backend/env.py:/code/env.py:Z
-      - ./backend/static:/code/static:ro
     depends_on:
       - redis-db
     networks:
