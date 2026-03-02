@@ -21,10 +21,8 @@ env.py
 backend/env.py
 .env
 env2.py
-<<<<<<< HEAD
-=======
-backend/env2.py
->>>>>>> test
+env1.py
+env.py
 
 # Django
 # (Keep migrations – they are part of the repo – but ignore local media & static)
