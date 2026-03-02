@@ -1,7 +1,7 @@
 import datetime
 import logging 
 
-import env2 as env
+import env
 import stripe
 import db
 from fastapi import HTTPException, Request, Depends, APIRouter

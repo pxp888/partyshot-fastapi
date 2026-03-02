@@ -8,7 +8,7 @@ from contextlib import contextmanager
 
 import arq
 import aws
-import env2 as env
+import env
 import psycopg2
 from arq.connections import RedisSettings
 from psycopg2.pool import ThreadedConnectionPool

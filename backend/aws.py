@@ -6,7 +6,7 @@ import os
 import time
 
 import boto3
-import env2 as env
+import env
 from botocore.exceptions import ClientError
 from botocore.exceptions import ClientError
 from botocore.config import Config

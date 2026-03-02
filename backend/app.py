@@ -10,7 +10,7 @@ logging.basicConfig(
 
 import aws
 import db
-import env2 as env
+import env
 import redis.asyncio as redis
 import watcher
 from arq import create_pool
