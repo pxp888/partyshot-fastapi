@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import AlbumItem from "./AlbumItem";
-import "./style/Userview.css";
-import { useSocket } from "./WebSocketContext"; // ← websocket
+import "./Userview.css";
+import { useSocket } from "../WebSocketContext"; // ← websocket
 
 function Userview({ currentUser }) {
   const { username } = useParams();

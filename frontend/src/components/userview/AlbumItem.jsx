@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import "./style/AlbumItem.css";
-import blankImage from "../assets/blank.jpg";
+import "./AlbumItem.css";
+import blankImage from "../../assets/blank.jpg";
 
 function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
   const navigate = useNavigate();

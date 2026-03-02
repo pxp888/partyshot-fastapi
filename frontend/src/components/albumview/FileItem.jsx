@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, forwardRef } from "react";
-import "./style/FileItem.css";
-import blankImage from '../assets/blank.jpg';
-import videoImage from '../assets/video.webp';
+import "./FileItem.css";
+import blankImage from '../../assets/blank.jpg';
+import videoImage from '../../assets/video.webp';
 
 const FileItem = forwardRef(({
   index,

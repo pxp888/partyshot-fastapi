@@ -1,6 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
-import './style/QRHover.css';
+import './QRHover.css';
 
 const QRHover = ({ text }) => {
     const [showQR, setShowQR] = useState(false);

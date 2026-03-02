@@ -1,8 +1,8 @@
 import { useState, useImperativeHandle, forwardRef, useContext } from "react";
-import { useMessage } from "./MessageBoxContext";
+import { useMessage } from "../MessageBoxContext";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
-import "./style/Uploader.css";
+import "./Uploader.css";
 
 function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
   return new Promise((resolve, reject) => {

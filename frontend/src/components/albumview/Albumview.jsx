@@ -1,18 +1,18 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSocket } from "./WebSocketContext";
-import { useMessage } from "./MessageBoxContext";
+import { useSocket } from "../WebSocketContext";
+import { useMessage } from "../MessageBoxContext";
 import JSZip from "jszip";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
-import Imageview from "./Imageview";
+import Imageview from "../Imageview";
 import Uploader from "./Uploader";
 import AlbumRenamer from "./AlbumRenamer";
 import Iconlist from "./Iconlist";
 import Listview from "./Listview";
 import QRHover from "./QRHover";
 
-import "./style/Albumview.css";
+import "./Albumview.css";
 
 function Albumview(currentUser) {
   const { albumcode } = useParams();

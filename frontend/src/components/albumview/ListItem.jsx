@@ -1,4 +1,4 @@
-import "./style/ListItem.css";
+import "./ListItem.css";
 
 function ListItem({
     index,
