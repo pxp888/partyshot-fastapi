@@ -9,7 +9,7 @@
     position: relative;
     height: 100%;
     cursor: pointer;
-    padding-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
 .album-item:hover {

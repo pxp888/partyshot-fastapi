@@ -56,6 +56,10 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
         <div className="album-details">
           <label>user</label>
           <p>{album.username}</p>
+          <label className="hideMobile">created</label>
+          <p className="hideMobile">
+            {new Date(album.created_at).toLocaleDateString()}
+          </p>
 
           <label className="hideMobile">open</label>
           <p
@@ -81,10 +85,7 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
             {album.private ? "Yes" : "No"}
           </p>
 
-          <label className="hideMobile">created</label>
-          <p className="hideMobile">
-            {new Date(album.created_at).toLocaleDateString()}
-          </p>
+
         </div>
       </div>
     </div>
