@@ -61,31 +61,26 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
             {new Date(album.created_at).toLocaleDateString()}
           </p>
 
-          <label className="hideMobile">open</label>
-          <p
-            className={`hideMobile status-badge ${!isOtherUser ? "clickable" : ""}`}
+        </div>
+        <div className="album-actions hideMobile">
+          <span
+            className={`status-word ${album.open ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
             onClick={handleToggleOpen}
           >
-            {album.open ? "Yes" : "No"}
-          </p>
-
-          <label className="hideMobile">profile</label>
-          <p
-            className={`hideMobile status-badge ${!isOtherUser ? "clickable" : ""}`}
+            open
+          </span>
+          <span
+            className={`status-word ${album.profile ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
             onClick={handleToggleProfile}
           >
-            {album.profile ? "Yes" : "No"}
-          </p>
-
-          <label className="hideMobile">private</label>
-          <p
-            className={`hideMobile status-badge ${!isOtherUser ? "clickable" : ""}`}
+            profile
+          </span>
+          <span
+            className={`status-word ${album.private ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
             onClick={handleTogglePrivate}
           >
-            {album.private ? "Yes" : "No"}
-          </p>
-
-
+            private
+          </span>
         </div>
       </div>
     </div>
