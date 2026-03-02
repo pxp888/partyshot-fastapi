@@ -27,7 +27,6 @@ services:
       - ./backend/env.py:/code/env.py:Z
     depends_on:
       - redis-db
-      - db-server
     networks:
       - backend-network
 
@@ -40,7 +39,6 @@ services:
       - ./backend/env.py:/code/env.py:Z
     depends_on:
       - redis-db
-      - db-server
     networks:
       - backend-network
 
@@ -48,21 +46,6 @@ services:
     image: redis:7-alpine
     container_name: redis_server
     restart: always
-    networks:
-      - backend-network
-
-  db-server:
-    image: postgres:15
-    container_name: postgres_server
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - ../postgres_data2:/var/lib/postgresql/data:Z
     networks:
       - backend-network
 
