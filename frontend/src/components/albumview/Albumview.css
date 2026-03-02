@@ -278,30 +278,35 @@
 /* ----- adetails ------------------------------------------ */
 .adetails {
     background-color: #434343;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
 
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-around;
+.adetails .title {
+    font-size: 1.2rem;
+    grid-column: 1 / -1;
+    justify-self: left;
 }
 
 .adetails p {
     color: white;
+    margin: 0 1rem;
 }
 
-.maindetail {
-    grid-template-rows: 2;
-    display: flex;
-    flex-direction: column;
+.adetails .username {
+    color: white;
+    justify-self: left;
+    margin: 0 1rem;
 }
 
-.subdetail {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
+.adetails .date {
+    color: white;
+    justify-self: left;
+    margin: 0 1rem;
 }
 
 .album-controls {
+    justify-self: right;
     display: flex;
     flex-direction: row;
 }
