@@ -28,7 +28,7 @@ function Topbar({ currentUser, setCurrentUser }) {
       })
       .catch((err) => {
         console.error("Logged out:", err);
-        setCurrentUser(null);
+        handleLogout();
       });
   }, [setCurrentUser]); // Test protected route on mount
 

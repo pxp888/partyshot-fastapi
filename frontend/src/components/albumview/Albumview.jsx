@@ -201,12 +201,16 @@ function Albumview(currentUser) {
   }, [lastJsonMessage, currentUser, albumcode]);
 
   async function handleDeleteAlbum() {
-    showConfirm("Are you sure you want to delete this album?", "Delete Album", () => {
-      sendJsonMessage({
-        action: "deleteAlbum",
-        payload: { albumcode: albumcode },
-      });
-    });
+    showConfirm(
+      "Are you sure you want to delete this album?",
+      "Delete Album",
+      () => {
+        sendJsonMessage({
+          action: "deleteAlbum",
+          payload: { albumcode: albumcode },
+        });
+      },
+    );
   }
 
   const startZipProcess = async (photosToZip) => {
@@ -317,14 +321,18 @@ function Albumview(currentUser) {
       return showMessage("No files selected for deletion.", "Delete Files");
     }
 
-    showConfirm("Are you sure you want to delete the selected files?", "Delete Files", () => {
-      const idsToDelete = [...selected];
-      setSelected([]);
+    showConfirm(
+      "Are you sure you want to delete the selected files?",
+      "Delete Files",
+      () => {
+        const idsToDelete = [...selected];
+        setSelected([]);
 
-      idsToDelete.forEach(async (id) => {
-        deletedPhoto(id);
-      });
-    });
+        idsToDelete.forEach(async (id) => {
+          deletedPhoto(id);
+        });
+      },
+    );
   }
 
   function toggleOpen() {
@@ -389,72 +397,80 @@ function Albumview(currentUser) {
         deletedPhoto={deletedPhoto}
       />
 
-      <div className="albumview">
-        <div className="albumDetails">
-          <div className="infoItem">
-            <label>name </label>
-            {isRenaming ? (
-              <AlbumRenamer
-                album={album}
-                onRename={handleRename}
-                onCancel={() => setIsRenaming(false)}
-              />
-            ) : (
-              <p
-                onClick={() => {
-                  if (album.username === currentUser.currentUser) {
-                    setIsRenaming(true);
-                  }
-                }}
-                className={
-                  album.username === currentUser.currentUser ? "clickable" : ""
-                }
-              >
-                {album.name}
-              </p>
-            )}
-          </div>
-          <div className="infoItem">
-            <label> user </label>
+      <section className="adetails">
+        <div className="maindetail">
+          {isRenaming ? (
+            <AlbumRenamer
+              album={album}
+              onRename={handleRename}
+              onCancel={() => setIsRenaming(false)}
+            />
+          ) : (
             <p
-              onClick={() => navigate(`/user/${album.username}`)}
-              className="clickable"
+              onClick={() => {
+                if (album.username === currentUser.currentUser) {
+                  setIsRenaming(true);
+                }
+              }}
+              className={
+                album.username === currentUser.currentUser ? "clickable" : ""
+              }
             >
-              {album.username}{" "}
+              {album.name}
             </p>
-          </div>
-          <div className="infoItem">
-            <label>open </label>
-            <p onClick={toggleOpen} className="clickable">
-              {album.open ? "Yes" : "No"}
+          )}
+          <p
+            onClick={() => navigate(`/user/${album.username}`)}
+            className="clickable"
+          >
+            {album.username}{" "}
+          </p>
+          <p>{new Date(album.created_at).toLocaleString()}</p>
+        </div>
+
+        <div className="subdetail">
+          <QRHover text={album.code} />
+          <div className="album-controls">
+            <p
+              className={`status-word ${album.open ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
+              onClick={toggleOpen}
+            >
+              open
             </p>
-          </div>
-          <div className="infoItem">
-            <label>profile </label>
-            <p onClick={toggleProfile} className="clickable">
-              {album.profile ? "Yes" : "No"}
+            <p
+              className={`status-word ${album.profile ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
+              onClick={toggleProfile}
+            >
+              profile
             </p>
-          </div>
-          <div className="infoItem">
-            <label>private </label>
-            <p onClick={togglePrivate} className="clickable">
-              {album.private ? "Yes" : "No"}
+            <p
+              className={`status-word ${album.private ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
+              onClick={togglePrivate}
+            >
+              private
             </p>
-          </div>
-          <div className="infoItem">
-            <label>created </label>
-            <p>{new Date(album.created_at).toLocaleString()}</p>
-          </div>
-          <div className="infoItem">
-            <label>Code: </label>
-            <QRHover text={album.code} />
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* new
+
+
+
+
+
+
+
+
+  */}
 
       {selectMode && (
         <div className="albumActions">
-          <button onClick={cancelSelect} className="btn" disabled={!userLoggedIn}>
+          <button
+            onClick={cancelSelect}
+            className="btn"
+            disabled={!userLoggedIn}
+          >
             Cancel Selection
           </button>
           <button onClick={selectAll} className="btn" disabled={!userLoggedIn}>
@@ -463,10 +479,18 @@ function Albumview(currentUser) {
           <button onClick={selectNone} className="btn" disabled={!userLoggedIn}>
             Select None
           </button>
-          <button onClick={downloadSelected} className="btn" disabled={!userLoggedIn}>
+          <button
+            onClick={downloadSelected}
+            className="btn"
+            disabled={!userLoggedIn}
+          >
             Download Selected
           </button>
-          <button onClick={deleteSelected} className="btn" disabled={!userLoggedIn}>
+          <button
+            onClick={deleteSelected}
+            className="btn"
+            disabled={!userLoggedIn}
+          >
             Delete Selected
           </button>
 
@@ -510,12 +534,20 @@ function Albumview(currentUser) {
 
       {!selectMode && (
         <div className="albumActions">
-          <button onClick={() => setSelectMode(true)} className="btn" disabled={!userLoggedIn}>
+          <button
+            onClick={() => setSelectMode(true)}
+            className="btn"
+            disabled={!userLoggedIn}
+          >
             Selection Mode
           </button>
           <Uploader album={album} ref={uploaderRef} disabled={!userLoggedIn} />
 
-          <button onClick={downloadAll} className="btn" disabled={!userLoggedIn}>
+          <button
+            onClick={downloadAll}
+            className="btn"
+            disabled={!userLoggedIn}
+          >
             Download All
           </button>
           {album.username === currentUser.currentUser && (
@@ -525,7 +557,11 @@ function Albumview(currentUser) {
           )}
 
           {album.username !== currentUser.currentUser && (
-            <button onClick={toggleSubscription} className="btn" disabled={!userLoggedIn}>
+            <button
+              onClick={toggleSubscription}
+              className="btn"
+              disabled={!userLoggedIn}
+            >
               {album.subscribed ? "Unsubscribe" : "Subscribe"}
             </button>
           )}
@@ -580,7 +616,6 @@ function Albumview(currentUser) {
           isFetching={isFetching}
           onDrop={handleUpload}
         />
-
       ) : (
         <Listview
           photos={photos}
@@ -593,13 +628,15 @@ function Albumview(currentUser) {
           isFetching={isFetching}
           onDrop={handleUpload}
         />
-
       )}
-      {
-        album?.private && album?.username !== currentUser?.currentUser && album?.open && (
-          <p className="helptext">This album is private, so you cannot access the photos, but you can upload photos.</p>
-        )
-      }
+      {album?.private &&
+        album?.username !== currentUser?.currentUser &&
+        album?.open && (
+          <p className="helptext">
+            This album is private, so you cannot access the photos, but you can
+            upload photos.
+          </p>
+        )}
     </section>
   );
 }
