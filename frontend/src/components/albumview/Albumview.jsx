@@ -421,41 +421,53 @@ function Albumview(currentUser) {
           )}
         </div>
 
+        <div className="spread">
+          <div className="vert left">
+            <p className="date">{new Date(album.created_at).toLocaleString()}</p>
+            <p
+              onClick={() => navigate(`/user/${album.username}`)}
+              className="clickable username"
+            >
+              {album.username}{" "}
+            </p>
+          </div>
+          <div className="vert right">
+            <QRHover text={album.code} />
 
-        <p className="date">{new Date(album.created_at).toLocaleString()}</p>
-
-
-        <QRHover text={album.code} />
-
-
-        <p
-          onClick={() => navigate(`/user/${album.username}`)}
-          className="clickable username"
-        >
-          {album.username}{" "}
-        </p>
-
-
-        <div className="album-controls">
-          <p
-            className={`status-word ${album.open ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
-            onClick={toggleOpen}
-          >
-            open
-          </p>
-          <p
-            className={`status-word ${album.profile ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
-            onClick={toggleProfile}
-          >
-            profile
-          </p>
-          <p
-            className={`status-word ${album.private ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
-            onClick={togglePrivate}
-          >
-            private
-          </p>
+            <div className="album-controls">
+              <p
+                className={`status-word ${album.open ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
+                onClick={toggleOpen}
+              >
+                open
+              </p>
+              <p
+                className={`status-word ${album.profile ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
+                onClick={toggleProfile}
+              >
+                profile
+              </p>
+              <p
+                className={`status-word ${album.private ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
+                onClick={togglePrivate}
+              >
+                private
+              </p>
+            </div>
+          </div>
         </div>
+
+
+
+
+
+
+
+
+
+
+
+
       </section>
 
       {/* new

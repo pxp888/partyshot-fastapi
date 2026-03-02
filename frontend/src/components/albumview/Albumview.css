@@ -278,39 +278,52 @@
 /* ----- adetails ------------------------------------------ */
 .adetails {
     background-color: #434343;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 .adetails .title {
-    font-size: 1.2rem;
-    grid-column: 1 / -1;
-    justify-self: left;
+    font-size: 1.3rem;
+    font-weight: 500;
+    text-align: left;
 }
 
-.adetails p {
+.adetails p,
+.adetails .username,
+.adetails .date,
+.album-controls p {
     color: white;
-    margin: 0 1rem;
-}
-
-.adetails .username {
-    color: white;
-    justify-self: left;
-    margin: 0 1rem;
-}
-
-.adetails .date {
-    color: white;
-    justify-self: left;
-    margin: 0 1rem;
+    margin: 0;
 }
 
 .album-controls {
-    justify-self: right;
     display: flex;
     flex-direction: row;
+    gap: 1.5rem;
 }
 
-.album-controls p {
-    margin: 0 1rem;
+.spread {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.vert {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.vert.left {
+    text-align: left;
+}
+
+.vert.right {
+    text-align: right;
 }
