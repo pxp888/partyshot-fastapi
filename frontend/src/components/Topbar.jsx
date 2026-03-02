@@ -32,7 +32,6 @@ function Topbar({ currentUser, setCurrentUser }) {
       });
   }, [setCurrentUser]); // Test protected route on mount
 
-
   /* ---- Keep‑alive logic ---- */
   useEffect(() => {
     // Only run if we have a refresh token (user is logged in)
@@ -97,7 +96,10 @@ function Topbar({ currentUser, setCurrentUser }) {
         {currentUser ? (
           <div className="userInfo">
             <div>
-              <Link to={`/contact?from=${location.pathname}${location.search}`} className="plans-link">
+              <Link
+                to={`/contact?from=${location.pathname}${location.search}`}
+                className="plans-link"
+              >
                 Contact
               </Link>
               <Link to="/plans" className="plans-link">
@@ -109,12 +111,9 @@ function Topbar({ currentUser, setCurrentUser }) {
                 className="btn"
                 onClick={() => navigate(`/user/${currentUser}`)}
               >
-                {currentUser} home
+                Profile
               </button>
-              <button
-                className="btn"
-                onClick={() => navigate("/account")}
-              >
+              <button className="btn" onClick={() => navigate("/account")}>
                 Account
               </button>
               <button className="btn" onClick={handleLogout}>
@@ -124,7 +123,10 @@ function Topbar({ currentUser, setCurrentUser }) {
           </div>
         ) : (
           <div className="nav">
-            <Link to={`/contact?from=${location.pathname}${location.search}`} className="plans-link">
+            <Link
+              to={`/contact?from=${location.pathname}${location.search}`}
+              className="plans-link"
+            >
               Contact
             </Link>
             <Link to="/plans" className="plans-link">
