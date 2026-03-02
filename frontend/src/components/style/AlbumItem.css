@@ -1,7 +1,8 @@
 .album-item {
     display: flex;
     flex-direction: column;
-    background-color: var(--form-color);
+    /* background-color: var(--form-color); */
+    background-color: #d3d3d3;
     color: var(--text-primary);
     border: 1px solid rgba(255, 255, 255, 0.05);
     /* border-radius: 12px; */
