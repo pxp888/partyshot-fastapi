@@ -57,7 +57,7 @@
 
 /* Ensure the popup doesn't disappear if mouse moves over it */
 .qr-code-popup::before {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 100%;
     left: 0;
@@ -71,7 +71,7 @@
     top: -25px;
     left: 50%;
     transform: translateX(-50%);
-    background: #10b981;
+    background: var(--bright-color);
     color: white;
     padding: 4px 8px;
     border-radius: 4px;
