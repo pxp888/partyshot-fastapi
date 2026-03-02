@@ -4,10 +4,10 @@
 .album-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1rem;
+    gap: 3rem;
     padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: 2400px;
+    margin: 0 10%;
     box-sizing: border-box;
 }
 
@@ -196,7 +196,7 @@
 
     .album-list {
         grid-template-columns: 1fr 1fr;
-        gap: 1px;
+        gap: 0.5rem;
         padding: 1px;
         padding-bottom: 140px;
         margin: 0;
