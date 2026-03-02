@@ -388,6 +388,9 @@ function Albumview(currentUser) {
     );
   }
 
+  const isOwner =
+    album.username?.toLowerCase() === currentUser.currentUser?.toLowerCase();
+
   return (
     <section>
       <Imageview
@@ -408,13 +411,11 @@ function Albumview(currentUser) {
           ) : (
             <p
               onClick={() => {
-                if (album.username === currentUser.currentUser) {
+                if (isOwner) {
                   setIsRenaming(true);
                 }
               }}
-              className={
-                album.username === currentUser.currentUser ? "clickable" : ""
-              }
+              className={isOwner ? "clickable" : ""}
             >
               {album.name}
             </p>
@@ -423,7 +424,9 @@ function Albumview(currentUser) {
 
         <div className="spread">
           <div className="vert left">
-            <p className="date">{new Date(album.created_at).toLocaleString()}</p>
+            <p className="date">
+              {new Date(album.created_at).toLocaleString()}
+            </p>
             <p
               onClick={() => navigate(`/user/${album.username}`)}
               className="clickable username"
@@ -435,24 +438,30 @@ function Albumview(currentUser) {
             <QRHover text={album.code} />
 
             <div className="album-controls">
-              <p
-                className={`status-word ${album.open ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
-                onClick={toggleOpen}
+              <span
+                className={`status-word ${album.open ? "selected" : ""} ${isOwner ? "clickable" : ""}`}
+                onClick={() => {
+                  if (isOwner) toggleOpen();
+                }}
               >
                 open
-              </p>
-              <p
-                className={`status-word ${album.profile ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
-                onClick={toggleProfile}
+              </span>
+              <span
+                className={`status-word ${album.profile ? "selected" : ""} ${isOwner ? "clickable" : ""}`}
+                onClick={() => {
+                  if (isOwner) toggleProfile();
+                }}
               >
                 profile
-              </p>
-              <p
-                className={`status-word ${album.private ? "selected" : ""} ${album.username === currentUser.currentUser ? "clickable" : ""}`}
-                onClick={togglePrivate}
+              </span>
+              <span
+                className={`status-word ${album.private ? "selected" : ""} ${isOwner ? "clickable" : ""}`}
+                onClick={() => {
+                  if (isOwner) togglePrivate();
+                }}
               >
                 private
-              </p>
+              </span>
             </div>
           </div>
         </div>

@@ -282,6 +282,7 @@
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    color: white;
 }
 
 .adetails .title {
@@ -290,10 +291,10 @@
     text-align: left;
 }
 
-.adetails p,
+.adetails .title p,
 .adetails .username,
 .adetails .date,
-.album-controls p {
+.adetails .qr-trigger-text {
     color: white;
     margin: 0;
 }
@@ -302,6 +303,26 @@
     display: flex;
     flex-direction: row;
     gap: 1.5rem;
+}
+
+.status-word {
+    color: #888888;
+    text-transform: lowercase;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.status-word.selected {
+    color: white !important;
+}
+
+.status-word.clickable {
+    cursor: pointer;
+}
+
+.status-word.clickable:hover {
+    filter: brightness(1.4);
+    text-decoration: underline rgba(255, 255, 255, 0.5);
 }
 
 .spread {
