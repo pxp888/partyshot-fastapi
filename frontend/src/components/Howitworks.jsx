@@ -57,7 +57,7 @@ function Howitworks() {
         <div className="hiw-step-item">
           <div className="hiw-step-content">
             <span className="hiw-step-number">Step 02</span>
-            <h2>Let People Know</h2>
+            <h2>Open it up</h2>
             <p>
               Invite guests to contribute by sharing your album{" "}
               <strong>URL</strong> or your <strong>username</strong>. There's
@@ -128,50 +128,67 @@ function Howitworks() {
         <h2>General Mechanics</h2>
         <div className="hiw-features-grid">
           <div className="hiw-feature-card">
-            <h3>Smart Deletion</h3>
+            <h3>Open Albums</h3>
             <p>
-              Maintain control over your content. Photos can only be deleted by
-              the person who uploaded them or the album owner.
+              Albums can be set to <strong>open</strong>, allowing anyone with
+              the URL to upload photos.
             </p>
-          </div>
-
-          <div className="hiw-feature-card">
-            <h3>Complete Ownership</h3>
             <p>
-              As an album owner, you have full authority. Only you can delete
-              albums, change settings, or modify visibility.
-            </p>
-          </div>
-
-          <div className="hiw-feature-card">
-            <h3>Easy Subscriptions</h3>
-            <p>
-              Never miss an update. Subscribe to albums you love, and they'll be
-              pinned to your profile for quick access.
-            </p>
-          </div>
-
-          <div className="hiw-feature-card">
-            <h3>Profiles</h3>
-            <p>
-              Showcase your best work. Any album set to profile will
-              automatically appear on your shareShot profile.
-            </p>
-          </div>
-
-          <div className="hiw-feature-card">
-            <h3>Privacy</h3>
-            <p>
-              Albums that are marked as private will not appear on your profile,
-              and can only be accessed by users with the album URL.
+              By the way, the storage taken by photos uploaded to open albums
+              counts against the album owner's storage quota.
             </p>
           </div>
 
           <div className="hiw-feature-card">
             <h3>Profile Albums</h3>
             <p>
-              Albums that are marked as profile will appear on your profile, and
-              other users can view and subscribe to them.
+              Albums marked <strong>profile</strong> will appear on your
+              shareShot profile, allowing others to easily find them.
+            </p>
+            <p>
+              Albums that are not marked <strong>profile</strong> are still
+              accessible by anyone with the URL, but they aren't listed on your
+              profile.
+            </p>
+          </div>
+
+          <div className="hiw-feature-card">
+            <h3>Private Albums</h3>
+            <p>
+              Albums are open to anyone with the URL, but if you want to keep it
+              more exclusive, you can set it to <strong>private</strong>.
+            </p>
+            <p>Private albums can't be accessed by others.</p>
+          </div>
+
+          <div className="hiw-feature-card">
+            <h3>Subscribe</h3>
+            <p>You can subscribe to other people's albums with just a click.</p>
+            <p>
+              Then they appear on your profile, and you can easily access them
+              at any time.
+            </p>
+          </div>
+
+          <div className="hiw-feature-card">
+            <h3>Deleting</h3>
+            <p>You can create and delete your own albums at any time.</p>
+            <p>
+              Photos can be deleted by either the album owner or the photo
+              uploader.
+            </p>
+          </div>
+
+          <div className="hiw-feature-card">
+            <h3>private + open</h3>
+            <p>
+              You can set an album to both private and open, which means that
+              anyone can upload to it, but only the album owner can view it.
+            </p>
+            <p>
+              This is useful for situations where you want to allow people to
+              contribute photos without giving them immediate access to the
+              existing collection.
             </p>
           </div>
         </div>

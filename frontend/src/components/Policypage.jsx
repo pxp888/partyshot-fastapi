@@ -18,14 +18,15 @@ function Policypage() {
           <strong>Org. nr:</strong> [Your Personnummer]
         </li>
         <li>
-          <strong>Contact:</strong> <a href="mailto:[Your Email]">[Your Email]</a>
+          <strong>Contact:</strong>{" "}
+          <a href="mailto:[Your Email]">[Your Email]</a>
         </li>
       </ul>
 
       <h2>2. How We Secure Your Photos (The UUID System)</h2>
       <p>
-        We take a "Privacy by Design" approach to your content. To ensure
-        high performance while maintaining privacy:
+        We take a "Privacy by Design" approach to your content. To ensure high
+        performance while maintaining privacy:
       </p>
       <ul>
         <li>
@@ -40,7 +41,7 @@ function Policypage() {
           management tools.
         </li>
         <li>
-          <strong>Infrastructure:</strong> All data is hosted on{" "}
+          <strong>Infrastructure:</strong> All metadata is hosted on{" "}
           <strong>AWS</strong>. We utilize the{" "}
           <strong>Stockholm Region (eu‑north‑1)</strong> to ensure your data
           remains within the EEA, complying with GDPR data residency standards.
@@ -48,23 +49,19 @@ function Policypage() {
       </ul>
 
       <h2>3. Cookies</h2>
-      <p>
-        We keep it simple. We do not use tracking or marketing cookies.
-      </p>
+      <p>We keep it simple. We do not use tracking or marketing cookies.</p>
       <ul>
         <li>
           <strong>Strictly Necessary Session Cookies:</strong> These are used
           solely to keep you logged in and to authorize your requests. Because
-          these are essential for the service you requested, they do not
-          require a "Reject" option under the ePrivacy Directive, but we list
-          them here for full transparency.
+          these are essential for the service you requested, they do not require
+          a "Reject" option under the ePrivacy Directive, but we list them here
+          for full transparency.
         </li>
       </ul>
 
       <h2>4. Your Rights (The Swedish Context)</h2>
-      <p>
-        Under GDPR and the Swedish Data Act, you have the right to:
-      </p>
+      <p>Under GDPR and the Swedish Data Act, you have the right to:</p>
       <ul>
         <li>
           <strong>Access & Export:</strong> Download all photos you have
@@ -72,9 +69,8 @@ function Policypage() {
         </li>
         <li>
           <strong>Erasure (Right to be Forgotten):</strong> When you delete a
-          photo or your account, we trigger an immediate deletion from our
-          S3 storage and an invalidation of the content on our CDN
-          (CloudFlare).
+          photo or your account, we trigger an immediate deletion from our S3
+          storage and an invalidation of the content on our CDN (CloudFlare).
         </li>
         <li>
           <strong>Withdrawal (New for 2026):</strong> In accordance with the
