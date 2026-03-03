@@ -25,7 +25,6 @@ function Howitworks() {
         </p>
       </section>
 
-
       <section className="screenshot-section">
         <img
           src={screen1}
@@ -33,8 +32,6 @@ function Howitworks() {
           className="screenshot-image"
         />
       </section>
-
-
 
       {/* Steps Section */}
       <section className="hiw-steps">
@@ -126,7 +123,6 @@ function Howitworks() {
         </Link>
       </section>
 
-
       {/* General Mechanics Section */}
       <section className="hiw-features">
         <h2>General Mechanics</h2>
@@ -181,18 +177,24 @@ function Howitworks() {
         </div>
       </section>
 
-
-
       <footer className="welcome-footer">
-        <nav className="footer-nav">
-          <a
-            href="https://github.com/pxp888/partyshot-fastapi"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-        </nav>
+        <div className="footerlinks">
+          <nav className="footer-nav">
+            <a
+              href="https://github.com/pxp888/partyshot-fastapi"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>
+          </nav>
+          <nav className="footer-nav">
+            <a href="/privacy">Privacy Policy</a>
+          </nav>
+          <nav className="footer-nav">
+            <a href="/terms">Terms of Service</a>
+          </nav>
+        </div>
         <p className="footer-copy">
           &copy; {new Date().getFullYear()} shareShot.eu
         </p>

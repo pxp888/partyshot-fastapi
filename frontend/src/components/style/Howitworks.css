@@ -241,3 +241,10 @@
         width: 100%;
     }
 }
+
+.footerlinks {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 4rem;
+}

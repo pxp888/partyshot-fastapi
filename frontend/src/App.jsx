@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./App.css";
+import { WebSocketProvider } from "./components/WebSocketContext";
+import { MessageBoxProvider } from "./components/MessageBoxContext";
+
 import Topbar from "./components/Topbar";
 import WelcomePage from "./components/WelcomePage";
 import Userview from "./components/userview/Userview";
@@ -8,14 +11,11 @@ import Albumview from "./components/albumview/Albumview";
 import Adminpage from "./components/Adminpage";
 import Contactpage from "./components/Contactpage";
 import Plans from "./components/Plans";
-import { WebSocketProvider } from "./components/WebSocketContext";
-
 import AccountPage from "./components/AccountPage";
 import Howitworks from "./components/Howitworks";
-import { MessageBoxProvider } from "./components/MessageBoxContext";
+import Policypage from "./components/Policypage";
+import Termspage from "./components/Termspage";
 import CookieConsent from "./components/CookieConsent";
-
-
 
 function NotFound() {
   return <h2>Page not found (client‑side)</h2>;
@@ -35,6 +35,8 @@ export default function App() {
             <Route path="/" element={<Howitworks />} />
             <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/plans" element={<Plans />} />
+            <Route path="/privacy" element={<Policypage />} />
+            <Route path="/terms" element={<Termspage />} />
 
             <Route
               path="/user/:username"
