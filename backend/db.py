@@ -12,6 +12,7 @@ import aws
 import env
 import psycopg2
 from arq.connections import RedisSettings
+from markdown_it.rules_block.list import skipBulletListMarker
 from psycopg2.pool import ThreadedConnectionPool
 
 # --------------------------------------------------------------------------- #
@@ -1597,4 +1598,50 @@ def dumpStripeEvent(event_id: str, event: dict) -> None:
                 conn.commit()
             except Exception as e:
                 logging.error("Error dumping stripe event %s: %s", event_id, e)
+                conn.rollback()
+
+
+async def delete_user(username: str) -> None:
+    """Delete a user and all associated data from the database."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                # Get user ID
+                cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
+                row = cursor.fetchone()
+                if not row:
+                    return
+                user_id = row[0]
+
+                # get all s3_keys for user's photos to delete from S3 after DB cleanup
+                cursor.execute(
+                    """
+                    SELECT p.s3_key, p.thumb_key, p.mid_key
+                    FROM photos p
+                    JOIN albums a ON p.album_id = a.id
+                    WHERE a.user_id = %s
+                    """,
+                    (user_id,),
+                )
+                photo_rows = cursor.fetchall()
+                killed_keys = []
+                for s3_key, thumb_key, mid_key in photo_rows:
+                    if s3_key:
+                        killed_keys.append(s3_key)
+                    if thumb_key:
+                        killed_keys.append(thumb_key)
+                    if mid_key:
+                        killed_keys.append(mid_key)
+
+                while killed_keys:
+                    batch = killed_keys[:100]
+                    killed_keys = killed_keys[100:]
+                    await enqueue_delete_keys(batch)
+
+                # Delete user record (cascades to albums, photos, subscriptions, etc.)
+                cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+
+                conn.commit()
+            except Exception as e:
+                logging.error("Error deleting user %s: %s", username, e)
                 conn.rollback()

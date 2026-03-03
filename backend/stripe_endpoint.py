@@ -1,10 +1,10 @@
 import datetime
-import logging 
+import logging
 
+import db
 import env
 import stripe
-import db
-from fastapi import HTTPException, Request, Depends, APIRouter
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi_jwt_auth2 import AuthJWT
 
 # Create a router for Stripe endpoints
@@ -18,81 +18,8 @@ endpoint_secret = env.STRIPE_WEBHOOK_SECRET
 product_plans = {
     "prod_U2tflIpiXCuzex": "pro",
     "prod_U2RGXhmr8EWeZh": "basic",
-    "prod_U2tel5VgyQI5mV": "starter"
+    "prod_U2tel5VgyQI5mV": "starter",
 }
-
-
-# cus_U2yFK5mCFpw4pF cat
-
-# @router.post("/create-checkout-session")
-# async def create_checkout_session(request: Request, Authorize: AuthJWT = Depends()):
-#     try:
-#         Authorize.jwt_required()
-#         current_user = Authorize.get_jwt_subject()
-
-#         # 1. Check if we already have a Stripe Customer ID for this user
-#         stripe_customer_id = db.getStripeCustomerId(current_user)
-
-#         base_url = str(request.base_url).rstrip("/")
-#         return_url = f"{base_url}/basic/return?session_id={{CHECKOUT_SESSION_ID}}"
-
-#         # 2. Build session arguments
-#         session_args = {
-#             "client_reference_id": current_user,
-#             "metadata": {
-#                 "user_id": current_user,
-#                 "plan_type": "basic"
-#             },
-#             "subscription_data": {
-#                 "metadata": {
-#                     "user_id": current_user,
-#                     "plan_type": "basic"
-#                 },
-#             },
-#             "line_items": [
-#                 {
-#                     "price_data": {
-#                         "currency": "eur",
-#                         "product_data": {"name": "Basic Plan"},
-#                         "unit_amount": 999,
-#                         "recurring": {"interval": "month"},
-#                     },
-#                     "quantity": 1,
-#                 }
-#             ],
-#             "mode": "subscription",
-#             "ui_mode": "embedded",
-#             "return_url": return_url,
-#         }
-
-#         # 3. If the customer exists, attach their ID to the session
-#         if stripe_customer_id:
-#             session_args["customer"] = stripe_customer_id
-#         else:
-#             # Pre-fill email for new customers
-#             email = db.getEmail(current_user)
-#             if email:
-#                 session_args["customer_email"] = email
-
-#         session = stripe.checkout.Session.create(**session_args)
-#         return {"clientSecret": session.client_secret}
-#     except Exception as e:
-#         # It is helpful to print the error to your server logs for debugging
-#         print(f"Stripe Error: {e}")
-#         raise HTTPException(status_code=400, detail=str(e))
-
-
-# @router.get("/session_status")
-# async def session_status(session_id: str):
-#     try:
-#         session = stripe.checkout.Session.retrieve(session_id)
-#         return {
-#             "status": session.status,
-#             "customer_email": session.customer_details.email if session.customer_details else None
-#             # TODO: check if user is premium
-#         }
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/webhook")
@@ -102,11 +29,9 @@ async def stripe_webhook(request: Request):
     event = None
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError as e:
-        # Invalid payload   
+        # Invalid payload
         logging.error("Invalid payload: %s", e)
         raise HTTPException(status_code=400, detail="Invalid payload")
     except stripe.error.SignatureVerificationError as e:
@@ -114,35 +39,38 @@ async def stripe_webhook(request: Request):
         logging.error("Invalid signature: %s", e)
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-
-    # db.dumpStripeEvent(event["id"], event) 
-    print('STRIPE EVENT TYPE: ', event["type"])
-    
+    # db.dumpStripeEvent(event["id"], event)
+    print("STRIPE EVENT TYPE: ", event["type"])
 
     if event["type"] == "checkout.session.completed":
         customer_id = event["data"]["object"]["customer"]
         username = event["data"]["object"]["client_reference_id"]
         db.updateUserStripeCustomerId(username, customer_id)
-        print("WEBHOOK: checkout.session.completed - customer: {customer_id}, username: {username}")
-        
+        print(
+            "WEBHOOK: checkout.session.completed - customer: {customer_id}, username: {username}"
+        )
+
     elif event["type"] == "invoice.paid":
         customer_id = event["data"]["object"]["customer"]
         try:
-            product_id = event["data"]["object"]["lines"]["data"][1]["pricing"]["price_details"]["product"]
+            product_id = event["data"]["object"]["lines"]["data"][1]["pricing"][
+                "price_details"
+            ]["product"]
         except:
-            product_id = event["data"]["object"]["lines"]["data"][0]["pricing"]["price_details"]["product"]
-        
+            product_id = event["data"]["object"]["lines"]["data"][0]["pricing"][
+                "price_details"
+            ]["product"]
+
         plan = product_plans.get(product_id)
         if not plan:
             raise HTTPException(status_code=400, detail="Invalid product ID")
-        
+
         db.updateUserPlan(customer_id, plan, event["id"])
         print("WEBHOOK: invoice.paid - customer: {customer_id}, plan: {plan}")
-        
+
     elif event["type"] == "customer.subscription.deleted":
         customer_id = event["data"]["object"]["customer"]
         db.updateUserPlan(customer_id, "free", event["id"])
-        
 
     # elif event["type"] == "customer.subscription.updated":
     #     customer_id = event["data"]["object"]["customer"]
@@ -156,27 +84,28 @@ async def create_customer_session(Authorize: AuthJWT = Depends()):
     try:
         Authorize.jwt_required()
         current_user = Authorize.get_jwt_subject()
-        
+
         # 1. Check for existing Stripe customer ID
         stripe_customer_id = db.getStripeCustomerId(current_user)
-        
+
         # 2. If no customer ID exists, create one and update the database
         if not stripe_customer_id:
             email = db.getEmail(current_user)
             customer = stripe.Customer.create(
                 email=email,
-                metadata={"user_id": current_user, "username": current_user}
+                metadata={"user_id": current_user, "username": current_user},
             )
             stripe_customer_id = customer.id
             db.updateUserStripeCustomerId(current_user, stripe_customer_id)
-            print(f"Created new Stripe customer {stripe_customer_id} for user {current_user}")
+            print(
+                f"Created new Stripe customer {stripe_customer_id} for user {current_user}"
+            )
 
         # 3. Create a Customer Session for the pricing table
         session = stripe.CustomerSession.create(
-            customer=stripe_customer_id,
-            components={"pricing_table": {"enabled": True}}
+            customer=stripe_customer_id, components={"pricing_table": {"enabled": True}}
         )
-        
+
         return {"client_secret": session.client_secret}
     except Exception as e:
         print(f"Stripe Customer Session Error: {e}")
@@ -188,14 +117,14 @@ async def create_portal_session(request: Request, Authorize: AuthJWT = Depends()
     try:
         Authorize.jwt_required()
         current_user = Authorize.get_jwt_subject()
-        
+
         stripe_customer_id = db.getStripeCustomerId(current_user)
         if not stripe_customer_id:
             raise HTTPException(status_code=400, detail="Stripe customer not found")
 
         base_url = str(request.base_url).rstrip("/")
         # Return to the account settings page
-        return_url = f"{base_url}/account" 
+        return_url = f"{base_url}/account"
 
         session = stripe.billing_portal.Session.create(
             customer=stripe_customer_id,
@@ -207,7 +136,30 @@ async def create_portal_session(request: Request, Authorize: AuthJWT = Depends()
         print(f"Stripe Portal Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-
-
     # invoice.payment_failed
     # customer.subscription.deleted
+
+
+@router.post("/deletecustomer")
+async def delete_customer(request: Request, Authorize: AuthJWT = Depends()):
+    try:
+        Authorize.jwt_required()
+        current_user = Authorize.get_jwt_subject()
+        current_user = str(current_user)
+
+        print("Deleting user from database", current_user)
+
+        stripe_customer_id = db.getStripeCustomerId(current_user)
+        if stripe_customer_id:
+            logging.warning(
+                "DELETE CUSTOMER", stripe.Customer.delete(stripe_customer_id)
+            )
+        else:
+            logging.warning("No Stripe customer ID found for user %s", current_user)
+
+        await db.delete_user(current_user)
+        return {"detail": "Customer and user deleted successfully"}
+
+    except Exception as e:
+        print(f"Stripe Delete Customer Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))

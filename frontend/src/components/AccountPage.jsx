@@ -1,210 +1,275 @@
+// fast1/frontend/src/components/AccountPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSocket } from "./WebSocketContext";
+import { receiveJson, sendJson } from "./helpers";
 import "./style/AccountPage.css";
 import ManageBilling from "./stripe/ManageBilling";
 
 const AccountPage = ({ currentUser, setCurrentUser }) => {
-    const { sendJsonMessage, lastJsonMessage } = useSocket();
-    const [userInfo, setUserInfo] = useState(null);
-    const [formData, setFormData] = useState({
-        newusername: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-    });
-    const [status, setStatus] = useState({ type: "", message: "" });
-    const [loading, setLoading] = useState(false);
-    const [emailPlaceholder, setEmailPlaceholder] = useState("Loading current email...");
-    const [usage, setUsage] = useState(null);
+  const { sendJsonMessage, lastJsonMessage } = useSocket();
+  const [userInfo, setUserInfo] = useState(null);
+  const [formData, setFormData] = useState({
+    newusername: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState({ type: "", message: "" });
+  const [emailPlaceholder, setEmailPlaceholder] = useState(
+    "Loading current email...",
+  );
+  const [usage, setUsage] = useState(null);
 
-    useEffect(() => {
-        if (currentUser) {
-            sendJsonMessage({ action: "getEmail" });
-            sendJsonMessage({ action: "getUsage" });
-            sendJsonMessage({ action: "getUserInfo" });
-        }
-    }, [currentUser, sendJsonMessage]);
+  useEffect(() => {
+    if (currentUser) {
+      sendJsonMessage({ action: "getEmail" });
+      sendJsonMessage({ action: "getUsage" });
+      sendJsonMessage({ action: "getUserInfo" });
+    }
+  }, [currentUser, sendJsonMessage]);
 
-    useEffect(() => {
-        if (lastJsonMessage) {
-            if (lastJsonMessage.action === "setUserData") {
-                setLoading(false);
-                const { username, message } = lastJsonMessage.payload;
+  useEffect(() => {
+    if (lastJsonMessage) {
+      if (lastJsonMessage.action === "setUserData") {
+        setLoading(false);
+        const { username, message } = lastJsonMessage.payload;
 
-                if (message === "success") {
-                    setStatus({ type: "success", message: "Account settings updated successfully!" });
-                    setFormData({
-                        newusername: "",
-                        email: "",
-                        password: "",
-                        confirmPassword: "",
-                    });
-                    // Refresh email placeholder after update
-                    sendJsonMessage({ action: "getEmail" });
-                } else if (message === "username taken") {
-                    setStatus({ type: "error", message: "That username is already taken. Please choose another." });
-                } else if (message === "no changes") {
-                    setStatus({ type: "info", message: "No changes were detected." });
-                } else if (message === "error") {
-                    setStatus({ type: "error", message: "An error occurred while updating your settings." });
-                } else {
-                    setStatus({ type: "error", message: message || "Unexpected response from server." });
-                }
-
-                if (username && username !== currentUser) {
-                    setCurrentUser(username);
-                    localStorage.setItem("username", username);
-                }
-            } else if (lastJsonMessage.action === "getEmail") {
-                setEmailPlaceholder(lastJsonMessage.payload || "No email set");
-            } else if (lastJsonMessage.action === "getUsage") {
-                setUsage(lastJsonMessage.payload);
-            } else if (lastJsonMessage.action === "getUserInfo") {
-                setUserInfo(lastJsonMessage.payload);
-            }
-        }
-    }, [lastJsonMessage, currentUser, setCurrentUser, sendJsonMessage]);
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setStatus({ type: "", message: "" });
-
-        if (formData.password && formData.password !== formData.confirmPassword) {
-            setStatus({ type: "error", message: "Passwords do not match." });
-            return;
+        if (message === "success") {
+          setStatus({
+            type: "success",
+            message: "Account settings updated successfully!",
+          });
+          setFormData({
+            newusername: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+          });
+          // Refresh email placeholder after update
+          sendJsonMessage({ action: "getEmail" });
+        } else if (message === "username taken") {
+          setStatus({
+            type: "error",
+            message: "That username is already taken. Please choose another.",
+          });
+        } else if (message === "no changes") {
+          setStatus({ type: "info", message: "No changes were detected." });
+        } else if (message === "error") {
+          setStatus({
+            type: "error",
+            message: "An error occurred while updating your settings.",
+          });
+        } else {
+          setStatus({
+            type: "error",
+            message: message || "Unexpected response from server.",
+          });
         }
 
-        setLoading(true);
-        sendJsonMessage({
-            action: "setUserData",
-            payload: {
-                newusername: formData.newusername || null,
-                email: formData.email || null,
-                password: formData.password || null,
-            },
-        });
-    };
+        if (username && username !== currentUser) {
+          setCurrentUser(username);
+          localStorage.setItem("username", username);
+        }
+      } else if (lastJsonMessage.action === "getEmail") {
+        setEmailPlaceholder(lastJsonMessage.payload || "No email set");
+      } else if (lastJsonMessage.action === "getUsage") {
+        setUsage(lastJsonMessage.payload);
+      } else if (lastJsonMessage.action === "getUserInfo") {
+        setUserInfo(lastJsonMessage.payload);
+      }
+    }
+  }, [lastJsonMessage, currentUser, setCurrentUser, sendJsonMessage]);
 
-    if (!currentUser) {
-        return (
-            <div className="account-container">
-                <div className="account-card">
-                    <h2>Access Denied</h2>
-                    <p style={{ textAlign: "center", color: "#a0a0c0" }}>
-                        Please log in to manage your account settings.
-                    </p>
-                </div>
-            </div>
-        );
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone.",
+    );
+    if (!confirmed) return;
+    setDeleteStatus({ type: "", message: "" });
+    setLoading(true);
+    try {
+      console.log(await sendJson("/api/deletecustomer", {}));
+
+      setDeleteStatus({
+        type: "success",
+        message: "Account deleted successfully. You will be logged out.",
+      });
+      setCurrentUser(null);
+      localStorage.removeItem("username");
+      localStorage.removeItem("access_token");
+    } catch (err) {
+      setDeleteStatus({ type: "error", message: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setStatus({ type: "", message: "" });
+
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      setStatus({ type: "error", message: "Passwords do not match." });
+      return;
     }
 
+    setLoading(true);
+    sendJsonMessage({
+      action: "setUserData",
+      payload: {
+        newusername: formData.newusername || null,
+        email: formData.email || null,
+        password: formData.password || null,
+      },
+    });
+  };
+
+  if (!currentUser) {
     return (
-        <div className="account-container">
-            <div className="account-card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                    <h2 style={{ margin: 0 }}>Account Settings</h2>
-                </div>
-                <div className="current-user-info">
-                    {userInfo?.class && <p>Current Plan: <strong>{userInfo.class}</strong></p>}
-                    {userInfo?.class !== "" && <ManageBilling />}
-                </div>
-
-                {usage && (
-                    <div className="usage-stats">
-                        <h3>Usage Statistics</h3>
-                        <div className="usage-grid">
-                            <div className="usage-item">
-                                <span className="usage-label">Photos Uploaded</span>
-                                <span className="usage-value">{usage["number of photos"]}</span>
-                            </div>
-                            <div className="usage-item">
-                                <span className="usage-label">Albums Created</span>
-                                <span className="usage-value">{usage["number of albums"]}</span>
-                            </div>
-                            <div className="usage-item">
-                                <span className="usage-label">Guest Photos (in your albums)</span>
-                                <span className="usage-value">{usage["number of other peoples photos in users albums"]}</span>
-                            </div>
-                            <div className="usage-item">
-                                <span className="usage-label">Your Photos Size</span>
-                                <span className="usage-value">{(usage["total size of photos"] / (1024 * 1024)).toFixed(2)} MB</span>
-                            </div>
-                            <div className="usage-item">
-                                <span className="usage-label">Total Album Size</span>
-                                <span className="usage-value">{(usage["total size in user albums"] / (1024 * 1024)).toFixed(2)} MB</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <form className="account-form" onSubmit={handleSubmit}>
-                    {/* <div className="form-group">
-                        <label htmlFor="newusername">New Username (min 3 chars)</label>
-                        <input
-                            type="text"
-                            id="newusername"
-                            name="newusername"
-                            value={formData.newusername}
-                            onChange={handleChange}
-                            placeholder="Leave blank to keep current"
-                        />
-                    </div> */}
-
-                    <div className="form-group">
-                        <label htmlFor="email">New Email</label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder={emailPlaceholder}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="password">New Password (min 6 chars)</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Leave blank to keep current"
-                        />
-                    </div>
-
-                    {formData.password && (
-                        <div className="form-group">
-                            <label htmlFor="confirmPassword">Confirm New Password</label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="Confirm your new password"
-                            />
-                        </div>
-                    )}
-
-                    <button className="account-btn" type="submit" disabled={loading}>
-                        {loading ? "Updating..." : "Update Settings"}
-                    </button>
-
-                    {status.message && (
-                        <div className={`message ${status.type}`}>
-                            {status.message}
-                        </div>
-                    )}
-                </form>
-            </div>
+      <div className="account-container">
+        <div className="account-card">
+          <h2>Access Denied</h2>
+          <p style={{ textAlign: "center", color: "#a0a0c0" }}>
+            Please log in to manage your account settings.
+          </p>
         </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="account-container">
+      <div className="account-card">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Account Settings</h2>
+        </div>
+        <div className="current-user-info">
+          {userInfo?.class && (
+            <p>
+              Current Plan: <strong>{userInfo.class}</strong>
+            </p>
+          )}
+          {userInfo?.class !== "" && <ManageBilling />}
+        </div>
+
+        {usage && (
+          <div className="usage-stats">
+            <h3>Usage Statistics</h3>
+            <div className="usage-grid">
+              <div className="usage-item">
+                <span className="usage-label">Photos Uploaded</span>
+                <span className="usage-value">{usage["number of photos"]}</span>
+              </div>
+              <div className="usage-item">
+                <span className="usage-label">Albums Created</span>
+                <span className="usage-value">{usage["number of albums"]}</span>
+              </div>
+              <div className="usage-item">
+                <span className="usage-label">
+                  Guest Photos (in your albums)
+                </span>
+                <span className="usage-value">
+                  {usage["number of other peoples photos in users albums"]}
+                </span>
+              </div>
+              <div className="usage-item">
+                <span className="usage-label">Your Photos Size</span>
+                <span className="usage-value">
+                  {(usage["total size of photos"] / (1024 * 1024)).toFixed(2)}{" "}
+                  MB
+                </span>
+              </div>
+              <div className="usage-item">
+                <span className="usage-label">Total Album Size</span>
+                <span className="usage-value">
+                  {(usage["total size in user albums"] / (1024 * 1024)).toFixed(
+                    2,
+                  )}{" "}
+                  MB
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form className="account-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="email">New Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder={emailPlaceholder}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">New Password (min 6 chars)</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Leave blank to keep current"
+            />
+          </div>
+
+          {formData.password && (
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm New Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm your new password"
+              />
+            </div>
+          )}
+
+          <button className="account-btn" type="submit" disabled={loading}>
+            {loading ? "Updating..." : "Update Settings"}
+          </button>
+
+          <button
+            className="account-btn"
+            type="button"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            Delete Account
+          </button>
+
+          {status.message && (
+            <div className={`message ${status.type}`}>{status.message}</div>
+          )}
+
+          {deleteStatus.message && (
+            <div className={`message ${deleteStatus.type}`}>
+              {deleteStatus.message}
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default AccountPage;

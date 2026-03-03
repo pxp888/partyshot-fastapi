@@ -108,6 +108,7 @@ def delete_files_from_s3(keys):
     objects = [{"Key": key} for key in keys if key]
     if not objects:
         return True
+
     try:
         response = s3_client.delete_objects(
             Bucket=BUCKET_NAME, Delete={"Objects": objects}
