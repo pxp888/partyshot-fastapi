@@ -465,30 +465,7 @@ function Albumview(currentUser) {
             </div>
           </div>
         </div>
-
-
-
-
-
-
-
-
-
-
-
-
       </section>
-
-      {/* new
-
-
-
-
-
-
-
-
-  */}
 
       {selectMode && (
         <div className="albumActions">
@@ -524,18 +501,20 @@ function Albumview(currentUser) {
             <button
               className="sortOrderBtn"
               onClick={() => {
-                const nextType = viewType === "icon" ? "list" : "icon";
-                setViewType(nextType);
-                localStorage.setItem("viewType", nextType);
+                setViewType("list");
               }}
-              title={
-                viewType === "icon"
-                  ? "Switch to List View"
-                  : "Switch to Icon View"
-              }
             >
-              {viewType === "icon" ? "☰" : "▦"}
+              ☰
             </button>
+            <button
+              className="sortOrderBtn"
+              onClick={() => {
+                setViewType("icon");
+              }}
+            >
+              ▦
+            </button>
+
             <select
               value={sortField}
               onChange={(e) => setSortField(e.target.value)}
@@ -596,17 +575,18 @@ function Albumview(currentUser) {
             <button
               className="sortOrderBtn"
               onClick={() => {
-                const nextType = viewType === "icon" ? "list" : "icon";
-                setViewType(nextType);
-                localStorage.setItem("viewType", nextType);
+                setViewType("list");
               }}
-              title={
-                viewType === "icon"
-                  ? "Switch to List View"
-                  : "Switch to Icon View"
-              }
             >
-              {viewType === "icon" ? "☰" : "▦"}
+              ☰
+            </button>
+            <button
+              className="sortOrderBtn"
+              onClick={() => {
+                setViewType("icon");
+              }}
+            >
+              ▦
             </button>
             <select
               value={sortField}
@@ -630,7 +610,7 @@ function Albumview(currentUser) {
         </div>
       )}
 
-      {viewType === "icon" ? (
+      {viewType === "icon" && (
         <Iconlist
           photos={photos}
           sortedPhotos={sortedPhotos}
@@ -642,7 +622,9 @@ function Albumview(currentUser) {
           isFetching={isFetching}
           onDrop={handleUpload}
         />
-      ) : (
+      )}
+
+      {viewType === "list" && (
         <Listview
           photos={photos}
           sortedPhotos={sortedPhotos}
