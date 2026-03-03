@@ -1,0 +1,20 @@
+/* ----- File list ----------------------------------------------------- */
+.fileList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-sm);
+    padding: var(--gap-sm) 0;
+    margin: 0 var(--gap-md);
+    box-sizing: border-box;
+}
+
+.fileList::after {
+    content: "";
+    flex-grow: 10000;
+}
+
+@media (max-width: 600px) {
+    .fileList {
+        margin: 0 var(--gap-sm);
+    }
+}

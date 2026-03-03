@@ -11,21 +11,6 @@
     --text-muted: var(--text-muted, #666);
 }
 
-/* ----- File list ----------------------------------------------------- */
-.fileList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--gap-sm);
-    padding: var(--gap-sm) 0;
-    margin: 0 var(--gap-md);
-    box-sizing: border-box;
-}
-
-.fileList::after {
-    content: "";
-    flex-grow: 10000;
-}
-
 .helptext {
     margin: 0 var(--gap-md);
     padding: var(--gap-lg) 0;
