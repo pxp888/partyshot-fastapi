@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import hashlib
+import json
 import logging
 import random
 import uuid
@@ -12,7 +13,6 @@ import env
 import psycopg2
 from arq.connections import RedisSettings
 from psycopg2.pool import ThreadedConnectionPool
-import json
 
 # --------------------------------------------------------------------------- #
 # Database connection helpers
@@ -27,6 +27,13 @@ async def enqueue_delete_key(key: str):
     if _pool is None:
         _pool = await arq.create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
     await _pool.enqueue_job("delete_s3_object", key)
+
+
+async def enqueue_delete_keys(keys: list):
+    global _pool
+    if _pool is None:
+        _pool = await arq.create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
+    await _pool.enqueue_job("delete_s3_objects", keys)
 
 
 async def enqueue_record_atomic_photo(
@@ -281,7 +288,9 @@ def getAlbum(code: str) -> dict | None:
             "open": bool(row[4]),
             "profile": bool(row[5]),
             "private": bool(row[6]),
-            "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
+            "created_at": row[7].isoformat()
+            if isinstance(row[7], datetime.datetime)
+            else row[7],
             "username": row[8],
         }
     return None
@@ -315,7 +324,9 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             "open": bool(row[4]),
             "profile": bool(row[5]),
             "private": bool(row[6]),
-            "created_at": row[7].isoformat() if isinstance(row[7], datetime.datetime) else row[7],
+            "created_at": row[7].isoformat()
+            if isinstance(row[7], datetime.datetime)
+            else row[7],
             "username": row[8],
             "subscribed": bool(row[9]),
         }
@@ -421,13 +432,18 @@ async def deleteAlbum(username: str, code: str) -> str:
                 photo_rows = cursor.fetchall()
 
                 # 4. Enqueue S3 deletions
+                killed_keys = []
                 for s3_key, thumb_key, mid_key in photo_rows:
                     if s3_key:
-                        await enqueue_delete_key(s3_key)
+                        killed_keys.append(s3_key)
                     if thumb_key:
-                        await enqueue_delete_key(thumb_key)
+                        killed_keys.append(thumb_key)
                     if mid_key:
-                        await enqueue_delete_key(mid_key)
+                        killed_keys.append(mid_key)
+                while killed_keys:
+                    batch = killed_keys[:100]
+                    killed_keys = killed_keys[100:]
+                    await enqueue_delete_keys(batch)
 
                 # 5. Get total size of all original photos in the album
                 cursor.execute(
@@ -446,7 +462,7 @@ async def deleteAlbum(username: str, code: str) -> str:
                         """
                         INSERT INTO spaceused (user_id, space)
                         VALUES (%s, %s)
-                        ON CONFLICT (user_id) DO UPDATE 
+                        ON CONFLICT (user_id) DO UPDATE
                         SET space = spaceused.space - EXCLUDED.space;
                         """,
                         (user["id"], total_size),
@@ -580,7 +596,15 @@ async def deletePhoto(id: str, username: str) -> bool:
                 if not photo_row:
                     return False
 
-                photo_owner_id, album_id, s3_key, thumb_key, mid_key, photo_size, filename = photo_row
+                (
+                    photo_owner_id,
+                    album_id,
+                    s3_key,
+                    thumb_key,
+                    mid_key,
+                    photo_size,
+                    filename,
+                ) = photo_row
 
                 # Fetch album owner
                 cursor.execute(
@@ -624,16 +648,21 @@ async def deletePhoto(id: str, username: str) -> bool:
                         """
                         INSERT INTO spaceused (user_id, space)
                         VALUES (%s, %s)
-                        ON CONFLICT (user_id) DO UPDATE 
+                        ON CONFLICT (user_id) DO UPDATE
                         SET space = spaceused.space - EXCLUDED.space;
                         """,
                         (album_owner_id, photo_size),
                     )
-                    
+
                     # Record atomic deletion in background
                     # Note: db.py is synchronous mostly, but deletePhoto is async.
                     await enqueue_record_atomic_photo(
-                        photo_id, photo_owner_id, album_id, -photo_size, filename, "delete"
+                        photo_id,
+                        photo_owner_id,
+                        album_id,
+                        -photo_size,
+                        filename,
+                        "delete",
                     )
                 # If DELETE affected a row, commit
                 if cursor.rowcount == 0:
@@ -712,11 +741,11 @@ def get_album_thumbnail(album_code: str) -> str | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT thumb_key 
+                SELECT thumb_key
                 FROM photos p
                 JOIN albums a ON p.album_id = a.id
-                WHERE a.code = %s AND p.thumb_key IS NOT NULL 
-                ORDER BY p.created_at ASC 
+                WHERE a.code = %s AND p.thumb_key IS NOT NULL
+                ORDER BY p.created_at ASC
                 LIMIT 1
                 """,
                 (album_code,),
@@ -1376,8 +1405,8 @@ def updatePhotoSizes(
                 cursor.execute(
                     """
                     SELECT a.user_id, p.size, a.id, p.filename
-                    FROM photos p 
-                    JOIN albums a ON p.album_id = a.id 
+                    FROM photos p
+                    JOIN albums a ON p.album_id = a.id
                     WHERE p.id = %s
                     """,
                     (photo_id,),
@@ -1385,10 +1414,10 @@ def updatePhotoSizes(
                 row = cursor.fetchone()
                 if not row:
                     return
-                
+
                 owner_id, current_size, album_id, filename = row
 
-                # If the new size is 0 or None, and we don't have a size yet, 
+                # If the new size is 0 or None, and we don't have a size yet,
                 # don't update the record so it can be picked up later.
                 if (size is None or size <= 0) and current_size is None:
                     conn.rollback()
@@ -1404,12 +1433,12 @@ def updatePhotoSizes(
                         """
                         INSERT INTO spaceused (user_id, space)
                         VALUES (%s, %s)
-                        ON CONFLICT (user_id) DO UPDATE 
+                        ON CONFLICT (user_id) DO UPDATE
                         SET space = spaceused.space + EXCLUDED.space;
                         """,
                         (owner_id, size),
                     )
-                    
+
                     # Record atomic transaction (append-only)
                     cursor.execute(
                         """
@@ -1431,9 +1460,9 @@ def addSpaceUsed(user_id: int, space: int):
             try:
                 cursor.execute(
                     """
-                    INSERT INTO spaceused (user_id, space) 
+                    INSERT INTO spaceused (user_id, space)
                     VALUES (%s, %s)
-                    ON CONFLICT (user_id) DO UPDATE 
+                    ON CONFLICT (user_id) DO UPDATE
                     SET space = spaceused.space + EXCLUDED.space;
                     """,
                     (user_id, space),
@@ -1495,7 +1524,9 @@ def getStripeCustomerId(username: str) -> str | None:
                 row = cursor.fetchone()
                 return row[0] if row else None
             except Exception as e:
-                logging.error("Error getting stripe customer id for %s: %s", username, e)
+                logging.error(
+                    "Error getting stripe customer id for %s: %s", username, e
+                )
                 return None
 
 
@@ -1567,12 +1598,3 @@ def dumpStripeEvent(event_id: str, event: dict) -> None:
             except Exception as e:
                 logging.error("Error dumping stripe event %s: %s", event_id, e)
                 conn.rollback()
-
-
-
-
-
-
-
-
-

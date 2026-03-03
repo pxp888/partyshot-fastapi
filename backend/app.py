@@ -12,6 +12,7 @@ import aws
 import db
 import env
 import redis.asyncio as redis
+import stripe_endpoint
 import watcher
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -709,8 +710,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
 
-
-import stripe_endpoint
 
 app.include_router(stripe_endpoint.router)
 

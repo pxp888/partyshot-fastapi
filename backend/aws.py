@@ -7,9 +7,9 @@ import time
 
 import boto3
 import env
-from botocore.exceptions import ClientError
-from botocore.exceptions import ClientError
 from botocore.config import Config
+from botocore.exceptions import ClientError
+
 # Removed CloudFront and Cryptography imports as they are no longer needed for R2
 
 
@@ -103,6 +103,19 @@ def s3size(key):
         return 0
 
 
-
-
-
+def delete_files_from_s3(keys):
+    s3_client = get_s3_client()
+    objects = [{"Key": key} for key in keys if key]
+    if not objects:
+        return True
+    try:
+        response = s3_client.delete_objects(
+            Bucket=BUCKET_NAME, Delete={"Objects": objects}
+        )
+        deleted = response.get("Deleted", [])
+        errors = response.get("Errors", [])
+        logging.info("Deleted %s objects from S3. Errors: %s", len(deleted), errors)
+        return len(errors) == 0
+    except ClientError as e:
+        logging.error("Error deleting files: %s", e)
+        return False
