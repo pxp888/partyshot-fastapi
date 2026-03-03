@@ -23,7 +23,8 @@
 .hiw-hero {
     padding: 8rem 2rem 4rem;
     text-align: center;
-    background: linear-gradient(135deg, var(--form-color) 0%, #e5e5ea 100%);
+    background-color: var(--bg-main);
+    color: var(--form-color);
 }
 
 .hiw-hero h1 {
@@ -39,7 +40,7 @@
 
 .hiw-hero p {
     font-size: 1.25rem;
-    color: #070707;
+    color: var(--card-bg);
     max-width: 700px;
     margin: 0 auto;
 }
@@ -132,7 +133,7 @@
 
 /* Features Grid */
 .hiw-features {
-    background-color: var(--card-bg);
+    background-color: var(--bg-main);
     padding: 8rem 2rem;
     text-align: center;
 }
@@ -142,6 +143,7 @@
     margin-bottom: 4rem;
     font-weight: 800;
     letter-spacing: -0.02em;
+    color: var(--form-color);
 }
 
 .hiw-features-grid {
@@ -153,9 +155,10 @@
 }
 
 .hiw-feature-card {
-    background: var(--hiw-bg);
+    background-color: #434343;
+    color: gainsboro;
     padding: 3rem;
-    border-radius: 24px;
+    /*border-radius: 24px;*/
     text-align: left;
     box-shadow: var(--card-shadow);
     transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
@@ -223,7 +226,6 @@
 
 /* Responsive */
 @media (max-width: 900px) {
-
     .hiw-step-item,
     .hiw-step-item:nth-child(even) {
         flex-direction: column;
