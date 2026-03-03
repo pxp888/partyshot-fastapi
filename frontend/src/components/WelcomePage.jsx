@@ -118,17 +118,28 @@ function Welcomepage() {
           <div className="workitem">
             <p className="name">open</p>
             <p className="head">allow uploads from others</p>
-            <p className="detail">blah</p>
+            <p className="detail">
+              users can upload photos to any albums marked <strong>open</strong>
+            </p>
           </div>
           <div className="workitem">
             <p className="name">profile</p>
-            <p className="head">let others see your</p>
-            <p className="detail">blah ipsum lorem</p>
+            <p className="head">let others see your content</p>
+            <p className="detail">
+              every user has a <strong>profile</strong> with albums they choose
+              to show.
+            </p>
+            <p className="detail">albums are visible to anyone with the URL</p>
           </div>
           <div className="workitem">
             <p className="name">private</p>
-            <p className="head">allow uploads from others</p>
-            <p className="detail">blah</p>
+            <p className="head">
+              other users can be blocked, even with the URL
+            </p>
+            <p className="detail">
+              <strong>private + open</strong> can be useful for allowing uploads
+              without users seeing current collection.
+            </p>
           </div>
         </div>
       </div>

@@ -5,13 +5,13 @@
     text-align: center;
 
     /* More Distinct Gray Theme Variables */
-    /*--bg-main: #212122;*/
-    --bg-main: rgb(220, 220, 220);
+    --bg-main: #212122;
+    /*--bg-main: rgb(220, 220, 220);*/
     --bg-glass: rgba(235, 235, 240, 0.85);
     --border-glass: rgba(0, 0, 0, 0.15);
 
-    --bright-color: #059467;
-    /*--bright-color: salmon;*/
+    /*--bright-color: #059467;*/
+    --bright-color: salmon;
     --form-color: #e5e5ea;
 
     --text-primary: #1c1c1e;
@@ -22,7 +22,7 @@
     --btn-text: #1c1c1e;
     --accent: var(--bright-color);
 
-    background-color: hsl(0 0 95%);
+    background-color: hsl(0 0 23%);
 }
 
 body {
