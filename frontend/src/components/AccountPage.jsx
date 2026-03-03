@@ -1,9 +1,10 @@
 // fast1/frontend/src/components/AccountPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSocket } from "./WebSocketContext";
-import { receiveJson, sendJson } from "./helpers";
+import { sendJson } from "./helpers";
 import "./style/AccountPage.css";
 import ManageBilling from "./stripe/ManageBilling";
+import MessageBox from "./MessageBox";
 
 const AccountPage = ({ currentUser, setCurrentUser }) => {
   const { sendJsonMessage, lastJsonMessage } = useSocket();
@@ -21,6 +22,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     "Loading current email...",
   );
   const [usage, setUsage] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -86,11 +88,8 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleDelete = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete your account? This action cannot be undone.",
-    );
-    if (!confirmed) return;
+  const confirmDelete = async () => {
+    setShowDeleteConfirm(false);
     setDeleteStatus({ type: "", message: "" });
     setLoading(true);
     try {
@@ -108,6 +107,10 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = async () => {
+    setShowDeleteConfirm(true);
   };
 
   const handleSubmit = (e) => {
@@ -265,6 +268,16 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
             <div className={`message ${deleteStatus.type}`}>
               {deleteStatus.message}
             </div>
+          )}
+
+          {showDeleteConfirm && (
+            <MessageBox
+              title="Confirm Delete"
+              message="Are you sure you want to delete your account? This will immediately delete all your content and account details.  This action cannot be undone."
+              type="confirm"
+              onConfirm={confirmDelete}
+              onClose={() => setShowDeleteConfirm(false)}
+            />
           )}
         </form>
       </div>
