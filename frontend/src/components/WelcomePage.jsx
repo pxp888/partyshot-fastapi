@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
 import "./style/WelcomePage.css";
 
+import how1 from "../assets/how1.webp";
+import how2 from "../assets/how2.webp";
+import how3 from "../assets/how3.webp";
+import how4 from "../assets/how4.webp";
+import screen1 from "../assets/screen1.webp";
+
 function Welcomepage() {
   return (
     <div className="welcome-container">
@@ -11,14 +17,15 @@ function Welcomepage() {
           Create shared albums anyone can contribute to. Share the link —
           friends drop their photos in, and the memories build themselves.
         </p>
-        <button className="btn">Learn more</button>
+        <p>No hashtags, no friction, just sharing.</p>
+        {/* <button className="btn">Learn more</button>*/}
       </div>
 
       <div className="features">
         <h3 className="t1">FEATURES</h3>
         <h2>Simple by design</h2>
         <div className="featgrid">
-          <div className="featbox">
+          <div className="featbox share">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"

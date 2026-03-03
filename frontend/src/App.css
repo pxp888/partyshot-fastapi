@@ -22,7 +22,7 @@
     --btn-text: #1c1c1e;
     --accent: var(--bright-color);
 
-    background-color: hsl(0 0 23%);
+    background-color: hsl(0 0 20%);
 }
 
 body {

@@ -2,15 +2,25 @@
     background-color: hsl(0 0 80%);
 }
 
-.welcome-container .t1 {
+.t1 {
     font-size: 0.9rem;
     font-weight: 400;
 }
 
+/*----------------HERO--------------*/
+
 .hero {
     text-align: left;
-    padding: 30vh 0 30vh 3rem;
+    padding: 30vh 0 20vh 3rem;
+    width: 100%;
     max-width: 400px;
+}
+
+.hero img {
+    position: absolute;
+    left: 500px;
+    top: 120px;
+    width: 60%;
 }
 
 .hero h1 {
@@ -18,11 +28,11 @@
     font-weight: 600;
 }
 
-/*----------------------FEATURES--------------------------*/
+/*----------------FEATURES--------------*/
 
 .features {
     text-align: left;
-    margin: 30vh 4rem;
+    padding: 20vh 4rem 20vh 4rem;
 }
 
 .features h2 {
@@ -38,7 +48,7 @@
 }
 
 .featbox {
-    background-color: hsl(0 0 20%);
+    background-color: rgba(24, 24, 24, 0.8);
     padding: 1.6rem;
     color: hsl(0 0 76%);
 }
@@ -60,10 +70,16 @@
     margin-top: 0.8rem;
 }
 
-/*----------------------WORKS--------------------------*/
+.featbox .share {
+    background-image: url("../../assets/how1.webp");
+    background-size: cover;
+    background-position: center;
+}
+
+/*----------------WORKS--------------*/
 
 .works {
-    margin: 8rem;
+    padding: 8rem 8rem 16rem 8rem;
     text-align: left;
     max-width: 800px;
 }
@@ -76,7 +92,7 @@
 
 .workitem {
     display: grid;
-    grid-template-columns: 160px 1fr;
+    grid-template-columns: 180px 1fr;
     margin: 3rem 0;
 }
 
@@ -126,4 +142,33 @@
     padding: 0.8rem 1.6rem;
     border-radius: 0.4rem;
     font-weight: 600;
+}
+
+/*----------------MEDIA QUERIES (MOBILE)-----------------*/
+
+@media (max-width: 768px) {
+    .hero {
+        padding: 20vh 1rem;
+    }
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    .features {
+        padding: 20vh 1rem;
+    }
+    .featgrid {
+        grid-template-columns: 1fr;
+    }
+    .works {
+        padding: 4rem 1rem;
+    }
+    .workitem {
+        grid-template-columns: 120px 1fr;
+    }
+    .CTA {
+        padding: 2rem 0;
+    }
+    .CTA h1 {
+        font-size: 2rem;
+    }
 }
