@@ -44,106 +44,67 @@ function Plans() {
         </p>
       </section>
 
-      {/* Comparison Table Section - Always Visible */}
-      <section className="comparison-section">
+      {/* Pricing and Comparison Section */}
+      <section className="pricing-section">
         <div className="pricing-container">
-          <div className="comparison-table">
-            <div className="labels-column">
-              <div className="cell label-cell cell-header">Plans & Specs</div>
-              <div className="cell label-cell">Total Storage</div>
-              <div className="cell label-cell">Profile Albums</div>
-              <div className="cell label-cell">Hidden Albums</div>
-              <div className="cell label-cell">Private Albums</div>
-              <div className="cell label-cell">Price</div>
-            </div>
-            <div className="plans-scroll-area">
+          <table className="plans-simple-table">
+            <thead>
+              <tr>
+                <th>Storage</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
               {[
-                {
-                  name: "Free",
-                  storage: "1 GB",
-                  profileAlbums: "Yes",
-                  hiddenAlbums: "Yes",
-                  privateAlbums: "No",
-                  price: "Free",
-                },
-                {
-                  name: "Starter",
-                  storage: "10 GB",
-                  profileAlbums: "Yes",
-                  hiddenAlbums: "Yes",
-                  privateAlbums: "Yes",
-                  price: "50 SEK/mo",
-                },
-                {
-                  name: "Basic",
-                  storage: "50 GB",
-                  profileAlbums: "Yes",
-                  hiddenAlbums: "Yes",
-                  privateAlbums: "Yes",
-                  price: "100 SEK/mo",
-                },
-                {
-                  name: "Pro",
-                  storage: "250 GB",
-                  profileAlbums: "Yes",
-                  hiddenAlbums: "Yes",
-                  privateAlbums: "Yes",
-                  price: "200 SEK/mo",
-                },
+                { name: "Free", storage: "1 GB", price: "Free" },
+                { name: "Starter", storage: "10 GB", price: "50 SEK/mo" },
+                { name: "Basic", storage: "50 GB", price: "100 SEK/mo" },
+                { name: "Pro", storage: "250 GB", price: "200 SEK/mo" },
               ].map((plan, idx) => (
-                <div
-                  key={idx}
-                  className={`plan-column ${plan.popular ? "popular" : ""}`}
-                >
-                  {plan.popular && (
-                    <div className="popular-badge">Most Popular</div>
-                  )}
-                  <div className="cell cell-header">
-                    <div className="plan-name">{plan.name}</div>
-                  </div>
-                  <div className="cell data-cell">{plan.storage}</div>
-                  <div className="cell data-cell">{plan.profileAlbums}</div>
-                  <div className="cell data-cell">{plan.hiddenAlbums}</div>
-                  <div className="cell data-cell">{plan.privateAlbums}</div>
-                  <div className="cell data-cell plan-price">{plan.price}</div>
-                </div>
+                <tr key={idx}>
+                  <td>
+                    <div className="plan-info">
+                      <span className="plan-name-tag">{plan.name}</span>
+                      <span className="plan-storage-value">{plan.storage}</span>
+                    </div>
+                  </td>
+                  <td className="plan-price-value">{plan.price}</td>
+                </tr>
               ))}
-            </div>
-          </div>
-        </div>
-      </section>
+            </tbody>
+          </table>
 
-      {/* Conditional pricing actions based on user status */}
-      {(!userInfo || userInfo?.class?.toLowerCase() === "free") ? (
-        <section className="pricing-section">
-          <div className="pricing-container">
-            {userInfo ? (
-              <StripePricingTable
-                userEmail={userInfo?.email}
-                userId={userInfo?.username}
-              />
+          {/* Conditional pricing actions based on user status */}
+          <div className="pricing-actions">
+            {(!userInfo || userInfo?.class?.toLowerCase() === "free") ? (
+              <div className="pricing-wrapper">
+                {userInfo ? (
+                  <StripePricingTable
+                    userEmail={userInfo?.email}
+                    userId={userInfo?.username}
+                  />
+                ) : (
+                  <div className="login-required-overlay">
+                    <div className="auth-card">
+                      <Link to="/" className="subscribe-button">
+                        Log in or Register to get started
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="login-required-overlay">
+              <div className="status-wrapper" style={{ textAlign: "center", padding: "40px" }}>
                 <div className="auth-card">
-                  <Link to="/" className="subscribe-button">
-                    Log in or Register to get started
-                  </Link>
+                  <h3>Subscription Active</h3>
+                  <p>You are currently on the <strong>{userInfo.class}</strong> plan. You can manage your subscription and billing details below.</p>
+                  <ManageBilling />
                 </div>
               </div>
             )}
           </div>
-        </section>
-      ) : (
-        <section className="pricing-section">
-          <div className="pricing-container" style={{ textAlign: "center", padding: "40px" }}>
-            <div className="auth-card">
-              <h3>Subscription Active</h3>
-              <p>You are currently on the <strong>{userInfo.class}</strong> plan. You can manage your subscription and billing details below.</p>
-              <ManageBilling />
-            </div>
-          </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       <Footer />
     </div>

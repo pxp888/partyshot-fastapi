@@ -32,9 +32,9 @@
 /* Hero Section */
 .plans-hero {
     text-align: left;
-    padding: 20vh 0 10vh 4rem;
+    padding: 30vh 0 20vh 3rem;
     width: 100%;
-    max-width: 600px;
+    max-width: 400px;
     box-sizing: border-box;
 }
 
@@ -68,149 +68,84 @@
 
 /* Pricing Section */
 .pricing-section {
-    padding: 2rem 4rem 10rem 4rem;
+    padding: 2rem 3rem 10rem 3rem;
     flex-grow: 1;
     box-sizing: border-box;
-}
-
-.comparison-section {
-    padding: 5vh 4rem 10vh 4rem;
-    text-align: left;
 }
 
 .pricing-container {
     max-width: 1200px;
     background: transparent;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    overflow: hidden;
 }
 
-.comparison-table {
-    display: flex;
+.plans-simple-table {
     width: 100%;
-}
-
-.labels-column {
-    flex: 0 0 160px;
-    background: rgba(255, 255, 255, 0.4);
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    color: #1c1c1e;
-}
-
-.plans-scroll-area {
-    display: flex;
-    flex-grow: 1;
-    overflow-x: auto;
-    scrollbar-width: none;
-    /* Firefox */
-}
-
-.plans-scroll-area::-webkit-scrollbar {
-    display: none;
-    /* Chrome/Safari */
-}
-
-.plan-column {
-    flex: 1;
-    min-width: 180px;
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
-    position: relative;
-    transition: var(--transition-med);
-    background: rgba(255, 255, 255, 0.2);
-    color: #1c1c1e;
-}
-
-.plan-column:last-child {
-    border-right: none;
-}
-
-.plan-column.popular {
-    background: rgba(255, 255, 255, 0.5);
-    z-index: 1;
-}
-
-.plan-column:hover {
-    background: rgba(255, 255, 255, 0.7);
-}
-
-.plan-column.popular:hover {
-    background: rgba(255, 127, 80, 0.05);
-}
-
-.popular-badge {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--bright-color);
-    color: white;
-    padding: 4px 10px;
+    border-collapse: collapse;
+    background: rgba(24, 24, 24, 0.85);
+    backdrop-filter: blur(10px);
     border-radius: 2px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    overflow: hidden;
+    margin-top: 1rem;
+    color: white;
 }
 
-.cell {
-    padding: 20px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 70px;
-    text-align: center;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+.pricing-actions {
+    margin-top: 4rem;
 }
 
-.label-cell {
-    justify-content: flex-start;
-    padding-left: 20px;
-    font-weight: 600;
-    color: #3a3a3c;
-    font-size: 0.9rem;
+.plans-simple-table th,
+.plans-simple-table td {
+    padding: 30px 40px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.cell-header {
-    min-height: 100px;
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.label-cell.cell-header {
-    background: transparent;
-}
-
-.cell-footer {
-    border-bottom: none;
-    min-height: 100px;
-}
-
-.plan-name {
-    font-size: 1.4rem;
-    font-weight: 600;
-    letter-spacing: normal;
-}
-
-.popular .plan-name {
-    color: var(--plans-accent);
-}
-
-
-
-.data-cell {
+.plans-simple-table th {
+    background: rgba(0, 0, 0, 0.2);
     font-weight: 400;
-    font-size: 1rem;
-    color: #1c1c1e;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #a1a1a6;
 }
 
-.data-cell.plan-price {
-    font-size: 1.25rem;
+.plan-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.plan-name-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--bright-color);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.plan-storage-value {
+    font-size: 2rem;
     font-weight: 600;
+    color: white;
+}
+
+.plan-price-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: white;
+    text-align: right;
+}
+
+.plans-simple-table th:last-child {
+    text-align: right;
+}
+
+.plans-simple-table tr:last-child td {
+    border-bottom: none;
+}
+
+.plans-simple-table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* Subscribe Button */
@@ -233,7 +168,7 @@
 }
 
 .subscribe-button:hover {
-    background: var(--bright-color);
+    background: var(--plans-accent);
     color: white;
     transform: translateY(-2px);
 }
@@ -250,38 +185,26 @@
 }
 
 
+.stripe-pricing-table-container {
+    margin: 2rem 0;
+    padding: 0;
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
-    .comparison-section {
-        width: 100%;
-        padding: 5vh 0rem 10vh 0rem;
+    .pricing-section {
+        padding: 2rem 1rem;
     }
 
-
-    .labels-column {
-        flex: 0 0 130px;
+    .plan-storage-value,
+    .plan-price-value {
+        font-size: 1.2rem;
     }
 
-    .label-cell {
-        padding-left: 15px;
-        font-size: 0.8rem;
-    }
-
-    .plan-name {
-        font-size: 1.1rem;
-    }
-
-    .plan-price {
-        font-size: 1.1rem;
-    }
-
-    .data-cell {
-        font-size: 0.9rem;
-    }
-
-    .subscribe-button {
-        padding: 10px 12px;
-        font-size: 0.8rem;
+    .plans-simple-table th,
+    .plans-simple-table td {
+        padding: 15px 20px;
     }
 
     .login-required-overlay {
