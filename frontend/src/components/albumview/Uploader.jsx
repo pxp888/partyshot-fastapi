@@ -114,7 +114,7 @@ function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
   });
 }
 
-const Uploader = forwardRef(({ album, disabled }, ref) => {
+const Uploader = forwardRef(({ album, isOwner, disabled }, ref) => {
   const { showMessage } = useMessage();
   const { albumcode } = useParams();
   const [totalFiles, setTotalFiles] = useState(0);
@@ -270,6 +270,11 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
 
   const handleFiles = async (files) => {
     if (!files || files.length === 0) return;
+
+    if (!isOwner && !album.open) {
+      showMessage("this album is not open for uploads", "Warning");
+      return;
+    }
 
     // Convert FileList to a static array so that clearing the input value
     // (e.target.value = "") doesn't empty the list during processing.

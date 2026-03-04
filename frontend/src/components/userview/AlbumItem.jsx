@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMessage } from "../MessageBoxContext";
 import { receiveJson } from "../helpers";
 import "./AlbumItem.css";
 import blankImage from "../../assets/blank.jpg";
 
 function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
   const navigate = useNavigate();
+  const { showMessage } = useMessage();
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
 
   useEffect(() => {
@@ -32,6 +34,19 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
   function handleClick(event) {
     event.preventDefault();
     navigate(`/album/${album.code}`);
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isOtherUser && !album.open) {
+      showMessage("this album is not open for uploads", "Warning");
+    }
   }
 
   function handleToggleOpen(event) {
@@ -65,6 +80,8 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
     <div
       className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.profile ? "not-profile" : ""} ${album.private ? "is-private" : ""}`}
       onClick={handleClick}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       <div className="thumbnail-container">
         <img

@@ -372,6 +372,10 @@ function Albumview(currentUser) {
   }
 
   const handleUpload = (files) => {
+    if (!isOwner && !album.open) {
+      showMessage("this album is not open for uploads", "Warning");
+      return;
+    }
     if (uploaderRef.current) {
       uploaderRef.current.handleFiles(files);
     }
@@ -546,7 +550,12 @@ function Albumview(currentUser) {
           >
             Selection Mode
           </button>
-          <Uploader album={album} ref={uploaderRef} disabled={!userLoggedIn} />
+          <Uploader
+            album={album}
+            ref={uploaderRef}
+            isOwner={isOwner}
+            disabled={!userLoggedIn}
+          />
 
           <button
             onClick={downloadAll}
