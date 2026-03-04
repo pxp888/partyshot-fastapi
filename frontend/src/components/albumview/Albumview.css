@@ -345,3 +345,23 @@
 .vert.right {
     text-align: right;
 }
+
+/* ----- AlbumRenamer styles ----- */
+.album-renamer {
+    width: 100%;
+}
+
+.renamer-input {
+    padding: 0;
+    font-size: 1.8rem;
+    font-weight: 500;
+    font-family: inherit;
+    border: none;
+    border-bottom: 2px solid var(--primary-color, #3b82f6);
+    background-color: transparent;
+    color: hsl(0 0 20%);
+    width: 100%;
+    outline: none;
+    margin: 0;
+    line-height: 1.2;
+}
