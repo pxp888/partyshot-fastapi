@@ -123,21 +123,25 @@ function Topbar({ currentUser, setCurrentUser }) {
           </div>
         ) : (
           <div className="nav">
-            <Link
-              to={`/contact?from=${location.pathname}${location.search}`}
-              className="plans-link"
-            >
-              Contact
-            </Link>
-            <Link to="/plans" className="plans-link">
-              Plans
-            </Link>
-            <button className="btn" onClick={() => setShowLogin(true)}>
-              Login
-            </button>
-            <button className="btn" onClick={() => setShowRegister(true)}>
-              Register
-            </button>
+            <div>
+              <Link
+                to={`/contact?from=${location.pathname}${location.search}`}
+                className="plans-link"
+              >
+                Contact
+              </Link>
+              <Link to="/plans" className="plans-link">
+                Plans
+              </Link>
+            </div>
+            <div>
+              <button className="btn" onClick={() => setShowLogin(true)}>
+                Login
+              </button>
+              <button className="btn" onClick={() => setShowRegister(true)}>
+                Register
+              </button>
+            </div>
           </div>
         )}
       </div>

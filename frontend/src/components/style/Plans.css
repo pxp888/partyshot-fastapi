@@ -35,6 +35,7 @@
     padding: 20vh 0 10vh 4rem;
     width: 100%;
     max-width: 600px;
+    box-sizing: border-box;
 }
 
 .plans-hero h1 {
@@ -69,6 +70,7 @@
 .pricing-section {
     padding: 2rem 4rem 10rem 4rem;
     flex-grow: 1;
+    box-sizing: border-box;
 }
 
 .comparison-section {
@@ -250,6 +252,12 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .comparison-section {
+        width: 100%;
+        padding: 5vh 0rem 10vh 0rem;
+    }
+
+
     .labels-column {
         flex: 0 0 130px;
     }
