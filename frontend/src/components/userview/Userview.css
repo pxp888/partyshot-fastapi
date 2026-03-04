@@ -1,6 +1,7 @@
 /* ------------------------------------------------------------------
  * 1️⃣  Layout – make the grid a little more fluid on small screens
  * ------------------------------------------------------------------ */
+
 .album-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -197,7 +198,7 @@
     .album-list {
         grid-template-columns: 1fr 1fr;
         gap: 0.25rem;
-        padding: .25rem;
+        padding: 0.25rem;
         padding-bottom: 140px;
         margin: 0;
     }

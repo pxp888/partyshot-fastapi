@@ -22,10 +22,11 @@
     --btn-text: #1c1c1e;
     --accent: var(--bright-color);
 
-    background-color: hsl(0 0 20%);
+    /*background-color: hsl(0 0 20%);*/
 }
 
 body {
+    background-color: hsl(0 0 10%);
     margin: 0;
 }
 

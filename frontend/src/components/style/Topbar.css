@@ -4,7 +4,8 @@
     left: 0;
     right: 0;
     z-index: 1000;
-    background: hsl(0 0 75%);
+    /*background: hsl(0 0 75%);*/
+    background-color: hsl(0 0 90%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-glass);
@@ -32,7 +33,7 @@
 .topLeft a .title-suffix {
     color: #888;
     color: var(--bright-color);
-    opacity: .8;
+    opacity: 0.8;
 }
 
 /*.topLeft a:hover {
@@ -46,7 +47,6 @@
     align-items: center;
     gap: 0.5rem;
 }
-
 
 .topbar .userInfo {
     display: flex;
@@ -154,8 +154,6 @@
         justify-content: center;
         flex-direction: column;
     }
-
-
 }
 
 .plans-link {

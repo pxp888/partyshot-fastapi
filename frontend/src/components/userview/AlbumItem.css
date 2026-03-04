@@ -135,7 +135,7 @@
     cursor: default;
 }
 
-.status-word.selected {
+.album-actions .status-word.selected {
     color: white !important;
     background-color: transparent;
     border: none;

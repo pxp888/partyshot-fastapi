@@ -12,7 +12,7 @@
 }
 
 .plans-page {
-    background-color: hsl(0 0 80%);
+    background-color: hsl(0 0 90%);
     color: var(--plans-text);
     font-family:
         "Inter",
@@ -184,12 +184,10 @@
     transform: translateY(-2px);
 }
 
-
 .stripe-pricing-table-container {
     margin: 2rem 0;
     padding: 0;
 }
-
 
 /* Responsive */
 @media (max-width: 768px) {

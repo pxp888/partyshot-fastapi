@@ -260,28 +260,39 @@
     color: var(--primary-color);
 }
 
-/* ----- adetails ------------------------------------------ */
+/* ----- adetails ------------ */
 .adetails {
-    background-color: #434343;
-    padding: 1.5rem 2rem;
+    background-color: hsl(0 0 93%);
+    /*background-color: #434343;*/
+    padding: 2rem 3rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    color: white;
+    gap: 1.5rem;
+    color: hsl(0 0 30%);
 }
 
 .adetails .title {
-    font-size: 1.3rem;
-    font-weight: 300;
+    font-size: 1.8rem;
+    font-weight: 500;
     text-align: left;
 }
 
 .adetails .title p,
 .adetails .username,
-.adetails .date,
-.adetails .qr-trigger-text {
-    color: white;
+.adetails .date {
+    color: hsl(0 0 20%);
     margin: 0;
+}
+
+.adetails .qr-trigger-text {
+    color: hsl(0 0 40%);
+    margin: 0;
+}
+
+.adetails .date,
+.adetails .username {
+    font-size: 0.9rem;
+    color: hsl(0 0 40%);
 }
 
 .album-controls {
@@ -297,8 +308,9 @@
     cursor: default;
 }
 
-.status-word.selected {
-    color: white !important;
+.status-word.active {
+    /*color: white !important;*/
+    color: black !important;
 }
 
 .status-word.clickable {
