@@ -715,8 +715,8 @@ def getAlbums(username: str, authuser: str) -> dict | None:
 
         if not is_owner and not is_profile:
             continue
-        if is_private and authuser != row[8]:
-            continue
+        # if is_private and authuser != row[8]:
+        #     continue
 
         created_at = row[7]
         if isinstance(created_at, datetime.datetime):
