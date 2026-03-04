@@ -306,6 +306,7 @@ const Uploader = forwardRef(({ album, disabled }, ref) => {
       <input
         type="file"
         name="file"
+        accept="image/*"
         multiple
         id="hiddenFileInput"
         style={{ display: "none" }}
