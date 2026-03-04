@@ -224,33 +224,10 @@
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-/*-----------------------footer-------------------*/
-
-.welcome-footer {
-    background-color: black;
-    color: white;
-    text-align: center;
-    padding: 4rem 2rem;
-}
-
-.footerlinks {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 2rem;
-    margin-top: 4rem;
-}
-
-.footer-nav a {
-    color: gainsboro;
-}
-
-.footer-copy {
-    color: #a29c9c;
-}
 
 /* Responsive */
 @media (max-width: 900px) {
+
     .hiw-step-item,
     .hiw-step-item:nth-child(even) {
         flex-direction: column;
@@ -266,11 +243,4 @@
         width: 100%;
     }
 
-    .footerlinks {
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        gap: 1rem;
-        margin-top: 4rem;
-    }
 }

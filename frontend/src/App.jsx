@@ -12,10 +12,9 @@ import Adminpage from "./components/Adminpage";
 import Contactpage from "./components/Contactpage";
 import Plans from "./components/Plans";
 import AccountPage from "./components/AccountPage";
-import Howitworks from "./components/Howitworks";
 import Policypage from "./components/Policypage";
 import Termspage from "./components/Termspage";
-// import CookieConsent from "./components/CookieConsent";
+import CookieConsent from "./components/CookieConsent";
 
 function NotFound() {
   return <h2>Page not found (client‑side)</h2>;
@@ -28,7 +27,7 @@ export default function App() {
     <MessageBoxProvider>
       <WebSocketProvider>
         <Router>
-          {/* <CookieConsent />*/}
+          <CookieConsent />
           <Topbar currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
           <Routes>

@@ -12,7 +12,7 @@
 }
 
 .plans-page {
-    background-color: var(--form-color, #e5e5ea);
+    background-color: hsl(0 0 80%);
     color: var(--plans-text);
     font-family:
         "Inter",
@@ -23,69 +23,65 @@
     flex-direction: column;
 }
 
-/* Hero Section */
-.plans-hero {
-    padding: 100px 20px 60px;
-    background: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    text-align: center;
+.t1 {
+    font-size: 0.9rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
 }
 
-.hero-content {
-    max-width: 800px;
-    margin: 0 auto;
+/* Hero Section */
+.plans-hero {
+    text-align: left;
+    padding: 20vh 0 10vh 4rem;
+    width: 100%;
+    max-width: 600px;
 }
 
 .plans-hero h1 {
-    font-size: clamp(2.5rem, 8vw, 4.5rem);
-    font-weight: 800;
-    margin-bottom: 20px;
-    letter-spacing: -0.03em;
+    font-size: 3.6rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
     line-height: 1.1;
+    text-align: left;
 }
 
 .plans-hero .accent-text {
-    color: var(--plans-accent);
+    color: var(--bright-color);
 }
 
 .plans-hero .hero-snarky {
-    font-size: 1.2rem;
-    color: #8e8e93;
+    font-size: 1rem;
+    color: #48484a;
     font-style: italic;
-    margin-bottom: 15px;
+    margin-bottom: 0.5rem;
+    text-align: left;
 }
 
 .hero-subtext {
-    font-size: 1.15rem;
-    color: #48484a;
-    line-height: 1.6;
-    max-width: 600px;
-    margin: 0 auto;
+    font-size: 1.1rem;
+    color: #3b3b3d;
+    line-height: 1.5;
+    text-align: left;
 }
 
 /* Pricing Section */
 .pricing-section {
-    /* padding: 0 20px 100px; */
+    padding: 2rem 4rem 10rem 4rem;
     flex-grow: 1;
 }
 
 .comparison-section {
-    padding: 0 20px;
-    margin-bottom: 40px;
+    padding: 5vh 4rem 10vh 4rem;
+    text-align: left;
 }
 
 .pricing-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: var(--card-shadow);
+    max-width: 1200px;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -95,11 +91,12 @@
 }
 
 .labels-column {
-    flex: 0 0 140px;
-    background: rgba(242, 242, 247, 0.5);
-    border-right: 1px solid var(--border-soft);
+    flex: 0 0 160px;
+    background: rgba(255, 255, 255, 0.4);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    color: #1c1c1e;
 }
 
 .plans-scroll-area {
@@ -117,13 +114,14 @@
 
 .plan-column {
     flex: 1;
-    min-width: 150px;
+    min-width: 180px;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--border-soft);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
     position: relative;
     transition: var(--transition-med);
-    background: transparent;
+    background: rgba(255, 255, 255, 0.2);
+    color: #1c1c1e;
 }
 
 .plan-column:last-child {
@@ -131,13 +129,12 @@
 }
 
 .plan-column.popular {
-    background: rgba(255, 127, 80, 0.03);
+    background: rgba(255, 255, 255, 0.5);
     z-index: 1;
 }
 
 .plan-column:hover {
-    background: rgba(255, 255, 255, 0.4);
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.02);
+    background: rgba(255, 255, 255, 0.7);
 }
 
 .plan-column.popular:hover {
@@ -146,41 +143,40 @@
 
 .popular-badge {
     position: absolute;
-    top: 10px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--plans-accent);
+    background: var(--bright-color);
     color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    box-shadow: 0 4px 10px rgba(255, 127, 80, 0.3);
 }
 
 .cell {
-    padding: 16px 12px;
+    padding: 20px 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 60px;
+    min-height: 70px;
     text-align: center;
-    border-bottom: 1px solid var(--border-soft);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .label-cell {
     justify-content: flex-start;
-    padding-left: 15px;
+    padding-left: 20px;
     font-weight: 600;
-    color: #636366;
-    font-size: 0.85rem;
+    color: #3a3a3c;
+    font-size: 0.9rem;
 }
 
 .cell-header {
-    min-height: 90px;
-    background: rgba(255, 255, 255, 0.2);
+    min-height: 100px;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .label-cell.cell-header {
@@ -194,7 +190,7 @@
 
 .plan-name {
     font-size: 1.4rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: normal;
 }
 
@@ -202,15 +198,17 @@
     color: var(--plans-accent);
 }
 
-.plan-price {
-    font-size: 1.25rem;
-    font-weight: 700;
-}
+
 
 .data-cell {
-    font-weight: 500;
+    font-weight: 400;
     font-size: 1rem;
-    color: var(--plans-text);
+    color: #1c1c1e;
+}
+
+.data-cell.plan-price {
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 /* Subscribe Button */
@@ -218,42 +216,37 @@
     display: inline-block;
     box-sizing: border-box;
     width: 100%;
-    max-width: 140px;
-    padding: 12px 20px;
-    border-radius: 12px;
+    max-width: 160px;
+    padding: 12px 24px;
+    border-radius: 4px;
     border: none;
-    background: var(--plans-accent);
-    color: white;
-    font-weight: 700;
+    background: white;
+    color: hsl(0 0 20%);
+    font-weight: 600;
     cursor: pointer;
     transition: var(--transition-fast);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    text-align: center;
 }
 
 .subscribe-button:hover {
-    background: var(--plans-accent-dark);
+    background: var(--bright-color);
+    color: white;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 127, 80, 0.3);
 }
 
-.subscribe-button.secondary {
+.secondary-subscribe-button {
     background: #f2f2f7;
     color: #1c1c1e;
+    border-radius: 4px;
 }
 
-.subscribe-button.secondary:hover {
+.secondary-subscribe-button:hover {
     background: #e5e5ea;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
-/* Footer Improvements */
-.welcome-footer {
-    padding: 40px 20px;
-    background: rgba(0, 0, 0, 0.03);
-    margin-top: auto;
-}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -318,24 +311,25 @@
 
 /* Login Required Overlay */
 .login-required-overlay {
-    padding: 80px 20px;
+    padding: 6rem 2rem;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(255, 255, 255, 0.4);
+    background: transparent;
     min-height: 400px;
 }
 
 .auth-card {
-    background: white;
-    padding: 60px 40px;
-    border-radius: 24px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
+    background: rgba(24, 24, 24, 0.9);
+    padding: 4rem;
+    border-radius: 2px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
     width: 100%;
     box-sizing: border-box;
     text-align: center;
-    border: 1px solid var(--border-soft);
+    border: none;
+    color: white;
 }
 
 .auth-icon {
@@ -346,12 +340,12 @@
 .auth-card h3 {
     font-size: 1.8rem;
     font-weight: 800;
-    margin-bottom: 16px;
-    color: var(--plans-text);
+    margin-bottom: 24px;
+    color: white;
 }
 
 .auth-card p {
-    color: #636366;
+    color: #a1a1a6;
     line-height: 1.6;
     margin-bottom: 32px;
 }

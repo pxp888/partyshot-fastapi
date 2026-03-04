@@ -1,0 +1,38 @@
+.welcome-footer {
+    background-color: black;
+    color: white;
+    text-align: center;
+    padding: 4rem 2rem;
+    margin-top: auto;
+}
+
+.footerlinks {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.footer-nav a {
+    color: gainsboro;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-nav a:hover {
+    color: white;
+}
+
+.footer-copy {
+    color: #a29c9c;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .footerlinks {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

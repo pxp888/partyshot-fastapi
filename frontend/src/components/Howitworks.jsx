@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./style/Howitworks.css";
+import Footer from "./Footer";
 import how1 from "../assets/how1.webp";
 import how2 from "../assets/how2.webp";
 import how3 from "../assets/how3.webp";
@@ -194,28 +195,7 @@ function Howitworks() {
         </div>
       </section>
 
-      <footer className="welcome-footer">
-        <div className="footerlinks">
-          <nav className="footer-nav">
-            <a
-              href="https://github.com/pxp888/partyshot-fastapi"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub
-            </a>
-          </nav>
-          <nav className="footer-nav">
-            <a href="/privacy">Privacy Policy</a>
-          </nav>
-          <nav className="footer-nav">
-            <a href="/terms">Terms of Service</a>
-          </nav>
-        </div>
-        <p className="footer-copy">
-          &copy; {new Date().getFullYear()} shareShot.eu
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

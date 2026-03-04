@@ -6,6 +6,7 @@ import { receiveJson } from "./helpers";
 import StripePricingTable from "./stripe/StripePricingTable";
 import ManageBilling from "./stripe/ManageBilling";
 import "./style/Plans.css";
+import Footer from "./Footer";
 
 function Plans() {
   const [userInfo, setUserInfo] = useState(null);
@@ -29,22 +30,22 @@ function Plans() {
     <div className="plans-page">
       {/* Hero Section */}
       <section className="plans-hero">
-        <div className="hero-content">
-          <h1>
-            Ready to <span className="accent-text">Level Up?</span>
-          </h1>
-          <p className="hero-snarky">
-            (because storage shouldn't be your bottleneck)
-          </p>
-          <p className="hero-subtext">
-            Choose the perfect plan for your memories. From casual sharing to
-            professional-grade collections, we've got you covered.
-          </p>
-        </div>
+        <h3 className="t1">STORAGE PLANS</h3>
+        <h1>
+          Ready to <span className="accent-text">Level Up?</span>
+          {/* Ready to level up? */}
+        </h1>
+        <p className="hero-snarky">
+          {/* (because storage shouldn't be your bottleneck) */}
+        </p>
+        <p className="hero-subtext">
+          Choose the perfect plan for your memories. From casual sharing to
+          professional-grade collections, we've got you covered.
+        </p>
       </section>
 
       {/* Comparison Table Section - Always Visible */}
-      <section className="comparison-section" style={{ marginBottom: "40px" }}>
+      <section className="comparison-section">
         <div className="pricing-container">
           <div className="comparison-table">
             <div className="labels-column">
@@ -104,7 +105,7 @@ function Plans() {
                   <div className="cell data-cell">{plan.profileAlbums}</div>
                   <div className="cell data-cell">{plan.hiddenAlbums}</div>
                   <div className="cell data-cell">{plan.privateAlbums}</div>
-                  <div className="cell data-cell">{plan.price}</div>
+                  <div className="cell data-cell plan-price">{plan.price}</div>
                 </div>
               ))}
             </div>
@@ -144,23 +145,9 @@ function Plans() {
         </section>
       )}
 
-      <footer className="welcome-footer">
-        <nav className="footer-nav">
-          <a
-            href="https://github.com/pxp888/partyshot-fastapi"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-        </nav>
-        <p className="footer-copy">
-          &copy; {new Date().getFullYear()} shareShot.eu
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }
 
 export default Plans;
-
