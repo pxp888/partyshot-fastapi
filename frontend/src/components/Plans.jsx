@@ -32,8 +32,8 @@ function Plans() {
       <section className="plans-hero">
         <h3 className="t1">STORAGE PLANS</h3>
         <h1>
-          Ready to <span className="accent-text">Level Up?</span>
-          {/* Ready to level up? */}
+          {/* Ready to <span className="accent-text">Level Up?</span> */}
+          Ready to level up?
         </h1>
         <p className="hero-snarky">
           {/* (because storage shouldn't be your bottleneck) */}
