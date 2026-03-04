@@ -5,7 +5,7 @@ import Footer from "./Footer";
 
 function Termspage() {
   return (
-    <>
+    <div className="policy-container">
       <section className="policy-page">
         <h1>Terms of Service</h1>
 
@@ -99,7 +99,7 @@ function Termspage() {
         </ul>
       </section>
       <Footer />
-    </>
+    </div>
   );
 }
 

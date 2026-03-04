@@ -7,8 +7,7 @@ import Footer from "./Footer";
 
 function Policypage() {
   return (
-    <>
-
+    <div className="policy-container">
       <section className="policy-page">
         <h1>Privacy Policy</h1>
 
@@ -95,7 +94,7 @@ function Policypage() {
         </p>
       </section>
       <Footer />
-    </>
+    </div>
   );
 }
 
