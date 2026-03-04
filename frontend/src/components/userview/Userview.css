@@ -196,8 +196,8 @@
 
     .album-list {
         grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
-        padding: 1px;
+        gap: 0.25rem;
+        padding: .25rem;
         padding-bottom: 140px;
         margin: 0;
     }

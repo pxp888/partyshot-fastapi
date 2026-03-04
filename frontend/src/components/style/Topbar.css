@@ -58,8 +58,10 @@
 
 /* Inputs within Searchbar */
 .topbar .search input {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.08);
+
     border: 1px solid gray;
+    border: none;
     border-radius: 8px;
     padding: 0.5rem 1rem;
     color: #393939;
@@ -70,8 +72,8 @@
 }
 
 .topbar .search input:focus {
-    background: rgba(0, 0, 0, 0.08);
-    border-color: var(--accent);
+    /* border-color: var(--accent); */
+    background: white;
     min-width: 300px;
 }
 
@@ -82,7 +84,8 @@
     border-radius: 6px;
     padding: 0.5rem 1rem;
     background: rgba(0, 0, 0, 0.05);
-    border: 1px solid gray;
+    /* border: 1px solid gray; */
+
     color: #393939;
     transition: all 0.2s ease;
     cursor: pointer;
