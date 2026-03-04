@@ -41,6 +41,10 @@
     margin-bottom: 3rem;
 }
 
+.features svg {
+    color: var(--bright-color);
+}
+
 .featgrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -70,12 +74,6 @@
     margin-top: 0.8rem;
 }
 
-.featbox .share {
-    background-image: url("../../assets/how1.webp");
-    background-size: cover;
-    background-position: center;
-}
-
 /*----------------WORKS--------------*/
 
 .works {
@@ -92,7 +90,7 @@
 
 .workitem {
     display: grid;
-    grid-template-columns: 180px 1fr;
+    grid-template-columns: 150px 1fr;
     margin: 3rem 0;
 }
 
@@ -100,6 +98,8 @@
     font-size: 2rem;
     font-weight: 600;
     color: rgba(70, 70, 70, 0.7);
+    color: var(--bright-color);
+    opacity: 0.7;
     margin: 0;
 }
 

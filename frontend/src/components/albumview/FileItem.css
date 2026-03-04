@@ -13,6 +13,7 @@
     aspect-ratio: var(--ar, 1);
     flex: var(--ar, 1) 1 calc(200px * var(--ar, 1));
     /* max-width: 300px; */
+    max-height: 300px;
 }
 
 @media (max-width: 768px) {
@@ -89,7 +90,7 @@
 }
 
 .info .title,
-.info>.title {
+.info > .title {
     color: var(--bright-color);
 }
 
@@ -97,6 +98,6 @@ label {
     color: gray;
 }
 
-.info>p {
+.info > p {
     color: white;
 }
