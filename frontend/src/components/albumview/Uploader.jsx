@@ -190,7 +190,7 @@ const Uploader = forwardRef(({ album, isOwner, disabled }, ref) => {
 
     // --- Thumbnail Generation & Upload ---
     try {
-      thumbnailBlob = await resizeImage(file, 300, 300, 0.8);
+      thumbnailBlob = await resizeImage(file, 500, 500, 0.6);
       if (thumbnailBlob) {
         const thumbS3Res = await fetch(thumb_presigned, {
           method: "PUT",
@@ -230,10 +230,14 @@ const Uploader = forwardRef(({ album, isOwner, disabled }, ref) => {
             if (midS3Res.ok) {
               final_mid_key = m_key;
             } else {
-              console.warn("Mid-size upload failed, continuing without mid version");
+              console.warn(
+                "Mid-size upload failed, continuing without mid version",
+              );
             }
           } else {
-            console.info("Mid-sized image larger than 50% of original, skipping upload");
+            console.info(
+              "Mid-sized image larger than 50% of original, skipping upload",
+            );
             midBlob = null; // Don't report size if we didn't upload
           }
         }
@@ -336,7 +340,10 @@ const Uploader = forwardRef(({ album, isOwner, disabled }, ref) => {
                 ? "All files uploaded!"
                 : `Uploading ${completedFiles + 1} of ${totalFiles}...`}
               {spaceRemaining !== null && (
-                <div className="uploader-space-text" style={{ fontSize: "0.8em", marginTop: "4px" }}>
+                <div
+                  className="uploader-space-text"
+                  style={{ fontSize: "0.8em", marginTop: "4px" }}
+                >
                   Remaining Storage: {formatBytes(spaceRemaining)}
                 </div>
               )}
@@ -357,4 +364,3 @@ const Uploader = forwardRef(({ album, isOwner, disabled }, ref) => {
 });
 
 export default Uploader;
-
