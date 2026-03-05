@@ -99,14 +99,10 @@ function Userview({ currentUser }) {
   // --------------------------------------------------------
 
   function handleCreateAlbum(event) {
-    event.preventDefault();
-    const albumName = event.target.elements.albumName.value;
-    if (!albumName || albumName.trim() === "") {
-      return;
-    }
+    if (event) event.preventDefault();
     sendJsonMessage({
       action: "createAlbum",
-      payload: { album_name: albumName, owner: currentUser },
+      payload: { album_name: "New album", owner: currentUser },
     });
   }
 
@@ -132,18 +128,9 @@ function Userview({ currentUser }) {
     <div className="userview">
       <div className="userActions">
         {username === currentUser && (
-          <form onSubmit={handleCreateAlbum}>
-            {/* <label htmlFor="albumName">New Album Name : </label>*/}
-            <input
-              type="text"
-              id="albumName"
-              name="albumName"
-              placeholder="New Album Name"
-            />
-            <button className="btn" type="submit">
-              Create Album
-            </button>
-          </form>
+          <button className="btn" onClick={handleCreateAlbum}>
+            Create Album
+          </button>
         )}
         <div style={{ display: "flex", gap: "10px" }}>
           {currentUser && (
@@ -168,7 +155,7 @@ function Userview({ currentUser }) {
                 }
               }}
             >
-              {sortField === "my_photos" ? "Show All Albums" : "My Photos"}
+              {sortField === "my_photos" ? "Show All Albums" : "all my photos"}
             </button>
           )}
           <div className="sortControls">

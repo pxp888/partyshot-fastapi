@@ -815,15 +815,18 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
     return {"albums": albums}
 
 
-def get_album_thumbnail(album_code: str) -> str | None:
+def get_album_thumbnail(album_code: str) -> dict | None:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
+            # We join albums and users to get the owner and privacy,
+            # then left join photos to get the oldest thumbnail if it exists.
             cursor.execute(
                 """
-                SELECT thumb_key
-                FROM photos p
-                JOIN albums a ON p.album_id = a.id
-                WHERE a.code = %s AND p.thumb_key IS NOT NULL
+                SELECT p.thumb_key, u.username, a.private
+                FROM albums a
+                JOIN users u ON a.user_id = u.id
+                LEFT JOIN photos p ON p.album_id = a.id AND p.thumb_key IS NOT NULL
+                WHERE a.code = %s
                 ORDER BY p.created_at ASC
                 LIMIT 1
                 """,
@@ -831,9 +834,17 @@ def get_album_thumbnail(album_code: str) -> str | None:
             )
             row = cursor.fetchone()
 
-    if row and row[0]:
-        return aws.create_presigned_url(row[0])
-    return None
+    if not row:
+        return None
+
+    thumb_key, username, private = row
+    thumb_url = aws.create_presigned_url(thumb_key) if thumb_key else "none"
+
+    return {
+        "thumbkey": thumb_url,
+        "username": username,
+        "private": bool(private),
+    }
 
 
 def createAlbum(username: str, album_name: str) -> str | None:

@@ -304,16 +304,15 @@ async def get_album_thumbnail_endpoint(
     except Exception:
         current_user = None
 
-    album = db.getAlbum(album_code)
-    if not album:
+    thumb_info = db.get_album_thumbnail(album_code)
+    if not thumb_info:
         raise HTTPException(status_code=404, detail="Album not found")
 
-    if album["private"]:
-        if not current_user or album["username"] != current_user:
+    if thumb_info["private"]:
+        if not current_user or thumb_info["username"] != current_user:
             raise HTTPException(status_code=403, detail="Not Allowed")
 
-    thumb_url = db.get_album_thumbnail(album_code)
-    return {"thumbnail": thumb_url}
+    return {"thumbnail": thumb_info["thumbkey"]}
 
 
 @app.post("/api/add-photo-metadata")

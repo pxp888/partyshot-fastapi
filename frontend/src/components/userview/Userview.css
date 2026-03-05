@@ -57,15 +57,6 @@
     display: none;
 }
 
-.userActions form {
-    background: transparent;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-}
 
 .userActions .btn {
     background: rgba(255, 255, 255, 0.1);
@@ -87,30 +78,6 @@
 /* ------------------------------------------------------------------
  * 4️⃣  Input styling – updated for dark theme
  * ------------------------------------------------------------------ */
-#albumName,
-.userview input[name="albumName"] {
-    height: 2.1rem;
-    padding: 0 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #e5e5e7;
-    font: inherit;
-    transition: all 0.2s ease;
-    flex: 1 1 auto;
-}
-
-#albumName:focus,
-.userview input[name="albumName"]:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-#albumName::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-}
 
 /* ------------------------------------------------------------------
  * 5️⃣  Sort Controls – matched to Albumview
@@ -186,9 +153,6 @@
         width: 100%;
     }
 
-    .userActions input[name="albumName"] {
-        flex: 1;
-    }
 
     .sortControls {
         margin-left: 0;
