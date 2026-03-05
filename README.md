@@ -4,8 +4,9 @@
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white)](https://www.cloudflare.com/)
 
-**shareShots** is a high-performance, real-time photo-sharing platform designed for seamless event photography and collaborative albums. Built with a modern tech stack, it features direct-to-S3 uploads, real-time WebSocket updates, and a glassmorphic React interface.
+**shareShots** is a high-performance, real-time photo-sharing platform designed for seamless event photography and collaborative albums. Built with a modern tech stack, it features direct-to-R2 uploads, real-time WebSocket updates, and a glassmorphic React interface.
 
 ### [www.shareshot.eu](https://www.shareshot.eu/) 
 
@@ -27,7 +28,7 @@
 - **📁 Collaborative Albums**: Create albums with granular permissions:
   - **Open**: Allow anyone to contribute photos to your event.
   - **Profile**: Showcase your best work on your profile.
-- **☁️ Direct S3 Uploads**: Files bypass the server and go straight to AWS S3 via presigned URLs, ensuring maximum performance and minimal server load.
+- **☁️ Direct R2 Uploads**: Files bypass the server and go straight to Cloudflare R2 via presigned URLs, ensuring maximum performance and minimal server load.
 - **⚡ Real-time Updates**: Instant UI refreshes across all devices using Redis Pub/Sub and WebSockets.
 - **🖼️ Smart Metadata**: Automatic tracking of photo sizes and dimensions via background workers.
 - **🔍 Global Search**: Quickly find albums and users with built-in search functionality.
@@ -39,11 +40,11 @@
 
 ### Backend
 - **FastAPI**: Asynchronous Python framework for high-concurrency APIs.
-- **Postgres**: Reliable relational database for metadata.
+- **Amazon RDS**: Managed PostgreSQL database for reliable metadata storage.
 - **Redis**: Powering real-time messaging and WebSocket synchronization.
 - **Arq**: Distributed background job processing.
-- **S3 & Boto3**: Scalable object storage for high-resolution images.
-- **Cloudfront**: Deployed site works with session cookies to reduce server load.  For local testing signed urls must be used.  
+- **Cloudflare R2 & Boto3**: Scalable S3-compatible object storage for high-resolution images.
+- **Cloudflare CDN**: Deployed site works with session cookies to reduce server load. For local testing, signed URLs must be used.  
 
 ### Frontend
 - **React 18**: Modern UI development with Hooks and Context API.
@@ -58,23 +59,24 @@ The included docker-compose.yml file is configured to run the full required stac
 ## Performance Optimizations
 
 - **Client‑side thumbnail generation** – Thumbnails are created in the browser before upload, eliminating server‑side image processing.  
-- **Direct S3 uploads** – Images are sent straight to S3 via presigned URLs, bypassing the application server.  
-- **Background size sync** – A worker polls S3 for photo and thumbnail sizes and updates the database with this metadata.  
+- **Direct R2 uploads** – Images are sent straight to R2 via presigned URLs, bypassing the application server.  
+- **Background size sync** – A worker polls R2 for photo and thumbnail sizes and updates the database with this metadata.  
 
 ### Browsing Experience
 
-- The front‑end fetches presigned URLs for thumbnails and full‑size images, while the backend caches them in **Redis** to avoid repeated S3 look‑ups.  
+- The front‑end fetches presigned URLs for thumbnails and full‑size images, while the backend caches them in **Redis** to avoid repeated R2 look‑ups.  
 - Album items that are off‑screen are not rendered (lazy loading).  
 - Thumbnails are paginated; the client requests presigned URLs only for thumbnails currently in view.  
 
 ### Downloads & Deletions
 
-- Files are downloaded directly from S3 via presigned URLs.  
-- Background workers also handle deletion of items from S3, keeping storage in sync with the database.
+- Files are downloaded directly from R2 via presigned URLs.  
+- Background workers also handle deletion of items from R2, keeping storage in sync with the database.
 
 ### Deployment
 - **Docker**: Containerization for easy deployment.
-- **AWS**: S3 for storage and EC2 for hosting.
+- **Cloudflare**: R2 for storage and CDN for content delivery.
+- **AWS**: Amazon RDS for managed database and EC2 for hosting.
 - **NGINX**: Reverse proxy for static file serving.
 - **docker compose**: Orchestration of the stack.
 
@@ -88,7 +90,7 @@ The included docker-compose.yml file is configured to run the full required stac
 
 ### Prerequisites
 - Docker & Docker Compose
-- AWS Account (S3 Bucket)
+- Cloudflare Account (R2 Bucket)
 - Node.js (for local frontend development)
 - Python 3.10+ (for local backend development)
 
@@ -102,7 +104,7 @@ The included docker-compose.yml file is configured to run the full required stac
 2. **Configure Environment**:
    Create the following files (refer to `example.env` templates):
    - `.env`: Database credentials for Docker Compose.
-   - `backend/env.py`: AWS keys, Redis URL, and JWT secrets.
+   - `backend/env.py`: R2 credentials, Redis URL, and JWT secrets.
    - `frontend/.env`: WebSocket and API endpoint URLs.
 
 
@@ -131,15 +133,15 @@ The included docker-compose.yml file is configured to run the full required stac
 
 - **Build Frontend First**: The frontend must be built (`npm run build`) before creating the production Docker image, as the backend serves the static assets.
 - **NGINX**: A pre-configured `nginx.conf` is provided to handle reverse proxying and static file serving.
-- **EC2 Hosting**: Optimized for deployment on Amazon EC2 with S3 integration.
+- **Hosting**: Optimized for deployment on Amazon EC2 with Cloudflare R2 and Amazon RDS integration.
 
 ---
 
 ## 🗺️ Roadmap
-- [ ] CloudFront integration for faster global delivery.
+- [x] CloudFront/CDN integration.
 - [ ] Advanced album editor permissions.
 - [ ] Mobile-first progressive web app (PWA) features.
-- [ ] Managed database
+- [x] Managed database (RDS).
 
 
 ---
