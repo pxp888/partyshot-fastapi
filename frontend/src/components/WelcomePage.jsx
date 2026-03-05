@@ -156,12 +156,20 @@ function Welcomepage() {
               every user has a <strong>profile</strong> with albums they choose
               to show.
             </p>
-            <p className="detail">albums are visible to anyone with the URL</p>
+            <p className="detail">albums are visible to anyone with the URL.</p>
           </div>
           <div className="workitem">
             <p className="name">private</p>
             <p className="head">
               other users can be blocked, even with the URL
+            </p>
+            <p className="detail">
+              other users cannot see photos in private albums unless they
+              uploaded them.
+            </p>
+            <p className="detail">
+              users will <strong>always</strong> be able to see their own
+              photos, even in your private albums.
             </p>
             <p className="detail">
               <strong>private + open</strong> can be useful for allowing uploads
