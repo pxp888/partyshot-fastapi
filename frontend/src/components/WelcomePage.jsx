@@ -13,18 +13,37 @@ function Welcomepage() {
     <div className="welcome-container">
       <div className="hero">
         <h3 className="t1">SHARED PHOTO ALBUMS, SIMPLIFIED</h3>
-        <h1>Every moment, together.</h1>
+        <h1>Simple by design</h1>
         <p>
           Create shared albums anyone can contribute to. Share the link —
           friends drop their photos in, and the memories build themselves.
         </p>
         <p>No hashtags, no friction, just sharing.</p>
-        {/* <button className="btn">Learn more</button>*/}
+
+        <div className="btn-group">
+          <button
+            className="btn demo"
+            onClick={() =>
+              (window.location.href = "https://shareshot.eu/user/alice")
+            }
+          >
+            Sample Profile
+          </button>
+          <button
+            className="btn demo"
+            onClick={() =>
+              (window.location.href =
+                "https://shareshot.eu/album/5f1d62d7688a422191c546a213471564")
+            }
+          >
+            Sample Album
+          </button>
+        </div>
       </div>
 
       <div className="features">
         <h3 className="t1">FEATURES</h3>
-        <h2>Simple by design</h2>
+        <h2>Easy to use, easy to share</h2>
         <div className="featgrid">
           <div className="featbox share">
             <svg
@@ -154,8 +173,8 @@ function Welcomepage() {
 
       <div className="CTA">
         <h1>Start collecting memories</h1>
-        <p>Create your first album in seconds, </p>
-        <button className="btn">Get started</button>
+        <p>Log in or Register to get started, </p>
+        {/* <button className="btn">Get started</button>*/}
       </div>
 
       <Footer />
