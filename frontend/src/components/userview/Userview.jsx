@@ -145,24 +145,52 @@ function Userview({ currentUser }) {
             </button>
           </form>
         )}
-        <div className="sortControls">
-          <select
-            value={sortField}
-            onChange={(e) => setSortField(e.target.value)}
-          >
-            <option value="created_at">Date</option>
-            <option value="name">Name</option>
-            <option value="username">User</option>
-          </select>
-          <button
-            className="sortOrderBtn"
-            onClick={() =>
-              setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-            }
-            title={sortOrder === "asc" ? "Ascending" : "Descending"}
-          >
-            {sortOrder === "asc" ? "↑" : "↓"}
-          </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          {currentUser && (
+            <button
+              className="btn"
+              style={{
+                backgroundColor:
+                  sortField === "my_photos" ? "#444" : "transparent",
+              }}
+              onClick={() => {
+                if (sortField === "my_photos") {
+                  setSortField("created_at");
+                  sendJsonMessage({
+                    action: "getAlbums",
+                    payload: { target: username },
+                  });
+                } else {
+                  setSortField("my_photos");
+                  sendJsonMessage({
+                    action: "getAlbumsWithUserPhotos",
+                  });
+                }
+              }}
+            >
+              {sortField === "my_photos" ? "Show All Albums" : "My Photos"}
+            </button>
+          )}
+          <div className="sortControls">
+            <select
+              value={sortField === "my_photos" ? "created_at" : sortField}
+              disabled={sortField === "my_photos"}
+              onChange={(e) => setSortField(e.target.value)}
+            >
+              <option value="created_at">Date</option>
+              <option value="name">Name</option>
+              <option value="username">User</option>
+            </select>
+            <button
+              className="sortOrderBtn"
+              onClick={() =>
+                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+              }
+              title={sortOrder === "asc" ? "Ascending" : "Descending"}
+            >
+              {sortOrder === "asc" ? "↑" : "↓"}
+            </button>
+          </div>
         </div>
       </div>
       <div className="album-list">
@@ -179,7 +207,7 @@ function Userview({ currentUser }) {
           <p>No albums found for this user.</p>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 

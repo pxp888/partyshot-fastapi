@@ -380,12 +380,6 @@ async def recount_sizes_endpoint(Authorize: AuthJWT = Depends()):
 
 
 @app.get("/api/space-used")
-def space_used(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    if current_user != "admin":
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    return db.spaceUsed()
 
 
 async def createAlbum(websocket, data, username):
@@ -437,7 +431,11 @@ async def getAlbum(websocket, data, username):
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
     if album["private"] and album["username"] != username:
-        return
+        user_record = db.getUser(username)
+        if user_record and db.check_user_has_photos_in_album(user_record["id"], album["id"]):
+             pass
+        else:
+             return
     await manager.subscribe(websocket, f"album-{albumcode}")
 
 
@@ -470,9 +468,14 @@ async def getPhotos(websocket, data, username):
     if not album:
         logging.info("getPhotos - no album found")
         return
+    user_id_filter = None
     if album["private"] and album["username"] != username:
-        logging.info("getPhotos - not allowed")
-        return
+        user_record = db.getUser(username)
+        if user_record and db.check_user_has_photos_in_album(user_record["id"], album["id"]):
+            user_id_filter = user_record["id"]
+        else:
+            logging.info("getPhotos - not allowed")
+            return
 
     photos_data = db.getPhotos(
         album["id"],
@@ -480,6 +483,7 @@ async def getPhotos(websocket, data, username):
         offset=offset,
         sort_field=sort_field,
         sort_order=sort_order,
+        user_id_filter=user_id_filter,
     )
 
     if photos_data:
@@ -676,6 +680,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     await subscribe(websocket, payload, username)
                 elif action == "unsubscribe":
                     await unsubscribe(websocket, payload, username)
+                elif action == "getAlbumsWithUserPhotos":
+                    result = db.getAlbumsWithUserPhotos(username)
+                    message = {"action": "getAlbums", "payload": result}
+                    await websocket.send_json(message)
                 elif action == "toggleOpen":
                     await toggleOpen(websocket, payload, username)
                 elif action == "toggleProfile":

@@ -266,6 +266,17 @@ def check_password(username: str, password: str) -> bool:
     return provided_hash == expected_hash
 
 
+def check_user_has_photos_in_album(user_id: int, album_id: int) -> bool:
+    """Check if the user has any photos in the specified album."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT 1 FROM photos WHERE user_id = %s AND album_id = %s LIMIT 1",
+                (user_id, album_id),
+            )
+            return cursor.fetchone() is not None
+
+
 def getAlbum(code: str) -> dict | None:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
@@ -340,6 +351,7 @@ def getPhotos(
     offset: int = 0,
     sort_field: str = "created_at",
     sort_order: str = "desc",
+    user_id_filter: int = None,
 ) -> dict | None:
 
     # Whitelist sort fields/orders to prevent SQL injection
@@ -355,22 +367,31 @@ def getPhotos(
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             # We also want to know the total count for pagination
-            cursor.execute(
-                "SELECT COUNT(*) FROM photos WHERE album_id = %s", (album_id,)
-            )
+            if user_id_filter:
+                cursor.execute(
+                    "SELECT COUNT(*) FROM photos WHERE album_id = %s AND user_id = %s",
+                    (album_id, user_id_filter),
+                )
+            else:
+                cursor.execute(
+                    "SELECT COUNT(*) FROM photos WHERE album_id = %s", (album_id,)
+                )
             total_count = cursor.fetchone()[0]
 
+            filter_clause = "AND p.user_id = %s" if user_id_filter else ""
             query = f"""
                 SELECT p.id, p.user_id, p.album_id, p.s3_key, p.thumb_key, p.mid_key, p.filename,
                        p.created_at, u.username, p.size, p.thumb_size, p.mid_size
                 FROM photos p
                 JOIN users u ON p.user_id = u.id
-                WHERE p.album_id = %s
+                WHERE p.album_id = %s {filter_clause}
                 ORDER BY {field} {order}, p.id ASC
                 LIMIT %s OFFSET %s;
             """
-            cursor.execute(query, (album_id, limit, offset))
+            params = (album_id, user_id_filter, limit, offset) if user_id_filter else (album_id, limit, offset)
+            cursor.execute(query, params)
             rows = cursor.fetchall()
+    # ... (rest of the processing)
 
     photos = []
     for row in rows:
@@ -707,13 +728,21 @@ def getAlbums(username: str, authuser: str) -> dict | None:
 
     albums = []
     for row in rows:
+        album_id = row[0]
         # Check permissions: if not admin or owner, only show profile albums
-        # If private, only show if owner
+        # If private, only show if owner OR if user has photos in it
         is_owner = authuser == username
         is_profile = bool(row[5])
         is_private = bool(row[6])
 
-        if not is_owner and not is_profile:
+        has_photos = False
+        if not is_owner:
+            auth_user_record = getUser(authuser)
+            if auth_user_record:
+                has_photos = check_user_has_photos_in_album(auth_user_record["id"], album_id)
+
+        # Allow if: owner OR profile OR has photos
+        if not is_owner and not is_profile and not has_photos:
             continue
         # if is_private and authuser != row[8]:
         #     continue
@@ -731,6 +760,55 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "open": bool(row[4]),
                 "profile": is_profile,
                 "private": is_private,
+                "created_at": created_at,
+            }
+        )
+    return {"albums": albums}
+
+
+def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
+    user = getUser(authuser)
+    if not user:
+        return None
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                # Find distinct albums where this user has photos
+                cursor.execute(
+                    """
+                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username
+                    FROM albums a
+                    JOIN users u ON a.user_id = u.id
+                    JOIN photos p ON a.id = p.album_id
+                    WHERE p.user_id = %s
+                    ORDER BY a.created_at DESC;
+                    """,
+                    (user["id"],),
+                )
+                rows = cursor.fetchall()
+            except Exception as e:
+                logging.error("Error fetching albums with user photos: %s", e)
+                rows = []
+
+    if not rows:
+        return {"albums": []}
+
+    albums = []
+    for row in rows:
+        created_at = row[7]
+        if isinstance(created_at, datetime.datetime):
+            created_at = created_at.isoformat()
+
+        albums.append(
+            {
+                "id": row[0],
+                "code": row[1],
+                "name": row[2],
+                "username": row[8],
+                "open": bool(row[4]),
+                "profile": bool(row[5]),
+                "private": bool(row[6]),
                 "created_at": created_at,
             }
         )
