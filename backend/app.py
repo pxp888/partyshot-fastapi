@@ -45,7 +45,7 @@ app = FastAPI()
 
 
 userlimits = {
-    "free": 100000000,
+    "free": 250000000,
     "starter": 500000000,
     "basic": 1000000000,
     "pro": 2000000000,
