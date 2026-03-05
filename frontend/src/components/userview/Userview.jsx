@@ -155,7 +155,7 @@ function Userview({ currentUser }) {
                 }
               }}
             >
-              {sortField === "my_photos" ? "Show All Albums" : "all my photos"}
+              {sortField === "my_photos" ? "Show My Albums" : "all my photos"}
             </button>
           )}
           <div className="sortControls">
