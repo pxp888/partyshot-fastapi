@@ -13,6 +13,11 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleChange = (e) => {
     setCredentials({
       ...credentials,
@@ -23,6 +28,12 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Validate email format
+    if (!validateEmail(credentials.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
 
     try {
       const data = await sendJson("/api/register", credentials);
@@ -60,13 +71,14 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
             />
           </div>
           <div className="field">
-            <label htmlFor="email">email</label>
+            <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
-              type="text"
+              type="email"
               value={credentials.email}
               onChange={handleChange}
+              required
             />
           </div>
           <div className="field">
@@ -80,10 +92,16 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
               required
             />
           </div>
+
+          {error && (
+            <div className="error-message">
+              <span className="error-text">{error}</span>
+            </div>
+          )}
+
           <button className="btn" type="submit">
             Register New User
           </button>
-          {error && <div className="error-message">{error}</div>}
         </form>
       </div>
     </div>
