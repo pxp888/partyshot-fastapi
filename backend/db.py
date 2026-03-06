@@ -254,6 +254,15 @@ def getUser(username: str) -> dict | None:
         return None
 
 
+def get_user_id(username: str) -> int | None:
+    """Retrieve only the user ID from the database by username."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id FROM users WHERE username = %s;", (username,))
+            row = cursor.fetchone()
+    return row[0] if row else None
+
+
 def check_password(username: str, password: str) -> bool:
     """Check if the provided password matches the stored hash for the user."""
     user = getUser(username)

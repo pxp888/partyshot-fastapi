@@ -131,7 +131,7 @@ def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
 
 
 @app.post("/api/register")
-def register(
+async def register(
     request: RegisterRequest, response: Response, Authorize: AuthJWT = Depends()
 ):
     """
@@ -139,8 +139,8 @@ def register(
     parses it into the RegisterRequest model.
     """
 
-    prev = db.getUser(request.username)
-    if prev is not None:
+    prev_id = await get_user_id(request.username)
+    if prev_id is not None:
         raise HTTPException(status_code=400, detail="Username already exists")
 
     db.setUser(request.username, request.email, request.password)
@@ -207,6 +207,26 @@ async def generate_wssecret_endpoint(Authorize: AuthJWT = Depends()):
     await redis_client.set(f"wssecret:{wssecret}", current_user, ex=1200)
     logging.info("------------------------secrets for : %s", current_user)
     return {"wssecret": wssecret}
+
+
+async def get_user_id(username: str) -> int | None:
+    """
+    Retrieve user ID by username.
+    Checks Redis cache first, then the database, then caches for 5 minutes.
+    """
+    if not username:
+        return None
+    cache_key = f"user_id:{username}"
+    user_id = await redis_client.get(cache_key)
+    if user_id:
+        return int(user_id)
+
+    user_id = db.get_user_id(username)
+    if user_id is not None:
+        await redis_client.set(cache_key, user_id, ex=300)
+        return user_id
+
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -317,13 +337,13 @@ async def add_photo_metadata(
 ):
     Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
-    user_record = db.getUser(str(current_user))
-    if user_record is None:
+    user_id = await get_user_id(str(current_user))
+    if user_id is None:
         raise HTTPException(status_code=404, detail="User not found")
 
     photo_resp = db.addPhoto(
         {
-            "user_id": user_record["id"],
+            "user_id": user_id,
             "album_id": payload["album_id"],
             "filename": payload["filename"],
             "s3_key": payload["s3_key"],
@@ -425,8 +445,8 @@ async def getAlbum(websocket, data, username):
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
     if album["private"] and album["username"] != username:
-        user_record = db.getUser(username)
-        if user_record and db.check_user_has_photos_in_album(user_record["id"], album["id"]):
+        user_id = await get_user_id(username)
+        if user_id and db.check_user_has_photos_in_album(user_id, album["id"]):
              pass
         else:
              return
@@ -464,9 +484,9 @@ async def getPhotos(websocket, data, username):
         return
     user_id_filter = None
     if album["private"] and album["username"] != username:
-        user_record = db.getUser(username)
-        if user_record and db.check_user_has_photos_in_album(user_record["id"], album["id"]):
-            user_id_filter = user_record["id"]
+        user_id = await get_user_id(username)
+        if user_id and db.check_user_has_photos_in_album(user_id, album["id"]):
+            user_id_filter = user_id
         else:
             logging.info("getPhotos - not allowed")
             return
