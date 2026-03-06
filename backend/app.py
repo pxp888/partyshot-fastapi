@@ -444,6 +444,8 @@ async def getAlbum(websocket, data, username):
         return
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
+    
+    await manager.subscribe(websocket, f"album-{albumcode}")
     if album["private"] and album["username"] != username:
         user_id = await get_user_id(username)
         if user_id and db.check_user_has_photos_in_album(user_id, album["id"]):
@@ -452,7 +454,7 @@ async def getAlbum(websocket, data, username):
             return
     else:
         await manager.subscribe(websocket, f"albumadd-{albumcode}")
-    await manager.subscribe(websocket, f"album-{albumcode}")
+    
 
 
 async def attach_presigned_urls(photos_data: dict):

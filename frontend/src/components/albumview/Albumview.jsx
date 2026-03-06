@@ -130,6 +130,7 @@ function Albumview(currentUser) {
       case "addPhoto":
         if (payload && payload.album_id === album?.id) {
           setPhotos((prev) => {
+            if (prev.find((p) => p.id === payload.id)) return prev;
             if (sortOrder === "desc") {
               return [payload, ...prev];
             } else {
@@ -555,6 +556,10 @@ function Albumview(currentUser) {
             ref={uploaderRef}
             isOwner={isOwner}
             disabled={!userLoggedIn}
+            photos={photos}
+            setPhotos={setPhotos}
+            setTotalPhotos={setTotalPhotos}
+            sortOrder={sortOrder}
           />
 
           <button
