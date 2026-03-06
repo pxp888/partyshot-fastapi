@@ -7,7 +7,6 @@ function Adminpage({ currentUser }) {
   const [spaceUsed, setSpaceUsed] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
   const fetchSpaceUsed = async () => {
     try {
       const token = localStorage.getItem("access_token");
@@ -35,30 +34,37 @@ function Adminpage({ currentUser }) {
   }, [currentUser]);
 
   const handleCleanup = async () => {
-    showConfirm("Are you sure you want to perform cleanup? This will remove orphan files from S3.", "Cleanup", async () => {
-      try {
-        const token = localStorage.getItem("access_token");
-        const response = await fetch("/api/cleanup", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+    showConfirm(
+      "Are you sure you want to perform cleanup? This will remove orphan files from S3.",
+      "Cleanup",
+      async () => {
+        try {
+          const token = localStorage.getItem("access_token");
+          const response = await fetch("/api/cleanup", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-        if (!response.ok) {
-          const error = await response.json();
-          showMessage("Cleanup failed: " + (error.detail || response.statusText), "Error");
-          return;
+          if (!response.ok) {
+            const error = await response.json();
+            showMessage(
+              "Cleanup failed: " + (error.detail || response.statusText),
+              "Error",
+            );
+            return;
+          }
+
+          showMessage("Cleanup performed successfully.", "Success");
+          fetchSpaceUsed();
+        } catch (err) {
+          console.error(err);
+          showMessage("Error performing cleanup", "Error");
         }
-
-        showMessage("Cleanup performed successfully.", "Success");
-        fetchSpaceUsed();
-      } catch (err) {
-        console.error(err);
-        showMessage("Error performing cleanup", "Error");
-      }
-    });
+      },
+    );
   };
 
   const handleRecountSizes = async () => {
@@ -74,11 +80,17 @@ function Adminpage({ currentUser }) {
 
       if (!response.ok) {
         const error = await response.json();
-        showMessage("Recount task failed: " + (error.detail || response.statusText), "Error");
+        showMessage(
+          "Recount task failed: " + (error.detail || response.statusText),
+          "Error",
+        );
         return;
       }
 
-      showMessage("Recount task enqueued. Sizes will be updated in the background.", "Success");
+      showMessage(
+        "Recount task enqueued. Sizes will be updated in the background.",
+        "Success",
+      );
     } catch (err) {
       console.error(err);
       showMessage("Error enqueuing recount task", "Error");
@@ -109,36 +121,58 @@ function Adminpage({ currentUser }) {
                 <div className="usage-grid">
                   <div className="usage-item">
                     <span className="usage-label">Original Images</span>
-                    <div className="usage-value">{formatBytes(spaceUsed.total)}</div>
+                    <div className="usage-value">
+                      {formatBytes(spaceUsed.total)}
+                    </div>
                   </div>
                   <div className="usage-item">
                     <span className="usage-label">System Thumbnails</span>
-                    <div className="usage-value">{formatBytes(spaceUsed.thumbs)}</div>
+                    <div className="usage-value">
+                      {formatBytes(spaceUsed.thumbs)}
+                    </div>
                   </div>
                   <div className="usage-item">
                     <span className="usage-label">Midsized Images</span>
-                    <div className="usage-value">{formatBytes(spaceUsed.mids)}</div>
+                    <div className="usage-value">
+                      {formatBytes(spaceUsed.mids)}
+                    </div>
                   </div>
                   <div className="usage-item">
                     <span className="usage-label">Total Users</span>
-                    <div className="usage-value">{spaceUsed.total_users || 0}</div>
+                    <div className="usage-value">
+                      {spaceUsed.total_users || 0}
+                    </div>
                   </div>
                   <div className="usage-item">
                     <span className="usage-label">Total Albums</span>
-                    <div className="usage-value">{spaceUsed.total_albums || 0}</div>
+                    <div className="usage-value">
+                      {spaceUsed.total_albums || 0}
+                    </div>
                   </div>
                   <div className="usage-item">
                     <span className="usage-label">Total Files</span>
-                    <div className="usage-value">{spaceUsed.total_files || 0}</div>
+                    <div className="usage-value">
+                      {spaceUsed.total_files || 0}
+                    </div>
                   </div>
                   <div className="usage-item">
                     <span className="usage-label">Photos Missing Size</span>
-                    <div className="usage-value">{spaceUsed.no_size_count || 0}</div>
+                    <div className="usage-value">
+                      {spaceUsed.no_size_count || 0}
+                    </div>
                   </div>
-                  <div className="usage-item total-usage">
+                  <div className="usage-item">
+                    <span className="usage-label">R2 Actual Usage (API)</span>
+                    <div className="usage-value">
+                      {formatBytes(spaceUsed.totalr2 || 0)}
+                    </div>
+                  </div>
+                  <div className="usage-item">
                     <span className="usage-label">Database Total Storage</span>
                     <div className="total-value">
-                      {formatBytes((spaceUsed.total || 0) + (spaceUsed.thumbs || 0) + (spaceUsed.mids || 0))}
+                      {formatBytes(
+                        (spaceUsed.thumbs || 0) + (spaceUsed.mids || 0),
+                      )}
                     </div>
                   </div>
                 </div>
@@ -147,14 +181,13 @@ function Adminpage({ currentUser }) {
               )}
             </div>
 
-
             <div className="action-section">
               <button className="recount-button" onClick={handleRecountSizes}>
                 Recount Missing Sizes
               </button>
               <p className="cleanup-hint">
-                Triggers a background process to fetch and record dimensions for photos that
-                currently have no size data in the database.
+                Triggers a background process to fetch and record dimensions for
+                photos that currently have no size data in the database.
               </p>
             </div>
 
@@ -167,13 +200,14 @@ function Adminpage({ currentUser }) {
                 obsolete files that are no longer referenced in any albums.
               </p>
             </div> */}
-
-
           </div>
         ) : (
           <div className="denied-container">
             <h2>Access Restricted</h2>
-            <p>You do not have the required administrative privileges to view this page.</p>
+            <p>
+              You do not have the required administrative privileges to view
+              this page.
+            </p>
           </div>
         )}
       </div>

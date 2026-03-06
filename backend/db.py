@@ -326,7 +326,7 @@ def get_upload_context(uploader_username: str, album_code: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT 
+                SELECT
                     a.id, a.code, a.user_id, a.open,
                     uo.username, uo.class,
                     COALESCE(s.space, 0),
@@ -434,7 +434,11 @@ def getPhotos(
                 ORDER BY {field} {order}, p.id ASC
                 LIMIT %s OFFSET %s;
             """
-            params = (album_id, user_id_filter, limit, offset) if user_id_filter else (album_id, limit, offset)
+            params = (
+                (album_id, user_id_filter, limit, offset)
+                if user_id_filter
+                else (album_id, limit, offset)
+            )
             cursor.execute(query, params)
             rows = cursor.fetchall()
     # ... (rest of the processing)
@@ -785,7 +789,9 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         if not is_owner:
             auth_user_record = getUser(authuser)
             if auth_user_record:
-                has_photos = check_user_has_photos_in_album(auth_user_record["id"], album_id)
+                has_photos = check_user_has_photos_in_album(
+                    auth_user_record["id"], album_id
+                )
 
         # Allow if: owner OR profile OR has photos
         if not is_owner and not is_profile and not has_photos:
@@ -1489,19 +1495,30 @@ async def cleanup2(ctx=None) -> None:
     logging.info("Cleanup completed.")
 
 
-def spaceUsed() -> dict:
+def totalSpaceUsed() -> dict:
+    """Get storage usage statistics including actual R2 bucket size."""
     result = {
         "total": 0,
         "thumbs": 0,
+        "mids": 0,
         "no_size_count": 0,
         "total_files": 0,
         "total_albums": 0,
         "total_users": 0,
     }
+
+    # Fetch actual R2 bucket usage
+    r2_usage = aws.get_bucket_usage()
+    if r2_usage:
+        result["totalr2"] = r2_usage.get("result", {}).get("payloadSize", 0)
+
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT SUM(size) FROM photos")
-            result["total"] = cursor.fetchone()[0] or 0
+            db_total = cursor.fetchone()[0]
+            if db_total is not None and result["total"] == 0:
+                result["total"] = db_total
+
             cursor.execute("SELECT SUM(thumb_size) FROM photos")
             result["thumbs"] = cursor.fetchone()[0] or 0
             cursor.execute("SELECT SUM(mid_size) FROM photos")
@@ -1514,6 +1531,7 @@ def spaceUsed() -> dict:
             result["total_albums"] = cursor.fetchone()[0] or 0
             cursor.execute("SELECT COUNT(*) FROM users")
             result["total_users"] = cursor.fetchone()[0] or 0
+
     return result
 
 

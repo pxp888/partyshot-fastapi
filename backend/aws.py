@@ -7,6 +7,7 @@ import time
 
 import boto3
 import env
+import requests
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
@@ -120,3 +121,36 @@ def delete_files_from_s3(keys):
     except ClientError as e:
         logging.error("Error deleting files: %s", e)
         return False
+
+
+def get_bucket_usage():
+    """
+    Fetch the total bucket usage from Cloudflare R2 API.
+
+    Returns a dictionary with usage information, or None on error.
+    The response includes 'total' (bytes), 'used' (bytes), and 'remaining' bytes.
+    """
+    try:
+        account_id = env.CLOUDFLARE_ACCOUNT_ID
+        api_token = env.CLOUDFLARE_API_TOKEN
+        endpoint = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/r2/buckets/{BUCKET_NAME}/usage"
+
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json",
+        }
+
+        response = requests.get(endpoint, headers=headers, timeout=10)
+
+        if response.status_code == 200:
+            data = response.json()
+            return data or {}
+        else:
+            logging.error(
+                "Cloudflare R2 usage API failed with status %s", response.status_code
+            )
+            return None
+
+    except Exception as e:
+        logging.error("Error fetching bucket usage from Cloudflare API: %s", e)
+        return None

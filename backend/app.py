@@ -402,7 +402,7 @@ async def space_used_endpoint(Authorize: AuthJWT = Depends()):
     if current_user != "admin":
         raise HTTPException(status_code=403, detail="Unauthorized")
 
-    data = db.spaceUsed()
+    data = db.totalSpaceUsed()
     return data
 
 
