@@ -171,7 +171,9 @@ function Adminpage({ currentUser }) {
                     <span className="usage-label">Database Total Storage</span>
                     <div className="total-value">
                       {formatBytes(
-                        (spaceUsed.thumbs || 0) + (spaceUsed.mids || 0),
+                        (spaceUsed.thumbs || 0) +
+                          (spaceUsed.mids || 0) +
+                          (spaceUsed.total || 0),
                       )}
                     </div>
                   </div>
