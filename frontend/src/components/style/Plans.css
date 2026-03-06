@@ -80,13 +80,16 @@
 
 .plans-simple-table {
     width: 100%;
+    max-width: 600px;
     border-collapse: collapse;
-    background: rgba(24, 24, 24, 0.85);
+    /*background: rgba(24, 24, 24, 0.85);*/
+    background: rgba(224, 224, 224, 1);
     backdrop-filter: blur(10px);
     border-radius: 2px;
     overflow: hidden;
     margin-top: 1rem;
-    color: white;
+    /*color: white;*/
+    color: black;
 }
 
 .pricing-actions {
@@ -106,7 +109,8 @@
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: #a1a1a6;
+    /*color: #a1a1a6;*/
+    color: black;
 }
 
 .plan-info {
@@ -126,13 +130,15 @@
 .plan-storage-value {
     font-size: 2rem;
     font-weight: 600;
-    color: white;
+    /*color: white;*/
+    color: black;
 }
 
 .plan-price-value {
     font-size: 2rem;
     font-weight: 600;
-    color: white;
+    /*color: white;*/
+    color: black;
     text-align: right;
 }
 
