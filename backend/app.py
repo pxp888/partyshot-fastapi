@@ -367,7 +367,7 @@ async def add_photo_metadata(
 
     if photo_resp:
         message = {"action": "addPhoto", "payload": photo_resp}
-        await redis_client.publish(f"album-{payload['albumcode']}", json.dumps(message))
+        await redis_client.publish(f"albumadd-{payload['albumcode']}", json.dumps(message))
     return {"photo_id": photo_resp}
 
 
@@ -447,9 +447,11 @@ async def getAlbum(websocket, data, username):
     if album["private"] and album["username"] != username:
         user_id = await get_user_id(username)
         if user_id and db.check_user_has_photos_in_album(user_id, album["id"]):
-             pass
+            pass
         else:
-             return
+            return
+    else:
+        await manager.subscribe(websocket, f"albumadd-{albumcode}")
     await manager.subscribe(websocket, f"album-{albumcode}")
 
 
