@@ -367,7 +367,9 @@ async def add_photo_metadata(
 
     if photo_resp:
         message = {"action": "addPhoto", "payload": photo_resp}
-        await redis_client.publish(f"albumadd-{payload['albumcode']}", json.dumps(message))
+        await redis_client.publish(
+            f"albumadd-{payload['albumcode']}", json.dumps(message)
+        )
     return {"photo_id": photo_resp}
 
 
@@ -394,6 +396,14 @@ async def recount_sizes_endpoint(Authorize: AuthJWT = Depends()):
 
 
 @app.get("/api/space-used")
+async def space_used_endpoint(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    if current_user != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    data = db.spaceUsed()
+    return data
 
 
 async def createAlbum(websocket, data, username):
@@ -444,7 +454,7 @@ async def getAlbum(websocket, data, username):
         return
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
-    
+
     await manager.subscribe(websocket, f"album-{albumcode}")
     if album["private"] and album["username"] != username:
         user_id = await get_user_id(username)
@@ -454,7 +464,6 @@ async def getAlbum(websocket, data, username):
             return
     else:
         await manager.subscribe(websocket, f"albumadd-{albumcode}")
-    
 
 
 async def attach_presigned_urls(photos_data: dict):
