@@ -223,22 +223,17 @@ async def get_presigned(
     Authorize.jwt_required()
 
     current_user = Authorize.get_jwt_subject()
-    # x = db.openCheck(str(current_user), album_code)
     if not current_user:
         return
-    user = db.getUser(str(current_user))
-    album = db.getAlbum(album_code)
-    if not album:
+
+    ctx = db.get_upload_context(str(current_user), album_code)
+    if not ctx:
         return
 
     # Calculate space remaining for the album owner
-    owner_username = album["username"]
-    owner_usage = db.getUsage(owner_username) or {}
-    owner_details = db.getUser(owner_username) or {}
-
-    owner_class = owner_details.get("class", "free").lower()
+    owner_class = (ctx["owner_class"] or "free").lower()
     owner_limit = userlimits.get(owner_class, userlimits["free"])
-    space_used = owner_usage.get("spaceused_table", 0)
+    space_used = ctx["owner_space_used"]
     space_remaining = max(0, owner_limit - space_used)
 
     if space_remaining <= 0:
@@ -247,8 +242,8 @@ async def get_presigned(
             detail="Storage limit reached for this album owner. Please upgrade or delete some photos.",
         )
 
-    if not album["open"]:
-        if album["user_id"] != user["id"]:
+    if not ctx["album_open"]:
+        if ctx["album_user_id"] != ctx["uploader_id"]:
             logging.info("get_presigned - not allowed")
             raise HTTPException(status_code=403, detail="Not Allowed")
 

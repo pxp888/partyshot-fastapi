@@ -308,6 +308,43 @@ def getAlbum(code: str) -> dict | None:
     return None
 
 
+def get_upload_context(uploader_username: str, album_code: str) -> dict | None:
+    """
+    Consolidates multiple database calls into one for the get_presigned endpoint.
+    Retrieves album details, owner details, owner's space usage, and uploader's ID.
+    """
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT 
+                    a.id, a.code, a.user_id, a.open,
+                    uo.username, uo.class,
+                    COALESCE(s.space, 0),
+                    (SELECT id FROM users WHERE username = %s)
+                FROM albums a
+                JOIN users uo ON a.user_id = uo.id
+                LEFT JOIN spaceused s ON uo.id = s.user_id
+                WHERE a.code = %s;
+                """,
+                (uploader_username, album_code),
+            )
+            row = cursor.fetchone()
+
+    if row:
+        return {
+            "album_id": row[0],
+            "album_code": row[1],
+            "album_user_id": row[2],
+            "album_open": bool(row[3]),
+            "owner_username": row[4],
+            "owner_class": row[5],
+            "owner_space_used": row[6],
+            "uploader_id": row[7],
+        }
+    return None
+
+
 def getAlbumWithSub(code: str, authuser: str) -> dict | None:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
