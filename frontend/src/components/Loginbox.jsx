@@ -2,46 +2,67 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./style/Loginbox.css";
 import { sendJson } from "./helpers";
-// import { useSocket } from "./WebSocketContext"; // ← socket
 
 function Loginbox({ setCurrentUser, setShowLogin }) {
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
   });
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  // const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← socket
 
   const handleChange = (e) => {
     setCredentials({
       ...credentials,
       [e.target.name]: e.target.value,
     });
+    if (successMessage) setSuccessMessage("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
 
     try {
-      const data = await sendJson("/api/login", credentials);
-      console.log("Login successful:");
-      setCurrentUser(data.user);
-      localStorage.setItem("user", data.user);
-      setShowLogin(false);
+      if (showForgotPassword) {
+        await sendCode();
+      } else {
+        const data = await sendJson("/api/login", credentials);
+        console.log("Login successful:");
+        setCurrentUser(data.user);
+        localStorage.setItem("user", data.user);
+        setShowLogin(false);
 
-      const uuidData = await sendJson("/api/generate-wssecret", {});
-      localStorage.setItem("wssecret", uuidData.wssecret);
+        const uuidData = await sendJson("/api/generate-wssecret", {});
+        localStorage.setItem("wssecret", uuidData.wssecret);
 
-
-      if (location.pathname === "/") {
-        navigate(`/user/${data.user}`);
+        if (location.pathname === "/") {
+          navigate(`/user/${data.user}`);
+        } else {
+          window.location.reload();
+        }
       }
-      else {
-        window.location.reload();
-      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const sendCode = async () => {
+    setError("");
+    try {
+      const data = await sendJson("/api/send-reset-code", {
+        username: credentials.username,
+      });
+      console.log("Reset code sent successfully");
+      setShowForgotPassword(false);
+      setResetEmail("");
+      setCredentials({ ...credentials, username: "" }); // clear username field
+      setSuccessMessage("Please check your email for a reset link");
     } catch (err) {
       setError(err.message);
     }
@@ -50,35 +71,71 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
   return (
     <div className="loginback" onClick={() => setShowLogin(false)}>
       <div className="loginbox" onClick={(e) => e.stopPropagation()}>
-        <h2>Login</h2>
+        <h2>{showForgotPassword ? "Reset Password" : "Login"}</h2>
 
         <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
-          <div className="field">
-            <label htmlFor="username">Username</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              value={credentials.username}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={credentials.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <button className="btn" type="submit">
-            Log In
-          </button>
+          {!showForgotPassword ? (
+            <>
+              <div className="field">
+                <label htmlFor="username">Username</label>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  value={credentials.username}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={credentials.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <button className="btn" type="submit">
+                Log In
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="field">
+                <label htmlFor="username">Username</label>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  value={credentials.username}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+
+              <button className="btn" type="submit">
+                Send Code
+              </button>
+            </>
+          )}
+          <a
+            className="forgotButton"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowForgotPassword(!showForgotPassword);
+              setSuccessMessage("");
+              setError("");
+            }}
+          >
+            {showForgotPassword ? "Back to Login" : "(forgot password)"}
+          </a>
           {error && <div className="error-message">{error}</div>}
+          {successMessage && <div className="success-message">{successMessage}</div>}
         </form>
       </div>
     </div>

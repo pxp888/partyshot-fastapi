@@ -103,7 +103,7 @@
 
 .loginbox .btn {
     width: 100%;
-    margin: 1rem 0 0 0;
+    margin: 1rem 0 1rem 0;
     background-color: #444;
     color: white;
     border: none;
@@ -137,8 +137,16 @@
     animation: shake 0.4s ease-in-out;
 }
 
-@keyframes shake {
+a.forgotButton {
+    background: none;
+    border: none;
+    color: rgb(68, 68, 68);
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+}
 
+@keyframes shake {
     0%,
     100% {
         transform: translateX(0);

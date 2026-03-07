@@ -192,6 +192,12 @@ def init_db() -> None:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
+                CREATE TABLE IF NOT EXISTS resetcodes (
+                    username TEXT UNIQUE NOT NULL,
+                    code INTEGER NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
                 """
             )
             conn.commit()
@@ -224,6 +230,33 @@ def setUser(username: str, email: str, password: str, user_class: str = "free") 
                 (username, email, passhash, salt, user_class),
             )
             conn.commit()
+
+
+def set_reset_code(username: str, code: int) -> None:
+    """Insert or update a reset code for the user."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO resetcodes (username, code)
+                VALUES (%s, %s)
+                ON CONFLICT (username) DO UPDATE
+                SET code = EXCLUDED.code, created_at = CURRENT_TIMESTAMP;
+                """,
+                (username, code),
+            )
+            conn.commit()
+
+
+def get_reset_code(username: str) -> int | None:
+    """Retrieve the reset code for the user."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT code FROM resetcodes WHERE username = %s", (username,)
+            )
+            row = cursor.fetchone()
+    return row[0] if row else None
 
 
 def getUser(username: str) -> dict | None:

@@ -406,6 +406,22 @@ async def space_used_endpoint(Authorize: AuthJWT = Depends()):
     return data
 
 
+class ResetCodeRequest(BaseModel):
+    username: str
+
+
+@app.post("/api/send-reset-code")
+async def send_reset_code_endpoint(request: ResetCodeRequest):
+    import random
+    code = random.randint(100000, 999999)
+    db.set_reset_code(request.username, code)
+    print(f"Generated reset code {code} for user {request.username}")
+    return {"msg": "Reset code sent"}
+
+
+# ---------------------------Websocket helpers and handlers--------------------------- #
+
+
 async def createAlbum(websocket, data, username):
     album_name = data["payload"]["album_name"]
 
