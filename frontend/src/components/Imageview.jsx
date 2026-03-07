@@ -167,7 +167,6 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   const handleClick = (e) => {
     if (focus === -1 || !files) return;
     hide();
-    hide();
   };
 
   const formatBytes = (bytes, decimals = 2) => {
@@ -188,58 +187,56 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   return (
     <div className="imageView" {...handlers} onClick={handleClick}>
       <div className="primo" onClick={(e) => e.stopPropagation()}>
-        <div className="imageView" {...handlers} onClick={handleClick}>
-          <div className="primo" onClick={(e) => e.stopPropagation()}>
-            {isVideo ? (
-              <video
-                src={files[focus].s3_key}
-                controls
-                autoPlay
-                loop
-                muted // Many browsers require muted for autoPlay
-                onKeyDown={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <img
-                src={files[focus].mid_key || files[focus].s3_key || placeholder}
-                alt={`${files[focus].filename}`}
-                onError={(e) => {
-                  e.target.src = placeholder;
-                }}
-              />
-            )}
-          </div>
-          <div
-            className={`fileDetails ${showDetails ? "visible" : ""}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="detailRow">
-              <span className="filename">{files[focus].filename}</span>
-            </div>
-            <div className="detailRow">
-              <span className="meta">
-                Uploaded by <strong>{files[focus].username}</strong> on{" "}
-                {new Date(files[focus].created_at).toLocaleString()}
-                {files[focus].size && ` • ${formatBytes(files[focus].size)}`}
-              </span>
-            </div>
-          </div>
-          {showDeleteConfirm && (
-            <MessageBox
-              title="Delete photo"
-              message="Are you sure you want to delete this file?"
-              type="confirm"
-              onClose={() => setShowDeleteConfirm(false)}
-              onConfirm={() => {
-                deletedPhoto(files[focus].id);
-                if (focus >= files.length - 1) {
-                  setFocus(focus - 1);
-                }
-              }}
-            />
-          )}
+        {isVideo ? (
+          <video
+            src={files[focus].s3_key}
+            controls
+            autoPlay
+            loop
+            muted // Many browsers require muted for autoPlay
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <img
+            src={files[focus].mid_key || files[focus].s3_key || placeholder}
+            alt={`${files[focus].filename}`}
+            onError={(e) => {
+              e.target.src = placeholder;
+            }}
+          />
+        )}
+      </div>
+      <div
+        className={`fileDetails ${showDetails ? "visible" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="detailRow">
+          <span className="filename">{files[focus].filename}</span>
         </div>
-        );
+        <div className="detailRow">
+          <span className="meta">
+            Uploaded by <strong>{files[focus].username}</strong> on{" "}
+            {new Date(files[focus].created_at).toLocaleString()}
+            {files[focus].size && ` • ${formatBytes(files[focus].size)}`}
+          </span>
+        </div>
+      </div>
+      {showDeleteConfirm && (
+        <MessageBox
+          title="Delete photo"
+          message="Are you sure you want to delete this file?"
+          type="confirm"
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => {
+            deletedPhoto(files[focus].id);
+            if (focus >= files.length - 1) {
+              setFocus(focus - 1);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
-        export default Imageview;
+export default Imageview;
