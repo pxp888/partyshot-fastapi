@@ -1,5 +1,8 @@
 import asyncio
 import logging
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 import aws
 import db
@@ -113,6 +116,35 @@ async def delete_s3_objects(ctx, keys: list):
     return True
 
 
+async def send_reset_code_email(ctx, email: str, code: int):
+    """
+    Background task to send a password reset code via Gmail SMTP.
+    """
+    logging.info("Sending reset code to %s", email)
+    
+    subject = "Your Password Reset Code"
+    body = f"Your shareShot.eu password reset code is: {code}"
+    
+    msg = MIMEMultipart()
+    msg["From"] = env.ADMIN_MAIL_EMAIL
+    msg["To"] = email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+    
+    try:
+        def send_smtp():
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login(env.ADMIN_MAIL_EMAIL, env.ADMIN_MAIL_PASSWORD)
+                server.send_message(msg)
+        
+        await asyncio.to_thread(send_smtp)
+        return True
+    except Exception as e:
+        logging.error("Error sending email to %s: %s", email, e)
+        return False
+
+
 async def startup(ctx):
     db.init_pool()
 
@@ -131,6 +163,7 @@ class WorkerSettings:
         db.cleanup2,
         record_atomic_photo,
         delete_s3_objects,
+        send_reset_code_email,
     ]
     # Connect to the Redis Docker container we set up earlier
     redis_settings = RedisSettings(host=env.REDIS_URL2, port=6379)

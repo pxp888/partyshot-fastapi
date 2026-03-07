@@ -413,9 +413,17 @@ class ResetCodeRequest(BaseModel):
 @app.post("/api/send-reset-code")
 async def send_reset_code_endpoint(request: ResetCodeRequest):
     import random
+    user_email = db.getEmail(request.username)
+    if not user_email:
+        logging.warning(f"Reset code requested for unknown or email-less user: {request.username}")
+        return {"msg": "Reset code sent"}
+
     code = random.randint(100000, 999999)
-    db.set_reset_code(request.username, code)
-    print(f"Generated reset code {code} for user {request.username}")
+    # Store code in Redis with 10 minute expiration
+    await redis_client.set(f"reset_code:{request.username}", str(code), ex=600)
+    
+    await app.state.redis.enqueue_job("send_reset_code_email", user_email, code)
+    
     return {"msg": "Reset code sent"}
 
 
@@ -427,9 +435,17 @@ class ResetPasswordRequest(BaseModel):
 
 @app.post("/api/reset-password")
 async def reset_password_endpoint(request: ResetPasswordRequest):
-    success = db.reset_password(request.username, request.code, request.new_password)
-    if not success:
+    # Verify code from Redis
+    stored_code = await redis_client.get(f"reset_code:{request.username}")
+    if not stored_code or int(stored_code) != request.code:
         raise HTTPException(status_code=400, detail="Invalid code or user not found")
+
+    success = db.update_user_password(request.username, request.new_password)
+    if not success:
+        raise HTTPException(status_code=400, detail="User not found")
+        
+    # Clear code from Redis after successful reset
+    await redis_client.delete(f"reset_code:{request.username}")
     return {"msg": "Password reset successful"}
 
 

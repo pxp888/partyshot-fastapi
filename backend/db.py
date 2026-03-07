@@ -182,12 +182,6 @@ def init_db() -> None:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
-                CREATE TABLE IF NOT EXISTS resetcodes (
-                    username TEXT UNIQUE NOT NULL,
-                    code INTEGER NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-
                 """
             )
             conn.commit()
@@ -222,39 +216,8 @@ def setUser(username: str, email: str, password: str, user_class: str = "free") 
             conn.commit()
 
 
-def set_reset_code(username: str, code: int) -> None:
-    """Insert or update a reset code for the user."""
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO resetcodes (username, code)
-                VALUES (%s, %s)
-                ON CONFLICT (username) DO UPDATE
-                SET code = EXCLUDED.code, created_at = CURRENT_TIMESTAMP;
-                """,
-                (username, code),
-            )
-            conn.commit()
-
-
-def get_reset_code(username: str) -> int | None:
-    """Retrieve the reset code for the user."""
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                "SELECT code FROM resetcodes WHERE username = %s", (username,)
-            )
-            row = cursor.fetchone()
-    return row[0] if row else None
-
-
-def reset_password(username: str, code: int, new_password: str) -> bool:
-    """Verify reset code and update user's password."""
-    stored_code = get_reset_code(username)
-    if stored_code is None or stored_code != code:
-        return False
-
+def update_user_password(username: str, new_password: str) -> bool:
+    """Update user's password with new hash and salt."""
     salt = random.randbytes(16).hex()
     passhash = hashlib.sha256((new_password + salt).encode()).hexdigest()
 
@@ -269,12 +232,10 @@ def reset_password(username: str, code: int, new_password: str) -> bool:
                 if cursor.rowcount == 0:
                     return False
                 
-                # Delete the used reset code
-                cursor.execute("DELETE FROM resetcodes WHERE username = %s", (username,))
                 conn.commit()
                 return True
             except Exception as e:
-                logging.error(f"Error resetting password for {username}: {e}")
+                logging.error(f"Error updating password for {username}: {e}")
                 conn.rollback()
                 return False
 
