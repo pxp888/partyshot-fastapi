@@ -10,6 +10,7 @@ import Uploader from "./Uploader";
 import AlbumRenamer from "./AlbumRenamer";
 import Iconlist from "./Iconlist";
 import Listview from "./Listview";
+import Gridview from "./Gridview";
 import QRHover from "./QRHover";
 
 import "./Albumview.css";
@@ -508,6 +509,7 @@ function Albumview(currentUser) {
               onClick={() => {
                 setViewType("list");
               }}
+              title="List View"
             >
               ☰
             </button>
@@ -516,8 +518,18 @@ function Albumview(currentUser) {
               onClick={() => {
                 setViewType("icon");
               }}
+              title="Icon View"
             >
               ▦
+            </button>
+            <button
+              className="sortOrderBtn"
+              onClick={() => {
+                setViewType("grid");
+              }}
+              title="Large Icon View"
+            >
+              ⊞
             </button>
 
             <select
@@ -591,6 +603,7 @@ function Albumview(currentUser) {
               onClick={() => {
                 setViewType("list");
               }}
+              title="List View"
             >
               ☰
             </button>
@@ -599,8 +612,18 @@ function Albumview(currentUser) {
               onClick={() => {
                 setViewType("icon");
               }}
+              title="Icon View"
             >
               ▦
+            </button>
+            <button
+              className="sortOrderBtn"
+              onClick={() => {
+                setViewType("grid");
+              }}
+              title="Large Icon View"
+            >
+              ⊞
             </button>
             <select
               value={sortField}
@@ -640,6 +663,20 @@ function Albumview(currentUser) {
 
       {viewType === "list" && (
         <Listview
+          photos={photos}
+          sortedPhotos={sortedPhotos}
+          lastPhotoElementRef={lastPhotoElementRef}
+          selectMode={selectMode}
+          selected={selected}
+          setSelected={setSelected}
+          setFocus={setFocus}
+          isFetching={isFetching}
+          onDrop={handleUpload}
+        />
+      )}
+
+      {viewType === "grid" && (
+        <Gridview
           photos={photos}
           sortedPhotos={sortedPhotos}
           lastPhotoElementRef={lastPhotoElementRef}

@@ -11,6 +11,7 @@
 .listItem {
     display: flex;
     align-items: center;
+    gap: 1rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
@@ -38,6 +39,28 @@
     pointer-events: none;
     background-color: rgba(255, 192, 203, 0.5);
     z-index: 20;
+}
+
+.listItemThumbnail {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background-color: #000;
+}
+
+.listItemThumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.listItemThumbnail img.loaded {
+    opacity: 1;
 }
 
 .listItemInfo {

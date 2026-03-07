@@ -1,0 +1,34 @@
+/* ----- File list ----------------------------------------------------- */
+.gridview .fileList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-md, 16px);
+    padding: var(--gap-md, 16px) 0;
+    margin: 0 var(--gap-lg, 24px);
+    box-sizing: border-box;
+}
+
+.gridview .fileList::after {
+    content: "";
+    flex-grow: 10000;
+}
+
+@media (max-width: 600px) {
+    .gridview .fileList {
+        margin: 0 var(--gap-md, 16px);
+    }
+}
+
+/* Larger FileItem sizing for Gridview */
+.gridview .fileItem {
+    min-height: 150px;
+    flex: var(--ar, 1) 1 calc(300px * var(--ar, 1));
+    max-height: 400px;
+}
+
+@media (max-width: 768px) {
+    .gridview .fileItem {
+        min-height: 100px;
+        flex: var(--ar, 1) 1 calc(150px * var(--ar, 1));
+    }
+}
