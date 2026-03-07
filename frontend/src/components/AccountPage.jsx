@@ -26,9 +26,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
 
   useEffect(() => {
     if (currentUser) {
-      sendJsonMessage({ action: "getEmail" });
-      sendJsonMessage({ action: "getUsage" });
-      sendJsonMessage({ action: "getUserInfo" });
+      sendJsonMessage({ action: "getAccountData" });
     }
   }, [currentUser, sendJsonMessage]);
 
@@ -49,8 +47,8 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
             password: "",
             confirmPassword: "",
           });
-          // Refresh email placeholder after update
-          sendJsonMessage({ action: "getEmail" });
+          // Refresh account data after update
+          sendJsonMessage({ action: "getAccountData" });
         } else if (message === "username taken") {
           setStatus({
             type: "error",
@@ -74,12 +72,11 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
           setCurrentUser(username);
           localStorage.setItem("username", username);
         }
-      } else if (lastJsonMessage.action === "getEmail") {
-        setEmailPlaceholder(lastJsonMessage.payload || "No email set");
-      } else if (lastJsonMessage.action === "getUsage") {
-        setUsage(lastJsonMessage.payload);
-      } else if (lastJsonMessage.action === "getUserInfo") {
-        setUserInfo(lastJsonMessage.payload);
+      } else if (lastJsonMessage.action === "getAccountData") {
+        const { userInfo, usage, email } = lastJsonMessage.payload;
+        setUserInfo(userInfo);
+        setUsage(usage);
+        setEmailPlaceholder(email || "No email set");
       }
     }
   }, [lastJsonMessage, currentUser, setCurrentUser, sendJsonMessage]);
@@ -202,6 +199,12 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
                     2,
                   )}{" "}
                   MB
+                </span>
+              </div>
+              <div className="usage-item">
+                <span className="usage-label">Remaining Space</span>
+                <span className="usage-value">
+                  {(usage["remaining space"] / (1024 * 1024)).toFixed(2)} MB
                 </span>
               </div>
             </div>

@@ -1369,6 +1369,71 @@ def getUsage(username: str) -> dict | None:
             }
 
 
+
+def getAccountData(username: str) -> dict | None:
+    """
+    Consolidates getEmail, getUser, and getUsage into one call.
+    Returns a dictionary with comprehensive account and usage data.
+    """
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    u.id, u.username, u.email, u.class,
+                    (SELECT COUNT(*) FROM photos WHERE user_id = u.id) as num_photos,
+                    (SELECT COUNT(*) FROM albums WHERE user_id = u.id) as num_albums,
+                    (SELECT COUNT(*) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id AND p.user_id != u.id) as num_other_photos,
+                    (SELECT SUM(COALESCE(size, 0) + COALESCE(thumb_size, 0)) FROM photos WHERE user_id = u.id) as total_size_photos,
+                    (SELECT SUM(COALESCE(p.size, 0) + COALESCE(p.thumb_size, 0)) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id) as total_size_albums,
+                    (SELECT space FROM spaceused WHERE user_id = u.id) as space_used_table
+                FROM users u
+                WHERE u.username = %s;
+                """,
+                (username,),
+            )
+            row = cursor.fetchone()
+
+    if not row:
+        return None
+
+    (
+        user_id,
+        uname,
+        email,
+        uclass,
+        num_photos,
+        num_albums,
+        num_other_photos,
+        total_size_photos,
+        total_size_albums,
+        space_used_table,
+    ) = row
+
+    # Calculate remaining space
+    user_class_lower = (uclass or "free").lower()
+    limit = env.USERLIMITS.get(user_class_lower, env.USERLIMITS.get("free", 0))
+    remaining_space = max(0, limit - (space_used_table or 0))
+
+    return {
+        "userInfo": {
+            "username": uname,
+            "email": email,
+            "class": uclass,
+        },
+        "usage": {
+            "number of photos": num_photos,
+            "number of albums": num_albums,
+            "number of other peoples photos in users albums": num_other_photos,
+            "total size of photos": int(total_size_photos or 0),
+            "total size in user albums": int(total_size_albums or 0),
+            "spaceused_table": int(space_used_table or 0),
+            "remaining space": int(remaining_space),
+        },
+        "email": email,
+    }
+
+
 # --------------------------------------------------------------------------- #
 # Admin functions
 # --------------------------------------------------------------------------- #

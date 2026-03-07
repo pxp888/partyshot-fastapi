@@ -44,12 +44,7 @@ manager = watcher.Watcher()
 app = FastAPI()
 
 
-userlimits = {
-    "free": 250000000,
-    "starter": 500000000,
-    "basic": 1000000000,
-    "pro": 2000000000,
-}
+userlimits = env.USERLIMITS
 
 
 class User(BaseModel):
@@ -650,6 +645,13 @@ async def getUserInfo(websocket, data, username):
         await websocket.send_json(message)
 
 
+async def getAccountData(websocket, data, username):
+    account_data = db.getAccountData(username)
+    if account_data:
+        message = {"action": "getAccountData", "payload": account_data}
+        await websocket.send_json(message)
+
+
 async def subscribe(websocket, data, username):
     albumcode = data["payload"]["albumcode"]
     ok = db.subscribe(username, albumcode)
@@ -746,6 +748,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await getUsage(websocket, payload, username)
                 elif action == "getUserInfo":
                     await getUserInfo(websocket, payload, username)
+                elif action == "getAccountData":
+                    await getAccountData(websocket, payload, username)
                 elif action == "subscribe":
                     await subscribe(websocket, payload, username)
                 elif action == "unsubscribe":
