@@ -627,22 +627,22 @@ async def getEmail(websocket, data, username):
     await websocket.send_json(message)
 
 
-async def getUsage(websocket, data, username):
-    usage = db.getUsage(username)
-    message = {"action": "getUsage", "payload": usage}
-    await websocket.send_json(message)
+# async def getUsage(websocket, data, username):
+#     usage = db.getUsage(username)
+#     message = {"action": "getUsage", "payload": usage}
+#     await websocket.send_json(message)
 
 
-async def getUserInfo(websocket, data, username):
-    user = db.getUser(username)
-    if user:
-        info = {
-            "username": user["username"],
-            "email": user["email"],
-            "class": user["class"],
-        }
-        message = {"action": "getUserInfo", "payload": info}
-        await websocket.send_json(message)
+# async def getUserInfo(websocket, data, username):
+#     user = db.getUser(username)
+#     if user:
+#         info = {
+#             "username": user["username"],
+#             "email": user["email"],
+#             "class": user["class"],
+#         }
+#         message = {"action": "getUserInfo", "payload": info}
+#         await websocket.send_json(message)
 
 
 async def getAccountData(websocket, data, username):

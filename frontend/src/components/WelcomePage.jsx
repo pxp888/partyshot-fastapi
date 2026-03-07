@@ -32,8 +32,8 @@ function Welcomepage() {
           <button
             className="btn demo"
             onClick={() =>
-              (window.location.href =
-                "https://shareshot.eu/album/5f1d62d7688a422191c546a213471564")
+            (window.location.href =
+              "https://shareshot.eu/album/7b18b77f53854e2f824aef92bad76dcc")
             }
           >
             Sample Album

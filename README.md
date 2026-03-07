@@ -27,7 +27,6 @@
 - **☁️ Direct R2 Uploads**: Files bypass the server and go straight to Cloudflare R2 via presigned URLs, ensuring maximum performance and minimal server load.  
 - **⚡ Real-time Updates**: Instant UI refreshes across all devices using Redis Pub/Sub and WebSockets.  
 - **🖼️ Smart Metadata**: Automatic tracking of photo sizes and dimensions via background workers.  
-- **🔍 Global Search**: Quickly find albums and users with built-in search functionality.  
 - **🛠️ Admin Dashboard**: Monitor storage usage and manage system integrity.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OQQmAABRAsSfYxZo/kSGMYQLPJrCCNxG2BFtmZquOAAD4i3Ot7mr/egIAwGvXA4qrBdGuSdJuAAAAAElFTkSuQmCC)  
 **🛠️ Tech Stack**  
@@ -53,7 +52,7 @@ The included docker-compose.yml file is configured to run the full required stac
 - Album items that are off‑screen are not rendered (lazy loading).  
 - Thumbnails are paginated; the client requests presigned URLs only for thumbnails currently in view.  
 **Downloads & Deletions**  
-- Files are downloaded directly from R2 via presigned URLs.  
+- Files are downloaded directly from R2.
 - Background workers also handle deletion of items from R2, keeping storage in sync with the database.  
 **Deployment**  
 - **Docker**: Containerization for easy deployment.  
