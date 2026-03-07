@@ -1,15 +1,29 @@
 import { useEffect, useRef, useState } from "react";
+import { useSwipeable } from "react-swipeable";
 import "./style/Imageview.css";
 import MessageBox from "./MessageBox";
 import blankImage from "../assets/blank.jpg";
 import videoImage from "../assets/video.webp";
 
 function Imageview({ files, focus, setFocus, deletedPhoto }) {
-  // Reference to the container so we can compute click position
-  const containerRef = useRef(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const lastFocus = useRef(focus);
+  const skipSwipe = useRef(false);
+
+  const handlers = useSwipeable({
+    onSwipeStart: (e) => {
+      // If more than one finger is touching, it's likely a pinch/zoom gesture
+      skipSwipe.current = e.event.touches?.length > 1;
+    },
+    onSwipedLeft: () => !skipSwipe.current && next(),
+    onSwipedRight: () => !skipSwipe.current && previous(),
+    onSwipedDown: () => !skipSwipe.current && hide(),
+    onSwipedUp: () => !skipSwipe.current && hide(),
+    delta: 150, // Higher threshold to avoid accidental swipes during zoom
+    preventScrollOnSwipe: true,
+    trackMouse: true,
+  });
 
   const updateUrl = (newFocus, mode = "replace") => {
     if (!files || files.length === 0) return;
@@ -152,23 +166,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
   const handleClick = (e) => {
     if (focus === -1 || !files) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const width = rect.width;
-
-    if (width === 0) return;
-
-    const leftZone = width / 3;
-    const rightZone = (2 * width) / 3;
-
-    if (clickX < leftZone) {
-      previous();
-    } else if (clickX > rightZone) {
-      next();
-    } else {
-      hide();
-    }
+    hide();
   };
 
   const formatBytes = (bytes, decimals = 2) => {
@@ -187,8 +185,8 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   if (focus === -1) return null;
 
   return (
-    <div className="imageView" ref={containerRef} onClick={handleClick}>
-      <div className="primo">
+    <div className="imageView" {...handlers} onClick={handleClick}>
+      <div className="primo" onClick={(e) => e.stopPropagation()}>
         {isVideo ? (
           <video
             src={files[focus].s3_key}
@@ -196,14 +194,12 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
             autoPlay
             loop
             muted // Many browsers require muted for autoPlay
-            onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           />
         ) : (
           <img
             src={files[focus].mid_key || files[focus].s3_key || placeholder}
             alt={`${files[focus].filename}`}
-            // onClick={(e) => e.stopPropagation()}
             onError={(e) => {
               e.target.src = placeholder;
             }}
