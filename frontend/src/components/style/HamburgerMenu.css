@@ -16,6 +16,12 @@
     transition: all 0.3s ease;
 }
 
+@media (max-width: 900px) {
+    .hamburger-menu {
+        position: absolute;
+    }
+}
+
 .hamburger-menu .line {
     display: block;
     width: 20px;
