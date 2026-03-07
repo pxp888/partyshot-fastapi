@@ -9,6 +9,7 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
   const navigate = useNavigate();
   const { showMessage } = useMessage();
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,8 +88,11 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
         <img
           src={thumbnailUrl || blankImage}
           alt={album.name}
+          className={isLoaded ? "loaded" : ""}
+          onLoad={() => setIsLoaded(true)}
           onError={(e) => {
             e.target.src = blankImage;
+            setIsLoaded(true);
           }}
         />
       </div>

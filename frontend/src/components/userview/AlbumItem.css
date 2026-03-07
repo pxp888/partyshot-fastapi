@@ -14,7 +14,7 @@
 }
 
 .album-item:hover {
-    transform: translateY(-5px);
+    /* transform: translateY(-5px); */
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
 }
 
@@ -60,7 +60,12 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease;
+}
+
+.thumbnail-container img.loaded {
+    opacity: 1;
 }
 
 .album-item:hover .thumbnail-container img {
