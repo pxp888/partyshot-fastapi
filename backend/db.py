@@ -85,16 +85,6 @@ def get_db_connection():
         _db_pool.putconn(conn)
 
 
-def get_connection():
-    """Return a new PostgreSQL connection to the database."""
-    return psycopg2.connect(
-        host=env.DB_HOST,
-        port=env.DB_PORT,
-        dbname=env.DB_NAME,
-        user=env.DB_USER,
-        password=env.DB_PASSWORD,
-    )
-
 
 # --------------------------------------------------------------------------- #
 # Schema setup
@@ -257,6 +247,36 @@ def get_reset_code(username: str) -> int | None:
             )
             row = cursor.fetchone()
     return row[0] if row else None
+
+
+def reset_password(username: str, code: int, new_password: str) -> bool:
+    """Verify reset code and update user's password."""
+    stored_code = get_reset_code(username)
+    if stored_code is None or stored_code != code:
+        return False
+
+    salt = random.randbytes(16).hex()
+    passhash = hashlib.sha256((new_password + salt).encode()).hexdigest()
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                # Update user password
+                cursor.execute(
+                    "UPDATE users SET passhash = %s, salt = %s WHERE username = %s",
+                    (passhash, salt, username),
+                )
+                if cursor.rowcount == 0:
+                    return False
+                
+                # Delete the used reset code
+                cursor.execute("DELETE FROM resetcodes WHERE username = %s", (username,))
+                conn.commit()
+                return True
+            except Exception as e:
+                logging.error(f"Error resetting password for {username}: {e}")
+                conn.rollback()
+                return False
 
 
 def getUser(username: str) -> dict | None:

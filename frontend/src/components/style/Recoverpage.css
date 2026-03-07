@@ -1,0 +1,126 @@
+.recover-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 2rem;
+    background-color: var(--background-color, #f9fafb);
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.recover-box {
+    background-color: var(--form-color, #ffffff);
+    padding: 3rem;
+    border-radius: 0.8rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.recover-box h2 {
+    font-size: 2.2rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+    color: var(--bright-color, #FA8072);
+    text-align: center;
+}
+
+.recover-box p {
+    text-align: center;
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+    line-height: 1.5;
+}
+
+.recover-box .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.recover-box .field label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
+    margin-left: 0.2rem;
+}
+
+.recover-box .field input {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 0.4rem;
+    padding: 0.9rem 1rem;
+    color: #333;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.recover-box .field input:focus {
+    border-color: var(--bright-color, #FA8072);
+    box-shadow: 0 0 0 4px rgba(250, 128, 114, 0.15);
+    transform: translateY(-1px);
+}
+
+.recover-box .btn {
+    width: 100%;
+    margin-top: 1rem;
+    background-color: #444;
+    color: white;
+    border: none;
+    border-radius: 0.4rem;
+    padding: 1.1rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.recover-box .btn:hover {
+    background-color: var(--bright-color, #FA8072);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(250, 128, 114, 0.3);
+}
+
+.recover-box .error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+    padding: 1rem;
+    border-radius: 0.4rem;
+    text-align: center;
+    margin-top: 1.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.recover-box .success-message {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #15803d;
+    padding: 1rem;
+    border-radius: 0.4rem;
+    text-align: center;
+    margin-top: 1.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+    .recover-box {
+        padding: 2rem 1.5rem;
+    }
+}

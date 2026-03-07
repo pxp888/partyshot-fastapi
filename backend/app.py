@@ -419,7 +419,18 @@ async def send_reset_code_endpoint(request: ResetCodeRequest):
     return {"msg": "Reset code sent"}
 
 
-# ---------------------------Websocket helpers and handlers--------------------------- #
+class ResetPasswordRequest(BaseModel):
+    username: str
+    code: int
+    new_password: str
+
+
+@app.post("/api/reset-password")
+async def reset_password_endpoint(request: ResetPasswordRequest):
+    success = db.reset_password(request.username, request.code, request.new_password)
+    if not success:
+        raise HTTPException(status_code=400, detail="Invalid code or user not found")
+    return {"msg": "Password reset successful"}
 
 
 async def createAlbum(websocket, data, username):

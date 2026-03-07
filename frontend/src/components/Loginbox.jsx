@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import "./style/Loginbox.css";
 import { sendJson } from "./helpers";
 
@@ -62,7 +62,12 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
       setShowForgotPassword(false);
       setResetEmail("");
       setCredentials({ ...credentials, username: "" }); // clear username field
-      setSuccessMessage("Please check your email for a reset link");
+      // setSuccessMessage(
+      //   <span>
+      //     Reset code sent! <Link to="/recover">Click here to reset</Link>
+      //   </span>
+      // );
+      window.location.href = "/recover";
     } catch (err) {
       setError(err.message);
     }
