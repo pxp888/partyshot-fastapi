@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { sendJson, receiveJson } from "./helpers";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import Searchbar from "./Searchbar";
+import HamburgerMenu from "./HamburgerMenu";
+import SlideOutMenu from "./SlideOutMenu";
 import "./style/Topbar.css";
 
 function Topbar({ currentUser, setCurrentUser }) {
@@ -12,8 +13,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [showRegister, setShowRegister] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [userClass, setUserClass] = useState(null);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     console.log("topbar protect test");
@@ -91,60 +91,19 @@ function Topbar({ currentUser, setCurrentUser }) {
             shareShot<span className="title-suffix">.eu</span>
           </Link>
         </div>
-
-        <Searchbar className="search" />
-        {currentUser ? (
-          <div className="userInfo">
-            <div>
-              <Link
-                to={`/contact?from=${location.pathname}${location.search}`}
-                className="plans-link"
-              >
-                Contact
-              </Link>
-              <Link to="/plans" className="plans-link">
-                Plans
-              </Link>
-            </div>
-            <div>
-              <button
-                className="btn"
-                onClick={() => navigate(`/user/${currentUser}`)}
-              >
-                Profile
-              </button>
-              <button className="btn" onClick={() => navigate("/account")}>
-                Account
-              </button>
-              <button className="btn" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="nav">
-            <div>
-              <Link
-                to={`/contact?from=${location.pathname}${location.search}`}
-                className="plans-link"
-              >
-                Contact
-              </Link>
-              <Link to="/plans" className="plans-link">
-                Plans
-              </Link>
-            </div>
-            <div>
-              <button className="btn" onClick={() => setShowLogin(true)}>
-                Login
-              </button>
-              <button className="btn" onClick={() => setShowRegister(true)}>
-                Register
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      <HamburgerMenu isOpen={isMenuOpen} toggle={() => setIsMenuOpen(!isMenuOpen)} />
+
+      <SlideOutMenu
+        isOpen={isMenuOpen}
+        close={() => setIsMenuOpen(false)}
+        currentUser={currentUser}
+        handleLogout={handleLogout}
+        setShowLogin={setShowLogin}
+        setShowRegister={setShowRegister}
+      />
+
       {showLogin && (
         <Loginbox setCurrentUser={setCurrentUser} setShowLogin={setShowLogin} />
       )}

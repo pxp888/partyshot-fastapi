@@ -1,0 +1,108 @@
+.slide-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.slide-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.slide-out-menu {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 300px;
+    height: 100vh;
+    background-color: hsl(0, 0%, 97%);
+    z-index: 1001;
+    /* Below hamburger */
+    transition: right 0.3s ease;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 80px 20px 20px 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.slide-out-menu.open {
+    right: 0;
+}
+
+.menu-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu-links {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.slide-out-menu .btn {
+    width: 100%;
+    font-weight: 500;
+    font-size: 1rem;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    color: #393939;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-align: center;
+}
+
+.slide-out-menu .btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.slide-out-menu .plans-link {
+    text-decoration: none;
+    color: #393939;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 0.5rem;
+    transition: color 0.2s ease;
+    margin: 0;
+}
+
+.slide-out-menu .plans-link:hover {
+    color: var(--accent);
+}
+
+.slide-search input {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.08);
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: #393939;
+    outline: none;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.slide-search input:focus {
+    background: white;
+}
