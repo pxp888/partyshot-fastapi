@@ -14,6 +14,7 @@ import Plans from "./components/Plans";
 import AccountPage from "./components/AccountPage";
 import Policypage from "./components/Policypage";
 import Termspage from "./components/Termspage";
+import Recoverpage from "./components/Recoverpage";
 import CookieConsent from "./components/CookieConsent";
 
 function NotFound() {
@@ -59,6 +60,7 @@ export default function App() {
                 />
               }
             />
+            <Route path="/recover" element={<Recoverpage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
