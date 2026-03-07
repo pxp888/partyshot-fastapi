@@ -20,7 +20,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     onSwipedRight: () => !skipSwipe.current && previous(),
     onSwipedDown: () => !skipSwipe.current && hide(),
     onSwipedUp: () => !skipSwipe.current && hide(),
-    delta: 150, // Higher threshold to avoid accidental swipes during zoom
+    delta: 75, // Higher threshold to avoid accidental swipes during zoom
     preventScrollOnSwipe: true,
     trackMouse: true,
   });
