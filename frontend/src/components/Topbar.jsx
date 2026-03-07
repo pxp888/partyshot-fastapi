@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { sendJson, receiveJson } from "./helpers";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import HamburgerMenu from "./HamburgerMenu";
 import SlideOutMenu from "./SlideOutMenu";
@@ -14,6 +14,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [userInfo, setUserInfo] = useState(null);
   const [userClass, setUserClass] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("topbar protect test");
@@ -90,6 +91,20 @@ function Topbar({ currentUser, setCurrentUser }) {
           <Link to="/">
             shareShot<span className="title-suffix">.eu</span>
           </Link>
+        </div>
+        <div className="top-actions">
+          {currentUser ? (
+            <button
+              className="btn topbar-btn"
+              onClick={() => navigate(`/user/${currentUser}`)}
+            >
+              Profile
+            </button>
+          ) : (
+            <button className="btn topbar-btn" onClick={() => setShowLogin(true)}>
+              Login
+            </button>
+          )}
         </div>
       </div>
 
