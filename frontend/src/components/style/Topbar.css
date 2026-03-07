@@ -43,6 +43,8 @@
 
 .top-actions {
     margin-right: 50px;
+    display: flex;
+    gap: 0.5rem;
     /* Space for the hamburger menu */
 }
 
@@ -76,5 +78,11 @@
     .topLeft {
         width: 100%;
         text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .register-btn {
+        display: none;
     }
 }

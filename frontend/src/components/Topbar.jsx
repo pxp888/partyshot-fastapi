@@ -98,12 +98,20 @@ function Topbar({ currentUser, setCurrentUser }) {
               className="btn topbar-btn"
               onClick={() => navigate(`/user/${currentUser}`)}
             >
-              Profile
+              {currentUser}
             </button>
           ) : (
-            <button className="btn topbar-btn" onClick={() => setShowLogin(true)}>
-              Login
-            </button>
+            <>
+              <button className="btn topbar-btn" onClick={() => setShowLogin(true)}>
+                Login
+              </button>
+              <button
+                className="btn topbar-btn register-btn"
+                onClick={() => setShowRegister(true)}
+              >
+                Register
+              </button>
+            </>
           )}
         </div>
       </div>
