@@ -21,6 +21,10 @@
         min-height: 50px;
         flex: var(--ar, 1) 1 calc(100px * var(--ar, 1));
     }
+
+    .fileItem:hover .fileInfo {
+        display: none;
+    }
 }
 
 .fileItem:hover {
@@ -90,7 +94,7 @@
 }
 
 .info .title,
-.info > .title {
+.info>.title {
     color: var(--bright-color);
 }
 
@@ -98,6 +102,6 @@ label {
     color: gray;
 }
 
-.info > p {
+.info>p {
     color: white;
 }
