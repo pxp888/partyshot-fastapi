@@ -17,8 +17,11 @@
 }
 
 .qr-code-popup {
-    position: absolute;
+    /* position: absolute;
     top: calc(100% + 12px);
+    left: 50%; */
+    position: fixed;
+    top: 40%;
     left: 50%;
     transform: translateX(-50%);
     background: white;

@@ -440,7 +440,7 @@ function Albumview(currentUser) {
             </p>
           </div>
           <div className="vert right">
-            <QRHover text={album.code} />
+            <QRHover text="copy URL" />
 
             <div className="album-controls">
               <span
