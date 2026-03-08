@@ -1,0 +1,68 @@
+{
+  "family": "shareshot-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "backend-api",
+      "image": "431754448027.dkr.ecr.eu-north-1.amazonaws.com/shareshot1:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DB_HOST",
+          "value": "your-rds-endpoint.aws.com"
+        },
+        {
+          "name": "REDIS_URL",
+          "value": "redis://your-elasticache-endpoint:6379"
+        },
+        {
+          "name": "ADMIN_USERNAME",
+          "value": "admin"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/shareshot-api",
+          "awslogs-region": "eu-north-1",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    },
+    {
+      "name": "cloudflared",
+      "image": "cloudflare/cloudflared:latest",
+      "essential": true,
+      "command": [
+        "tunnel",
+        "--no-autoupdate",
+        "run"
+      ],
+      "environment": [
+        {
+          "name": "TUNNEL_TOKEN",
+          "value": "YOUR_CLOUDFLARE_TUNNEL_TOKEN"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/shareshot-api",
+          "awslogs-region": "eu-north-1",
+          "awslogs-stream-prefix": "tunnel"
+        }
+      }
+    }
+  ]
+}
