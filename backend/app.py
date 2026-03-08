@@ -37,8 +37,7 @@ from fastapi_jwt_auth2.exceptions import AuthJWTException
 from pydantic import BaseModel
 from starlette.websockets import WebSocketDisconnect
 
-# redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
-redis_client = redis.from_url("rediss://shareshotcache-f7rkvd.serverless.eun1.cache.amazonaws.com:6379", decode_responses=True)
+redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 # redis_client = redis.from_url(env.REDIS_URL)
 
 
