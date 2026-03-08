@@ -25,8 +25,6 @@ services:
       - "8000"
     volumes:
       - ./backend/env.py:/code/env.py:Z
-    depends_on:
-      - redis-db
     networks:
       - backend-network
 
@@ -37,15 +35,6 @@ services:
     command: arq worker.WorkerSettings
     volumes:
       - ./backend/env.py:/code/env.py:Z
-    depends_on:
-      - redis-db
-    networks:
-      - backend-network
-
-  redis-db:
-    image: redis:7-alpine
-    container_name: redis_server
-    restart: always
     networks:
       - backend-network
 
