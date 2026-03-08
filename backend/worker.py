@@ -166,7 +166,9 @@ class WorkerSettings:
         send_reset_code_email,
     ]
     # Connect to the Redis Docker container we set up earlier
-    # redis_settings = RedisSettings(env.REDIS_URL2)
-    redis_settings = RedisSettings.from_dsn(env.REDIS_URL2)
+    if "amazon" in env.REDIS_URL2:
+        redis_settings = RedisSettings.from_dsn(env.REDIS_URL2)
+    else:
+        redis_settings = RedisSettings(env.REDIS_URL2)
     on_startup = startup
     on_shutdown = shutdown
