@@ -893,7 +893,7 @@ def get_album_thumbnail(album_code: str) -> dict | None:
                 JOIN users u ON a.user_id = u.id
                 LEFT JOIN photos p ON p.album_id = a.id AND p.thumb_key IS NOT NULL
                 WHERE a.code = %s
-                ORDER BY p.created_at ASC
+                ORDER BY p.created_at DESC
                 LIMIT 1
                 """,
                 (album_code,),
