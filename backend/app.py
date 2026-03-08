@@ -37,8 +37,8 @@ from fastapi_jwt_auth2.exceptions import AuthJWTException
 from pydantic import BaseModel
 from starlette.websockets import WebSocketDisconnect
 
-# redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
-redis_client = redis.from_url(env.REDIS_URL)
+redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
+# redis_client = redis.from_url(env.REDIS_URL)
 
 
 manager = watcher.Watcher()
