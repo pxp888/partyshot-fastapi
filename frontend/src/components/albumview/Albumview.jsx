@@ -34,6 +34,12 @@ function Albumview(currentUser) {
   const [viewType, setViewType] = useState(
     localStorage.getItem("viewType") || "icon",
   );
+
+  const handleViewTypeChange = (type) => {
+    setViewType(type);
+    localStorage.setItem("viewType", type);
+  };
+
   const observer = useRef();
   const uploaderRef = useRef();
 
@@ -506,27 +512,21 @@ function Albumview(currentUser) {
           <div className="sortControls">
             <button
               className="sortOrderBtn"
-              onClick={() => {
-                setViewType("list");
-              }}
+              onClick={() => handleViewTypeChange("list")}
               title="List View"
             >
               ☰
             </button>
             <button
               className="sortOrderBtn"
-              onClick={() => {
-                setViewType("icon");
-              }}
+              onClick={() => handleViewTypeChange("icon")}
               title="Icon View"
             >
               ▦
             </button>
             <button
               className="sortOrderBtn"
-              onClick={() => {
-                setViewType("grid");
-              }}
+              onClick={() => handleViewTypeChange("grid")}
               title="Large Icon View"
             >
               ⊞
@@ -600,27 +600,21 @@ function Albumview(currentUser) {
           <div className="sortControls">
             <button
               className="sortOrderBtn"
-              onClick={() => {
-                setViewType("list");
-              }}
+              onClick={() => handleViewTypeChange("list")}
               title="List View"
             >
               ☰
             </button>
             <button
               className="sortOrderBtn"
-              onClick={() => {
-                setViewType("icon");
-              }}
+              onClick={() => handleViewTypeChange("icon")}
               title="Icon View"
             >
               ▦
             </button>
             <button
               className="sortOrderBtn"
-              onClick={() => {
-                setViewType("grid");
-              }}
+              onClick={() => handleViewTypeChange("grid")}
               title="Large Icon View"
             >
               ⊞
