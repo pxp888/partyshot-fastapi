@@ -226,6 +226,26 @@ async def get_user_id(username: str) -> int | None:
     return None
 
 
+class ContactRequest(BaseModel):
+    email: str
+    subject: str
+    body: str
+
+
+@app.post("/api/contact")
+async def contact_endpoint(request: ContactRequest):
+    """
+    Handle contact form submissions by enqueuing a background email task.
+    """
+    await app.state.redis.enqueue_job(
+        "send_contact_email",
+        request.email,
+        request.subject,
+        request.body
+    )
+    return {"msg": "Message sent successfully"}
+
+
 # --------------------------------------------------------------------------- #
 # App Logic
 # --------------------------------------------------------------------------- #

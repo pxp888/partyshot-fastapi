@@ -26,19 +26,19 @@ function Contactpage() {
     setStatus("sending");
 
     try {
-      console.log("Submitting contact form to ntfy:", formData);
+      console.log("Submitting contact form:", formData);
 
-      const response = await fetch(
-        "/ntfy/partyShotsContact",
-        {
-          method: "POST",
-          body: `From: ${formData.email}\nSubject: ${formData.subject}\nSource: ${sourceUrl}\n\n${formData.body}`,
-          headers: {
-            Title: `Contact Form: ${formData.subject}`,
-            Tags: "email,mailbox_with_mail",
-          },
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        body: JSON.stringify({
+          email: formData.email,
+          subject: formData.subject,
+          body: formData.body,
+        }),
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

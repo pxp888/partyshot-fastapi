@@ -145,6 +145,36 @@ async def send_reset_code_email(ctx, email: str, code: int):
         return False
 
 
+async def send_contact_email(ctx, from_email: str, subject: str, body: str):
+    """
+    Background task to send a contact form message to the admin.
+    """
+    logging.info("Sending contact email from %s: %s", from_email, subject)
+    
+    admin_email = env.ADMIN_MAIL_EMAIL
+    
+    msg = MIMEMultipart()
+    msg["From"] = env.ADMIN_MAIL_EMAIL
+    msg["To"] = admin_email
+    msg["Subject"] = f"Contact Form: {subject}"
+    
+    full_body = f"From: {from_email}\nSubject: {subject}\n\n{body}"
+    msg.attach(MIMEText(full_body, "plain"))
+    
+    try:
+        def send_smtp():
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login(env.ADMIN_MAIL_EMAIL, env.ADMIN_MAIL_PASSWORD)
+                server.send_message(msg)
+        
+        await asyncio.to_thread(send_smtp)
+        return True
+    except Exception as e:
+        logging.error("Error sending contact email from %s: %s", from_email, e)
+        return False
+
+
 async def startup(ctx):
     db.init_pool()
 
@@ -164,6 +194,7 @@ class WorkerSettings:
         record_atomic_photo,
         delete_s3_objects,
         send_reset_code_email,
+        send_contact_email,
     ]
     # Connect to the Redis Docker container we set up earlier
     if "amazon" in env.REDIS_URL2_DSN:
