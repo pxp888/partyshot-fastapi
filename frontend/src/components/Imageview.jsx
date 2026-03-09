@@ -8,6 +8,7 @@ import videoImage from "../assets/video.webp";
 function Imageview({ files, focus, setFocus, deletedPhoto }) {
   const [showDetails, setShowDetails] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState("copy URL");
   const lastFocus = useRef(focus);
   const skipSwipe = useRef(false);
 
@@ -182,6 +183,27 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   const isVideo = focus !== -1 && videoExtensions.test(files[focus].filename);
   const placeholder = isVideo ? videoImage : blankImage;
 
+  const handleCopy = (e) => {
+    e.stopPropagation();
+    const originalUrl = files[focus].s3_key;
+    if (!originalUrl) return;
+
+    const fullUrl = originalUrl.startsWith("http")
+      ? originalUrl
+      : `${window.location.origin}${originalUrl.startsWith("/") ? "" : "/"
+      }${originalUrl}`;
+
+    navigator.clipboard
+      .writeText(fullUrl)
+      .then(() => {
+        setCopyFeedback("copied!");
+        setTimeout(() => setCopyFeedback("copy URL"), 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy: ", err);
+      });
+  };
+
   if (focus === -1) return null;
 
   return (
@@ -218,6 +240,11 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
             Uploaded by <strong>{files[focus].username}</strong> on{" "}
             {new Date(files[focus].created_at).toLocaleString()}
             {files[focus].size && ` • ${formatBytes(files[focus].size)}`}
+          </span>
+        </div>
+        <div className="detailRow">
+          <span className="copyLink" onClick={handleCopy}>
+            {copyFeedback}
           </span>
         </div>
       </div>

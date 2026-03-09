@@ -76,3 +76,13 @@
 .fileDetails .meta strong {
     color: var(--bright-color);
 }
+
+.copyLink {
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.7;
+}
+
+.copyLink:hover {
+    opacity: 1;
+}
