@@ -46,9 +46,6 @@ manager = watcher.Watcher()
 app = FastAPI()
 
 
-userlimits = env.USERLIMITS
-
-
 class User(BaseModel):
     username: str
     password: str
@@ -230,6 +227,7 @@ class ContactRequest(BaseModel):
     email: str
     subject: str
     body: str
+    source: str = "Unknown"
 
 
 @app.post("/api/contact")
@@ -241,7 +239,8 @@ async def contact_endpoint(request: ContactRequest):
         "send_contact_email",
         request.email,
         request.subject,
-        request.body
+        request.body,
+        request.source
     )
     return {"msg": "Message sent successfully"}
 
@@ -268,8 +267,7 @@ async def get_presigned(
         return
 
     # Calculate space remaining for the album owner
-    owner_class = (ctx["owner_class"] or "free").lower()
-    owner_limit = userlimits.get(owner_class, userlimits["free"])
+    owner_limit = ctx["owner_limit"]
     space_used = ctx["owner_space_used"]
     space_remaining = max(0, owner_limit - space_used)
 

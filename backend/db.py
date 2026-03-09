@@ -85,7 +85,6 @@ def get_db_connection():
         _db_pool.putconn(conn)
 
 
-
 # --------------------------------------------------------------------------- #
 # Schema setup
 # --------------------------------------------------------------------------- #
@@ -182,16 +181,54 @@ def init_db() -> None:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
+                CREATE TABLE IF NOT EXISTS user_limits (
+                    class TEXT PRIMARY KEY,
+                    max_size BIGINT NOT NULL
+                );
+
                 """
             )
             conn.commit()
 
     logging.info("Database schema initialized.")
 
+    # Initialize user limits if empty
+    init_user_limits()
+
     # create admin user if it doesn't exist
     if getUser(env.ADMIN_USERNAME) is None:
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD, "admin")
     setUserData(env.ADMIN_USERNAME, user_class="admin")
+
+
+def init_user_limits() -> None:
+    """Initialize user_limits table with hardcoded defaults if empty."""
+    initial_limits = {
+        "free": 104857600,  # 100 MB
+        "starter": 1073741824,  # 1 GB
+        "basic": 5368709120,  # 5 GB
+        "pro": 107374182400,  # 100 GB
+    }
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM user_limits")
+            if cursor.fetchone()[0] == 0:
+                logging.info("Initializing user_limits table with defaults.")
+                for uclass, max_size in initial_limits.items():
+                    cursor.execute(
+                        "INSERT INTO user_limits (class, max_size) VALUES (%s, %s)",
+                        (uclass.lower(), max_size),
+                    )
+                conn.commit()
+
+
+def get_user_limits() -> dict:
+    """Retrieve all user limits from the database."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT class, max_size FROM user_limits")
+            rows = cursor.fetchall()
+    return {row[0]: row[1] for row in rows}
 
 
 # --------------------------------------------------------------------------- #
@@ -231,7 +268,7 @@ def update_user_password(username: str, new_password: str) -> bool:
                 )
                 if cursor.rowcount == 0:
                     return False
-                
+
                 conn.commit()
                 return True
             except Exception as e:
@@ -335,6 +372,7 @@ def get_upload_context(uploader_username: str, album_code: str) -> dict | None:
     """
     Consolidates multiple database calls into one for the get_presigned endpoint.
     Retrieves album details, owner details, owner's space usage, and uploader's ID.
+    Includes the owner's storage limit from the user_limits table.
     """
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
@@ -344,10 +382,12 @@ def get_upload_context(uploader_username: str, album_code: str) -> dict | None:
                     a.id, a.code, a.user_id, a.open,
                     uo.username, uo.class,
                     COALESCE(s.space, 0),
-                    (SELECT id FROM users WHERE username = %s)
+                    (SELECT id FROM users WHERE username = %s),
+                    COALESCE(ul.max_size, (SELECT max_size FROM user_limits WHERE class = 'free'))
                 FROM albums a
                 JOIN users uo ON a.user_id = uo.id
                 LEFT JOIN spaceused s ON uo.id = s.user_id
+                LEFT JOIN user_limits ul ON LOWER(uo.class) = ul.class
                 WHERE a.code = %s;
                 """,
                 (uploader_username, album_code),
@@ -364,6 +404,7 @@ def get_upload_context(uploader_username: str, album_code: str) -> dict | None:
             "owner_class": row[5],
             "owner_space_used": row[6],
             "uploader_id": row[7],
+            "owner_limit": row[8],
         }
     return None
 
@@ -1369,7 +1410,6 @@ def getUsage(username: str) -> dict | None:
             }
 
 
-
 def getAccountData(username: str) -> dict | None:
     """
     Consolidates getEmail, getUser, and getUsage into one call.
@@ -1386,8 +1426,10 @@ def getAccountData(username: str) -> dict | None:
                     (SELECT COUNT(*) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id AND p.user_id != u.id) as num_other_photos,
                     (SELECT SUM(COALESCE(size, 0) + COALESCE(thumb_size, 0)) FROM photos WHERE user_id = u.id) as total_size_photos,
                     (SELECT SUM(COALESCE(p.size, 0) + COALESCE(p.thumb_size, 0)) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id) as total_size_albums,
-                    (SELECT space FROM spaceused WHERE user_id = u.id) as space_used_table
+                    (SELECT space FROM spaceused WHERE user_id = u.id) as space_used_table,
+                    COALESCE(ul.max_size, (SELECT max_size FROM user_limits WHERE class = 'free')) as max_size
                 FROM users u
+                LEFT JOIN user_limits ul ON LOWER(u.class) = ul.class
                 WHERE u.username = %s;
                 """,
                 (username,),
@@ -1408,12 +1450,11 @@ def getAccountData(username: str) -> dict | None:
         total_size_photos,
         total_size_albums,
         space_used_table,
+        max_size,
     ) = row
 
     # Calculate remaining space
-    user_class_lower = (uclass or "free").lower()
-    limit = env.USERLIMITS.get(user_class_lower, env.USERLIMITS.get("free", 0))
-    remaining_space = max(0, limit - (space_used_table or 0))
+    remaining_space = max(0, max_size - (space_used_table or 0))
 
     return {
         "userInfo": {

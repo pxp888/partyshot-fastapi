@@ -145,11 +145,11 @@ async def send_reset_code_email(ctx, email: str, code: int):
         return False
 
 
-async def send_contact_email(ctx, from_email: str, subject: str, body: str):
+async def send_contact_email(ctx, from_email: str, subject: str, body: str, source: str = "Unknown"):
     """
     Background task to send a contact form message to the admin.
     """
-    logging.info("Sending contact email from %s: %s", from_email, subject)
+    logging.info("Sending contact email from %s: %s (Source: %s)", from_email, subject, source)
     
     admin_email = env.ADMIN_MAIL_EMAIL
     
@@ -158,7 +158,7 @@ async def send_contact_email(ctx, from_email: str, subject: str, body: str):
     msg["To"] = admin_email
     msg["Subject"] = f"Contact Form: {subject}"
     
-    full_body = f"From: {from_email}\nSubject: {subject}\n\n{body}"
+    full_body = f"From: {from_email}\nSubject: {subject}\nSource: {source}\n\n{body}"
     msg.attach(MIMEText(full_body, "plain"))
     
     try:
