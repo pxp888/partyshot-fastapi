@@ -37,9 +37,9 @@
     opacity: 0.8;
 }
 
-.topLeft a:hover {
+/* .topLeft a:hover {
     transform: scale(1.05);
-}
+} */
 
 .top-actions {
     margin-right: 50px;
