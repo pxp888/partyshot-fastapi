@@ -813,9 +813,9 @@ async def startup():
     db.init_pool()
     db.init_db()
     # create pool for arq workers
-    if "amazon" in env.REDIS_URL2:
-        redis_settings = RedisSettings.from_dsn(env.REDIS_URL2)
+    if "amazon" in env.REDIS_URL2_DSN:
+        redis_settings = RedisSettings.from_dsn(env.REDIS_URL2_DSN)
     else:
-        redis_settings = RedisSettings(env.REDIS_URL2)
+        redis_settings = RedisSettings(env.REDIS_URL2_DSN)
     app.state.redis = await create_pool(redis_settings)
     # app.state.redis = await create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))

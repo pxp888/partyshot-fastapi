@@ -1,18 +1,29 @@
+# fargate_notes/Dockerfile
 FROM python:3.12-slim
-WORKDIR /code
 
-# Install dependencies
-COPY ./requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Set environment variables for Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on
 
-# Copy everything from your local 'backend' folder
-# directly into the current WORKDIR (/code)
-COPY ./backend /code/
-RUN touch /code/__init__.py
+WORKDIR /app
 
-# Now 'main.py' and the 'static' folder are both directly in /code
-# No need to change WORKDIR again
+# Install system dependencies (e.g., for psycopg2)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Use 0.0.0.0 so EC2 can route traffic to the container
-# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8000"]
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy backend code
+COPY backend/ /app/
+
+# Expose the port FastAPI runs on
+EXPOSE 8000
+
+# Use uvicorn directly for better debugging
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

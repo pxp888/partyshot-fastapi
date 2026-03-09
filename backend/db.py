@@ -26,14 +26,14 @@ _db_pool = None
 async def enqueue_delete_key(key: str):
     global _pool
     if _pool is None:
-        _pool = await arq.create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
+        _pool = await arq.create_pool(RedisSettings.from_dsn(env.REDIS_URL2_DSN))
     await _pool.enqueue_job("delete_s3_object", key)
 
 
 async def enqueue_delete_keys(keys: list):
     global _pool
     if _pool is None:
-        _pool = await arq.create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
+        _pool = await arq.create_pool(RedisSettings.from_dsn(env.REDIS_URL2_DSN))
     await _pool.enqueue_job("delete_s3_objects", keys)
 
 
@@ -47,7 +47,7 @@ async def enqueue_record_atomic_photo(
 ):
     global _pool
     if _pool is None:
-        _pool = await arq.create_pool(RedisSettings(host=env.REDIS_URL2, port=6379))
+        _pool = await arq.create_pool(RedisSettings.from_dsn(env.REDIS_URL2_DSN))
     await _pool.enqueue_job(
         "record_atomic_photo", photo_id, user_id, album_id, size, filename, action
     )

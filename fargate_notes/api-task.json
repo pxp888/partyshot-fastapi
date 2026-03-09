@@ -1,9 +1,8 @@
 {
   "family": "shareshot-api",
   "networkMode": "awsvpc",
-  "requiresCompatibilities": [
-    "FARGATE"
-  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::431754448027:role/ecsTaskExecutionRole",
   "cpu": "256",
   "memory": "512",
   "containerDefinitions": [
@@ -44,11 +43,7 @@
       "name": "cloudflared",
       "image": "cloudflare/cloudflared:latest",
       "essential": true,
-      "command": [
-        "tunnel",
-        "--no-autoupdate",
-        "run"
-      ],
+      "command": ["tunnel", "--no-autoupdate", "run"],
       "environment": [
         {
           "name": "TUNNEL_TOKEN",

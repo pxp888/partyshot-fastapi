@@ -1,9 +1,8 @@
 {
   "family": "shareshot-worker",
   "networkMode": "awsvpc",
-  "requiresCompatibilities": [
-    "FARGATE"
-  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::431754448027:role/ecsTaskExecutionRole",
   "cpu": "256",
   "memory": "512",
   "containerDefinitions": [
@@ -11,10 +10,7 @@
       "name": "arq-worker",
       "image": "431754448027.dkr.ecr.eu-north-1.amazonaws.com/shareshot1:latest",
       "essential": true,
-      "command": [
-        "arq",
-        "worker.WorkerSettings"
-      ],
+      "command": ["arq", "worker.WorkerSettings"],
       "environment": [
         {
           "name": "DB_HOST",
