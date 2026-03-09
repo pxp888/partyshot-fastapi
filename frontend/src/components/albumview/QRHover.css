@@ -50,6 +50,22 @@
     font-weight: 500;
 }
 
+.qr-close {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #ccc;
+    z-index: 2001;
+    padding: 8px;
+    line-height: 1;
+}
+
+.qr-close:hover {
+    color: #555;
+}
+
 @keyframes qrFadeIn {
     from {
         opacity: 0;

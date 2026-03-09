@@ -25,7 +25,10 @@ const QRHover = ({ text }) => {
       className="qr-hover-container"
       onMouseEnter={() => setShowQR(true)}
       onMouseLeave={() => setShowQR(false)}
-      onClick={handleCopy}
+      onClick={(e) => {
+        setShowQR(true);
+        handleCopy(e);
+      }}
       title="Click to copy"
     >
       <p className="qr-trigger-text">{text}</p>
@@ -33,6 +36,9 @@ const QRHover = ({ text }) => {
       {showQR && (
         <div className="qr-code-popup" onClick={(e) => e.stopPropagation()}>
           <div className="qr-inner">
+            <span className="qr-close" onClick={() => setShowQR(false)}>
+              ✕
+            </span>
             <QRCodeSVG
               value={currentUrl}
               size={320}
