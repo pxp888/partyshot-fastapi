@@ -122,7 +122,7 @@ def init_db() -> None:
                     name TEXT NOT NULL,
                     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     open BOOLEAN DEFAULT TRUE,
-                    profile BOOLEAN DEFAULT TRUE,
+                    profile BOOLEAN DEFAULT FALSE,
                     private BOOLEAN DEFAULT FALSE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
@@ -971,8 +971,8 @@ def createAlbum(username: str, album_name: str) -> str | None:
 
                 cursor.execute(
                     """
-                    INSERT INTO albums (name, user_id, code)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO albums (name, user_id, code, profile)
+                    VALUES (%s, %s, %s, FALSE)
                     RETURNING id;
                     """,
                     (album_name, user_id, album_code),
