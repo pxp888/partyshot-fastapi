@@ -2,6 +2,8 @@
     position: relative;
     display: inline-block;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .qr-trigger-text {
@@ -9,6 +11,8 @@
     padding: 0;
     transition: color 0.2s ease;
     text-align: left;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .qr-hover-container:hover .qr-trigger-text {
