@@ -1,6 +1,7 @@
 // fast1/frontend/src/components/AccountPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSocket } from "./WebSocketContext";
+import { Link } from "react-router-dom";
 import { sendJson } from "./helpers";
 import "./style/AccountPage.css";
 import ManageBilling from "./stripe/ManageBilling";
@@ -162,7 +163,15 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
               Current Plan: <strong>{userInfo.class}</strong>
             </p>
           )}
-          {userInfo?.class !== "" && <ManageBilling />}
+          {userInfo?.class && userInfo.class.toLowerCase() === "free" ? (
+            <div style={{ marginTop: "10px" }}>
+              <Link to="/plans" className="account-btn" style={{ textDecoration: "none" }}>
+                Upgrade Plan
+              </Link>
+            </div>
+          ) : (
+            userInfo?.class && userInfo.class !== "" && <ManageBilling />
+          )}
         </div>
 
         {usage && (

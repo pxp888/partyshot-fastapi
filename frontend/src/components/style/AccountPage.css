@@ -206,3 +206,18 @@
         transform: translateY(0);
     }
 }
+
+.account-link {
+    display: inline-block;
+    color: var(--bright-color, #FA8072);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.account-link:hover {
+    color: #e57373;
+    border-bottom-color: #e57373;
+    transform: translateY(-1px);
+}
