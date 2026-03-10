@@ -1,6 +1,7 @@
 /* Styles for the Privacy Policy page */
 .policy-container {
-    background-color: hsl(0 0 90%);
+    /* background-color: hsl(0 0 90%); */
+    background-color: #ffffff;
 }
 
 .policy-page {
