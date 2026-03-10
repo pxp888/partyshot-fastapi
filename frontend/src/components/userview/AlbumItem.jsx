@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMessage } from "../MessageBoxContext";
 import { receiveJson } from "../helpers";
@@ -10,18 +10,47 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
   const { showMessage } = useMessage();
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const localRef = useRef();
 
   useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(localRef.current);
+        }
+      });
+    }, {
+      rootMargin: '100px',
+    });
+
+    if (localRef.current) {
+      observer.observe(localRef.current);
+    }
+
+    return () => {
+      if (localRef.current) {
+        observer.unobserve(localRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
     let isMounted = true;
 
     const fetchThumbnail = async () => {
       try {
         const data = await receiveJson(`/api/album-thumbnail/${album.code}`);
         if (isMounted) {
-          setThumbnailUrl(data.thumbnail);
+          setThumbnailUrl(data.thumbnail || blankImage);
         }
       } catch (error) {
         console.error("Error fetching thumbnail:", error);
+        if (isMounted) {
+          setThumbnailUrl(blankImage);
+        }
       }
     };
 
@@ -30,7 +59,7 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
     return () => {
       isMounted = false;
     };
-  }, [album.code]);
+  }, [album.code, isVisible]);
 
   function handleClick(event) {
     event.preventDefault();
@@ -79,22 +108,25 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
 
   return (
     <div
+      ref={localRef}
       className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.profile ? "not-profile" : ""} ${album.private ? "is-private" : ""}`}
       onClick={handleClick}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       <div className="thumbnail-container">
-        <img
-          src={thumbnailUrl || blankImage}
-          alt={album.name}
-          className={isLoaded ? "loaded" : ""}
-          onLoad={() => setIsLoaded(true)}
-          onError={(e) => {
-            e.target.src = blankImage;
-            setIsLoaded(true);
-          }}
-        />
+        {isVisible && thumbnailUrl && (
+          <img
+            src={thumbnailUrl}
+            alt={album.name}
+            className={isLoaded ? "loaded" : ""}
+            onLoad={() => setIsLoaded(true)}
+            onError={(e) => {
+              e.target.src = blankImage;
+              setIsLoaded(true);
+            }}
+          />
+        )}
       </div>
       <div className="info">
         <h3>{album.name}</h3>
