@@ -170,83 +170,85 @@ const Uploader = forwardRef(
       } = await presignRes.json();
       setSpaceRemaining(space_remaining);
 
-      // 2️⃣  POST to Cloudflare R2 via PUT (R2 prefers PUT for presigned URLs)
-      const s3Res = await fetch(presigned, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      if (!s3Res.ok) {
-        const errText = await s3Res.text();
-        throw new Error(`Upload failed: ${s3Res.status} ${errText}`);
-      }
-
-      // 3️⃣ Create a thumbnail and mid-sized image and upload them
+      // 2️⃣  Upload everything in parallel (Original + Thumbnail + Mid-size)
       let thumbnailBlob = null;
       let final_thumb_key = null;
       let midBlob = null;
       let final_mid_key = null;
 
-      // --- Thumbnail Generation & Upload ---
-      try {
-        thumbnailBlob = await resizeImage(file, 500, 500, 0.6);
-        if (thumbnailBlob) {
-          const thumbS3Res = await fetch(thumb_presigned, {
-            method: "PUT",
-            body: thumbnailBlob,
-            headers: {
-              "Content-Type": "image/webp",
-            },
-          });
+      const uploadTasks = [];
 
-          if (thumbS3Res.ok) {
-            final_thumb_key = t_key;
-          } else {
-            console.warn("Thumbnail upload failed, continuing without thumb");
-          }
+      // Task A: Original file upload
+      uploadTasks.push((async () => {
+        const s3Res = await fetch(presigned, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type,
+          },
+        });
+        if (!s3Res.ok) {
+          const errText = await s3Res.text();
+          throw new Error(`Upload failed: ${s3Res.status} ${errText}`);
         }
-      } catch (err) {
-        console.warn("Thumbnail creation or upload failed:", err);
-      }
+      })());
 
-      // --- Mid-sized Generation & Upload ---
-      // Only attempt mid-sized for images, not videos.
-      if (!file.type.startsWith("video/")) {
+      // Task B: Thumbnail Generation & Upload
+      uploadTasks.push((async () => {
         try {
-          midBlob = await resizeImage(file, 2560, 2560, 0.85);
-
-          // Fail gracefully: only upload if generation succeeded and size is reasonable
-          if (midBlob) {
-            if (midBlob.size <= file.size / 2) {
-              const midS3Res = await fetch(mid_presigned, {
-                method: "PUT",
-                body: midBlob,
-                headers: {
-                  "Content-Type": "image/webp",
-                },
-              });
-
-              if (midS3Res.ok) {
-                final_mid_key = m_key;
-              } else {
-                console.warn(
-                  "Mid-size upload failed, continuing without mid version",
-                );
-              }
+          thumbnailBlob = await resizeImage(file, 500, 500, 0.6);
+          if (thumbnailBlob) {
+            const thumbS3Res = await fetch(thumb_presigned, {
+              method: "PUT",
+              body: thumbnailBlob,
+              headers: {
+                "Content-Type": "image/webp",
+              },
+            });
+            if (thumbS3Res.ok) {
+              final_thumb_key = t_key;
             } else {
-              console.info(
-                "Mid-sized image larger than 50% of original, skipping upload",
-              );
-              midBlob = null; // Don't report size if we didn't upload
+              console.warn("Thumbnail upload failed, continuing without thumb");
             }
           }
         } catch (err) {
-          console.warn("Mid-size creation or upload failed:", err);
+          console.warn("Thumbnail creation or upload failed:", err);
         }
+      })());
+
+      // Task C: Mid-sized Generation & Upload (Images only)
+      if (!file.type.startsWith("video/")) {
+        uploadTasks.push((async () => {
+          try {
+            midBlob = await resizeImage(file, 2560, 2560, 0.85);
+            if (midBlob) {
+              // Only upload if generation succeeded and size is significantly smaller than original
+              if (midBlob.size <= file.size / 2) {
+                const midS3Res = await fetch(mid_presigned, {
+                  method: "PUT",
+                  body: midBlob,
+                  headers: {
+                    "Content-Type": "image/webp",
+                  },
+                });
+                if (midS3Res.ok) {
+                  final_mid_key = m_key;
+                } else {
+                  console.warn("Mid-size upload failed, continuing without mid version");
+                }
+              } else {
+                console.info("Mid-sized image larger than 50% of original, skipping upload");
+                midBlob = null;
+              }
+            }
+          } catch (err) {
+            console.warn("Mid-size creation or upload failed:", err);
+          }
+        })());
       }
+
+      // Wait for all upload tasks to complete
+      await Promise.all(uploadTasks);
 
       // 4️⃣  Notify backend of metadata via REST
       const metadataRes = await fetch("/api/add-photo-metadata", {
