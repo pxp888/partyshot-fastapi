@@ -1,5 +1,6 @@
 .welcome-container {
-    background-color: hsl(0 0 90%);
+    /* background-color: hsl(0 0 90%); */
+    background-color: #ffffff;
 }
 
 .t1 {
@@ -157,24 +158,31 @@
     .hero {
         padding: 20vh 1rem;
     }
+
     .hero h1 {
         font-size: 2.5rem;
     }
+
     .features {
         padding: 20vh 1rem;
     }
+
     .featgrid {
         grid-template-columns: 1fr;
     }
+
     .works {
         padding: 4rem 1rem;
     }
+
     .workitem {
         grid-template-columns: 120px 1fr;
     }
+
     .CTA {
         padding: 2rem 0;
     }
+
     .CTA h1 {
         font-size: 2rem;
     }
