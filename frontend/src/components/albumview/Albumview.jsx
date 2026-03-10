@@ -459,9 +459,9 @@ function Albumview(currentUser) {
                 open
               </span>
               <span
-                className={`status-word ${album.profile ? "active" : ""} ${isOwner ? "clickable" : ""}`}
+                className={`status-word ${album.profile ? "active" : ""} ${isOwner || album.subscribed ? "clickable" : ""}`}
                 onClick={() => {
-                  if (isOwner) toggleProfile();
+                  if (isOwner || album.subscribed) toggleProfile();
                 }}
               >
                 profile

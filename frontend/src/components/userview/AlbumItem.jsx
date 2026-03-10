@@ -5,7 +5,7 @@ import { receiveJson } from "../helpers";
 import "./AlbumItem.css";
 import blankImage from "../../assets/blank.jpg";
 
-function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
+function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
   const navigate = useNavigate();
   const { showMessage } = useMessage();
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
@@ -90,7 +90,7 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
 
   function handleToggleProfile(event) {
     event.stopPropagation();
-    if (isOtherUser) return;
+    if (!isOwnProfile) return;
     sendJsonMessage({
       action: "toggleProfile",
       payload: { album_id: album.id },
@@ -139,28 +139,26 @@ function AlbumItem({ album, isOtherUser, sendJsonMessage }) {
           </p>
         </div>
 
-        {!isOtherUser && (
-          <div className="album-actions hideMobile">
-            <span
-              className={`status-word ${album.open ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
-              onClick={handleToggleOpen}
-            >
-              open
-            </span>
-            <span
-              className={`status-word ${album.profile ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
-              onClick={handleToggleProfile}
-            >
-              profile
-            </span>
-            <span
-              className={`status-word ${album.private ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
-              onClick={handleTogglePrivate}
-            >
-              private
-            </span>
-          </div>
-        )}
+        <div className="album-actions hideMobile">
+          <span
+            className={`status-word ${album.open ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
+            onClick={handleToggleOpen}
+          >
+            open
+          </span>
+          <span
+            className={`status-word ${album.profile ? "selected" : ""} ${isOwnProfile ? "clickable" : ""}`}
+            onClick={handleToggleProfile}
+          >
+            profile
+          </span>
+          <span
+            className={`status-word ${album.private ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
+            onClick={handleTogglePrivate}
+          >
+            private
+          </span>
+        </div>
       </div>
     </div>
   );

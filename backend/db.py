@@ -146,6 +146,7 @@ def init_db() -> None:
                     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     album_id INTEGER REFERENCES albums(id) ON DELETE CASCADE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    profile BOOLEAN DEFAULT TRUE,
                     UNIQUE(user_id, album_id)
                 );
 
@@ -188,6 +189,9 @@ def init_db() -> None:
 
                 """
             )
+            
+            # Migration for adding profile column to subscription
+            cursor.execute("ALTER TABLE subscription ADD COLUMN IF NOT EXISTS profile BOOLEAN DEFAULT TRUE;")
             conn.commit()
 
     logging.info("Database schema initialized.")
@@ -414,17 +418,16 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
-                       EXISTS(
-                           SELECT 1 FROM subscription s
-                           JOIN users su ON s.user_id = su.id
-                           WHERE s.album_id = a.id AND su.username = %s
-                       )
+                SELECT a.id, a.code, a.name, a.user_id, a.open, 
+                       CASE WHEN u.username = %s THEN a.profile ELSE COALESCE(s.profile, a.profile) END AS display_profile, 
+                       a.private, a.created_at, u.username,
+                       s.album_id IS NOT NULL AS subscribed
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
+                LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = (SELECT id FROM users WHERE username = %s)
                 WHERE a.code = %s;
                 """,
-                (authuser, code),
+                (authuser, authuser, code),
             )
             row = cursor.fetchone()
 
@@ -814,14 +817,16 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 # Include owned and subscribed albums (owned by the user whose profile is being viewed)
                 cursor.execute(
                     """
-                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username
+                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, 
+                           CASE WHEN a.user_id = %s THEN a.profile ELSE s.profile END AS display_profile, 
+                           a.private, a.created_at, u.username
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
-                    LEFT JOIN subscription s ON a.id = s.album_id
+                    LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
                     WHERE a.user_id = %s OR s.user_id = %s
                     ORDER BY a.created_at DESC;
                     """,
-                    (user["id"], user["id"]),
+                    (user["id"], user["id"], user["id"], user["id"]),
                 )
                 rows = cursor.fetchall()
             except Exception as e:
@@ -1126,29 +1131,53 @@ def toggleProfile(id: str, username: str) -> dict | None:
 
                 album_owner_id, album_code, current_profile = row
 
-                # Ensure the requesting user owns the album.
-                if user["id"] != album_owner_id:
-                    return None
+                if user["id"] == album_owner_id:
+                    # Toggle the `profile` flag.
+                    new_profile = not current_profile
+                    cursor.execute(
+                        """
+                        UPDATE albums
+                        SET profile = %s
+                        WHERE id = %s
+                        RETURNING id, code, profile;
+                        """,
+                        (new_profile, album_id),
+                    )
+                    updated_row = cursor.fetchone()
+                    if updated_row is None:
+                        conn.rollback()
+                        return None
+                    conn.commit()
+                    return getAlbum(album_code)
+                else:
+                    # Toggle the `profile` flag for the user's subscription.
+                    cursor.execute(
+                        """
+                        SELECT profile
+                        FROM subscription
+                        WHERE user_id = %s AND album_id = %s;
+                        """,
+                        (user["id"], album_id)
+                    )
+                    sub_row = cursor.fetchone()
+                    if sub_row is None:
+                        return None
+                        
+                    new_sub_profile = not sub_row[0]
+                    cursor.execute(
+                        """
+                        UPDATE subscription
+                        SET profile = %s
+                        WHERE user_id = %s AND album_id = %s;
+                        """,
+                        (new_sub_profile, user["id"], album_id)
+                    )
+                    conn.commit()
 
-                # Toggle the `profile` flag.
-                new_profile = not current_profile
-                cursor.execute(
-                    """
-                    UPDATE albums
-                    SET profile = %s
-                    WHERE id = %s
-                    RETURNING id, code, profile;
-                    """,
-                    (new_profile, album_id),
-                )
-                updated_row = cursor.fetchone()
-                if updated_row is None:
-                    conn.rollback()
-                    return None
-
-                conn.commit()
-
-                return getAlbum(album_code)
+                    album_obj = getAlbum(album_code)
+                    if album_obj:
+                        album_obj["profile"] = new_sub_profile
+                    return album_obj
 
             except Exception:
                 conn.rollback()

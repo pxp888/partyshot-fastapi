@@ -701,9 +701,10 @@ async def toggleProfile(websocket, data, username):
     updated_album = db.toggleProfile(album_id, username)
     if updated_album:
         message = {"action": "toggleProfile", "payload": updated_album}
-        await redis_client.publish(
-            f"album-{updated_album['code']}", json.dumps(message)
-        )
+        # await redis_client.publish(
+        #     f"album-{updated_album['code']}", json.dumps(message)
+        # )
+        await websocket.send_json(message)
         message = {"action": "newAlbum", "payload": {"type": "update"}}
         await redis_client.publish(f"user-{username}", json.dumps(message))
 

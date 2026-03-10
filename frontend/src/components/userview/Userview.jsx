@@ -187,6 +187,7 @@ function Userview({ currentUser }) {
               key={album.id}
               album={album}
               isOtherUser={album.username !== currentUser}
+              isOwnProfile={username === currentUser}
               sendJsonMessage={sendJsonMessage}
             />
           ))
