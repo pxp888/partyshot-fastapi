@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import AlbumItem from "./AlbumItem";
+import UserActions from "./UserActions";
 import "./Userview.css";
 import { useSocket } from "../WebSocketContext"; // ← websocket
 
@@ -126,60 +127,16 @@ function Userview({ currentUser }) {
 
   return (
     <div className="userview">
-      <div className="userActions">
-        {username === currentUser && (
-          <button className="btn" onClick={handleCreateAlbum}>
-            Create Album
-          </button>
-        )}
-        <div style={{ display: "flex", gap: "10px" }}>
-          {currentUser && (
-            <button
-              className="btn"
-              style={{
-                backgroundColor:
-                  sortField === "my_photos" ? "#444" : "transparent",
-              }}
-              onClick={() => {
-                if (sortField === "my_photos") {
-                  setSortField("created_at");
-                  sendJsonMessage({
-                    action: "getAlbums",
-                    payload: { target: username },
-                  });
-                } else {
-                  setSortField("my_photos");
-                  sendJsonMessage({
-                    action: "getAlbumsWithUserPhotos",
-                  });
-                }
-              }}
-            >
-              {sortField === "my_photos" ? "Show My Albums" : "all my photos"}
-            </button>
-          )}
-          <div className="sortControls">
-            <select
-              value={sortField === "my_photos" ? "created_at" : sortField}
-              disabled={sortField === "my_photos"}
-              onChange={(e) => setSortField(e.target.value)}
-            >
-              <option value="created_at">Date</option>
-              <option value="name">Name</option>
-              <option value="username">User</option>
-            </select>
-            <button
-              className="sortOrderBtn"
-              onClick={() =>
-                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-              }
-              title={sortOrder === "asc" ? "Ascending" : "Descending"}
-            >
-              {sortOrder === "asc" ? "↑" : "↓"}
-            </button>
-          </div>
-        </div>
-      </div>
+      <UserActions
+        username={username}
+        currentUser={currentUser}
+        handleCreateAlbum={handleCreateAlbum}
+        sortField={sortField}
+        setSortField={setSortField}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
+        sendJsonMessage={sendJsonMessage}
+      />
       <div className="album-list">
         {sortedAlbums.length > 0 ? (
           sortedAlbums.map((album) => (

@@ -1,0 +1,97 @@
+/* --- User Actions System: Multi-mode Toolbar --- */
+
+.user-actions-system {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #1c1c1e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Persistent Toolbar --- */
+.user-toolbar {
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    transition: background 0.3s ease;
+}
+
+.toolbar-left,
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0rem;
+}
+
+.dt-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: #8e8e93;
+    padding: 4px 9px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 65px;
+}
+
+.dt-tab:hover {
+    color: #fff;
+}
+
+.dt-tab.active {
+    color: white;
+}
+
+.dt-tab:active {
+    transform: scale(0.92);
+}
+
+.dt-tab:disabled,
+.dt-tab.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.dt-tab-icon {
+    font-size: 1.4rem;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dt-tab-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.dt-divider {
+    width: 1px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 10px;
+}
+
+@media (max-width: 768px) {
+    .user-actions-system {
+        /* If we want to keep it floating at bottom on mobile like Userview did before */
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        border-bottom: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
