@@ -51,97 +51,10 @@
     color: black;
 }
 
-/* ----- Action bar --------------------------------------------------- */
-.albumActions {
-    background: rgba(20, 20, 22, 0.95);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    margin: 0;
-    padding: 0.75rem 4.5rem 0.75rem 1.25rem;
-    display: flex;
-    justify-content: flex-start;
-    gap: var(--gap-md);
-    align-items: center;
-    position: sticky;
-    top: 0rem;
-    z-index: 1000;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    overflow-x: auto;
-    white-space: nowrap;
-    scrollbar-width: none;
-    color: #e5e5e7;
-}
-
-.albumActions::-webkit-scrollbar {
-    display: none;
-}
-
-.sortControls {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: var(--gap-sm);
-}
-
-.sortControls select {
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #e5e5e7;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-}
-
-.sortControls select option {
-    background: #1c1c1e;
-    color: #e5e5e7;
-}
-
-.sortOrderBtn {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #e5e5e7;
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    font-size: 1.1rem;
-    font-weight: bold;
-}
-
-.sortOrderBtn:hover,
-.sortControls select:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.albumActions .btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #f5f5f7;
-    transition: all 0.2s ease;
-}
-
-.albumActions .btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.albumActions .btn:disabled {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.3);
-    cursor: not-allowed;
-}
+/* Old albumActions and sortControls removed - migrated to DesktopActions */
 
 /* ----- Clickable elements ------------------------------------------ */
-.clickable,
-.albumActions button {
+.clickable {
     cursor: pointer;
 }
 
@@ -150,8 +63,7 @@
     text-decoration: underline;
 }
 
-.clickable:focus-visible,
-.albumActions button:focus-visible {
+.clickable:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
@@ -180,9 +92,6 @@
         font-size: 1rem;
     }
 
-    .desktop-actions {
-        display: none !important;
-    }
 
     .albumFiles,
     .albumListview {

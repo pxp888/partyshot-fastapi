@@ -13,6 +13,7 @@ import Listview from "./Listview";
 import Gridview from "./Gridview";
 import QRHover from "./QRHover";
 import MobileActions from "./MobileActions";
+import DesktopActions from "./DesktopActions";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 import "./Albumview.css";
@@ -526,169 +527,39 @@ function Albumview(currentUser) {
           }
         />
       ) : (
-        <>
-          {selectMode && (
-            <div className="albumActions desktop-actions">
-              <button
-                onClick={cancelSelect}
-                className="btn"
-                disabled={!userLoggedIn}
-              >
-                Cancel Selection
-              </button>
-              <button onClick={selectAll} className="btn" disabled={!userLoggedIn}>
-                Select All
-              </button>
-              <button onClick={selectNone} className="btn" disabled={!userLoggedIn}>
-                Select None
-              </button>
-              <button
-                onClick={downloadSelected}
-                className="btn"
-                disabled={!userLoggedIn}
-              >
-                Download Selected
-              </button>
-              <button
-                onClick={deleteSelected}
-                className="btn"
-                disabled={!userLoggedIn}
-              >
-                Delete Selected
-              </button>
-
-              <div className="sortControls">
-                <button
-                  className="sortOrderBtn"
-                  onClick={() => handleViewTypeChange("list")}
-                  title="List View"
-                >
-                  ☰
-                </button>
-                <button
-                  className="sortOrderBtn"
-                  onClick={() => handleViewTypeChange("icon")}
-                  title="Icon View"
-                >
-                  ▦
-                </button>
-                <button
-                  className="sortOrderBtn"
-                  onClick={() => handleViewTypeChange("grid")}
-                  title="Large Icon View"
-                >
-                  ⊞
-                </button>
-
-                <select
-                  value={sortField}
-                  onChange={(e) => setSortField(e.target.value)}
-                >
-                  <option value="created_at">Date</option>
-                  <option value="filename">Name</option>
-                  <option value="username">User</option>
-                  <option value="size">Size</option>
-                </select>
-                <button
-                  className="sortOrderBtn"
-                  onClick={() =>
-                    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-                  }
-                  title={sortOrder === "asc" ? "Ascending" : "Descending"}
-                >
-                  {sortOrder === "asc" ? "↑" : "↓"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {!selectMode && (
-            <div className="albumActions desktop-actions">
-              <button
-                onClick={() => setSelectMode(true)}
-                className="btn"
-                disabled={!userLoggedIn}
-              >
-                Selection Mode
-              </button>
-              <Uploader
-                album={album}
-                ref={uploaderRef}
-                isOwner={isOwner}
-                disabled={!userLoggedIn}
-                photos={photos}
-                setPhotos={setPhotos}
-                setTotalPhotos={setTotalPhotos}
-                sortOrder={sortOrder}
-              />
-
-              <button
-                onClick={downloadAll}
-                className="btn"
-                disabled={!userLoggedIn}
-              >
-                Download All
-              </button>
-              {album.username === currentUser.currentUser && (
-                <button onClick={handleDeleteAlbum} className="btn">
-                  Delete Album
-                </button>
-              )}
-
-              {album.username !== currentUser.currentUser && (
-                <button
-                  onClick={toggleSubscription}
-                  className="btn"
-                  disabled={!userLoggedIn}
-                >
-                  {album.subscribed ? "Unsubscribe" : "Subscribe"}
-                </button>
-              )}
-
-              <div className="sortControls">
-                <button
-                  className="sortOrderBtn"
-                  onClick={() => handleViewTypeChange("list")}
-                  title="List View"
-                >
-                  ☰
-                </button>
-                <button
-                  className="sortOrderBtn"
-                  onClick={() => handleViewTypeChange("icon")}
-                  title="Icon View"
-                >
-                  ▦
-                </button>
-                <button
-                  className="sortOrderBtn"
-                  onClick={() => handleViewTypeChange("grid")}
-                  title="Large Icon View"
-                >
-                  ⊞
-                </button>
-                <select
-                  value={sortField}
-                  onChange={(e) => setSortField(e.target.value)}
-                >
-                  <option value="created_at">Date</option>
-                  <option value="filename">Name</option>
-                  <option value="username">User</option>
-                  <option value="size">Size</option>
-                </select>
-                <button
-                  className="sortOrderBtn"
-                  onClick={() =>
-                    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-                  }
-                  title={sortOrder === "asc" ? "Ascending" : "Descending"}
-                >
-                  {sortOrder === "asc" ? "↑" : "↓"}
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+        <DesktopActions
+          selectMode={selectMode}
+          setSelectMode={setSelectMode}
+          cancelSelect={cancelSelect}
+          selectAll={selectAll}
+          selectNone={selectNone}
+          downloadSelected={downloadSelected}
+          deleteSelected={deleteSelected}
+          downloadAll={downloadAll}
+          handleDeleteAlbum={handleDeleteAlbum}
+          toggleSubscription={toggleSubscription}
+          handleViewTypeChange={handleViewTypeChange}
+          viewType={viewType}
+          sortField={sortField}
+          setSortField={setSortField}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          userLoggedIn={userLoggedIn}
+          isOwner={isOwner}
+          album={album}
+          uploader={
+            <Uploader
+              album={album}
+              ref={uploaderRef}
+              isOwner={isOwner}
+              disabled={!userLoggedIn}
+              photos={photos}
+              setPhotos={setPhotos}
+              setTotalPhotos={setTotalPhotos}
+              sortOrder={sortOrder}
+            />
+          }
+        />
       )}
 
       {viewType === "icon" && (
