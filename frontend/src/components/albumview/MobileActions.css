@@ -59,6 +59,13 @@
     transform: scale(0.92);
 }
 
+.toolbar-tab:disabled,
+.toolbar-tab.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .tab-icon {
     font-size: 1.4rem;
     height: 24px;

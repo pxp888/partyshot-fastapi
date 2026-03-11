@@ -69,7 +69,6 @@ const MobileActions = ({
     }
   };
 
-  if (!userLoggedIn && !album.open) return null;
 
   return (
     <div className={`mobile-actions-system ${activeDrawer && activeDrawer !== 'select' ? "drawer-open" : ""}`}>
@@ -175,7 +174,7 @@ const MobileActions = ({
 
       {/* PERSISTENT MAIN TOOLBAR */}
       <nav className={`mobile-toolbar ${selectMode ? 'selection-mode' : ''}`}>
-        <div className="toolbar-tab uploader-tab">
+        <div className={`toolbar-tab uploader-tab ${!userLoggedIn ? 'disabled' : ''}`}>
           {uploader}
           <span className="tab-label">Upload</span>
         </div>
