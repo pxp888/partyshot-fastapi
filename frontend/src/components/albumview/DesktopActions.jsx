@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import QRHover from "./QRHover";
 import "./DesktopActions.css";
 
 const DesktopActions = ({
@@ -72,6 +73,13 @@ const DesktopActions = ({
             {uploader}
             <span className="dt-tab-label">Upload</span>
           </div>
+
+          <QRHover text="Share">
+            <div className="dt-tab">
+              <span className="dt-tab-icon">⇪</span>
+              <span className="dt-tab-label">Share</span>
+            </div>
+          </QRHover>
 
           <button 
             className={`dt-tab ${selectMode ? 'active' : ''}`} 

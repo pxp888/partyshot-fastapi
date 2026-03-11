@@ -2,7 +2,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import "./QRHover.css";
 
-const QRHover = ({ text }) => {
+const QRHover = ({ text, children }) => {
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
   const currentUrl = window.location.href;
@@ -29,9 +29,9 @@ const QRHover = ({ text }) => {
         setShowQR(true);
         handleCopy(e);
       }}
-      title="Click to copy"
+      title="Click to copy URL & show QR Code"
     >
-      <p className="qr-trigger-text">{text}</p>
+      {children || <p className="qr-trigger-text">{text}</p>}
       {copied && <span className="copy-feedback">Copied!</span>}
       {showQR && (
         <div className="qr-code-popup" onClick={(e) => e.stopPropagation()}>

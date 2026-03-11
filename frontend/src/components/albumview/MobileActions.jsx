@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import QRHover from "./QRHover";
 import "./MobileActions.css";
 
 const MobileActions = ({
@@ -178,6 +179,13 @@ const MobileActions = ({
           {uploader}
           <span className="tab-label">Upload</span>
         </div>
+
+        <QRHover text="Share">
+          <div className="toolbar-tab">
+            <span className="tab-icon">⇪</span>
+            <span className="tab-label">Share</span>
+          </div>
+        </QRHover>
 
         <button 
           className={`toolbar-tab ${activeDrawer === 'view' ? 'active' : ''}`} 

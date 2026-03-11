@@ -6,6 +6,14 @@
     -webkit-user-select: none;
 }
 
+/* Support for being placed in Toolbars */
+.mobile-toolbar .qr-hover-container,
+.desktop-toolbar .qr-hover-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
 .qr-trigger-text {
     margin: 0 1rem;
     padding: 0;
