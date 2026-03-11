@@ -1,4 +1,4 @@
-/* --- Mobile Actions System: Toolbar + Drawers --- */
+/* --- Mobile Actions System: Multi-mode Toolbar + Drawers --- */
 
 .mobile-actions-system {
     position: fixed;
@@ -18,9 +18,7 @@
 /* --- Persistent Toolbar --- */
 .mobile-toolbar {
     height: 70px;
-    background: rgba(28, 28, 30, 0.9);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    background: #1c1c1e;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -28,14 +26,14 @@
     padding-bottom: env(safe-area-inset-bottom, 10px);
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
     position: relative;
-    z-index: 10;
+    z-index: 20; /* High z-index to stay above background but can be under drawer if needed, though here it sits below drawer */
     transition: background 0.3s ease;
 }
 
-.mobile-toolbar.selection-mode {
-    background: rgba(255, 149, 0, 0.15); /* Subtle orange tint */
-    border-top-color: rgba(255, 149, 0, 0.3);
-}
+/* .mobile-toolbar.selection-mode {
+    background: #3a2a1a; 
+    border-top-color: rgba(255, 149, 0, 0.4);
+} */
 
 .toolbar-tab {
     flex: 1;
@@ -50,54 +48,49 @@
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
+    min-width: 0;
 }
 
 .toolbar-tab.active {
-    color: #007aff;
+    color: var(--bright-color);
 }
 
-.toolbar-tab.selection-tab {
-    color: #e5e5e7;
+.toolbar-tab:active {
+    transform: scale(0.92);
 }
 
-.toolbar-tab.selection-tab.cancel {
-    color: #8e8e93;
+.tab-icon {
+    font-size: 1.4rem;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tab-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
 }
 
 .toolbar-divider {
     width: 1px;
     height: 30px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 2px;
+}
+
+.toolbar-tab.cancel {
+    color: #e5e5e7;
+    background: #313134;
+    border-radius: 12px;
     margin: 0 4px;
-}
-
-.tab-icon {
-    font-size: 1.4rem;
-}
-
-.tab-label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.active-dot {
-    position: absolute;
-    top: 6px;
-    right: 30%;
-    width: 6px;
-    height: 6px;
-    background: #ff9500;
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(255, 149, 0, 0.6);
+    max-width: 60px;
 }
 
 /* --- Uploader Tab Specifics --- */
-.uploader-tab {
-    overflow: visible;
-}
-
 .uploader-tab .btn {
     background: transparent !important;
     border: none !important;
@@ -109,7 +102,6 @@
     justify-content: center !important;
     align-items: center !important;
     box-shadow: none !important;
-    transform: none !important;
     width: auto !important;
     height: auto !important;
 }
@@ -118,11 +110,6 @@
     content: "↑";
     font-size: 1.4rem;
     color: inherit;
-    font-weight: normal;
-}
-
-.uploader-tab .tab-label {
-    transform: none;
 }
 
 /* --- Drawers --- */
@@ -133,11 +120,10 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
-    z-index: 5;
+    z-index: 10;
 }
 
 .drawer-open .mobile-drawer-backdrop {
@@ -147,28 +133,24 @@
 
 .mobile-drawer {
     position: absolute;
-    bottom: 70px; /* Sits above toolbar */
+    bottom: 70px; /* Sits exactly on top of toolbar */
     left: 0;
     right: 0;
-    background: rgba(28, 28, 30, 0.95);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    background: #1c1c1e;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px 20px 0 0;
     transform: translateY(100%);
     transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-    z-index: 8;
-    max-height: 80vh;
-    overflow-y: auto;
+    z-index: 15;
+    border-radius: 16px 16px 0 0;
 }
 
 .mobile-drawer.is-active {
     transform: translateY(0);
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
 }
 
 .drawer-handle {
-    height: 24px;
+    height: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -177,174 +159,18 @@
 
 .drawer-handle::after {
     content: "";
-    width: 40px;
+    width: 36px;
     height: 4px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 2px;
 }
 
 .drawer-content {
-    padding: 0 1.5rem 2rem;
+    padding: 0 8px 16px;
 }
 
-.drawer-pane h3 {
-    margin: 0 0 1.5rem;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    color: #8e8e93;
-    letter-spacing: 1px;
-    text-align: center;
-}
-
-/* --- View Drawer Layout --- */
-.view-types-row {
+.toolbar-like-layout {
     display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-}
-
-.view-btn {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 0.9rem;
-}
-
-.view-btn.active {
-    background: rgba(0, 122, 255, 0.2);
-    border-color: #007aff;
-    color: #007aff;
-}
-
-.sort-controls-row {
-    display: flex;
-    gap: 8px;
-}
-
-.mobile-select {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 1rem;
-}
-
-.sort-order-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 0 16px;
-    border-radius: 12px;
-}
-
-/* --- Select Drawer Layout --- */
-.action-grid-full {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.drawer-action-btn {
-    display: flex;
+    justify-content: space-around;
     align-items: center;
-    gap: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 16px;
-    border-radius: 16px;
-    font-size: 0.9rem;
-}
-
-.drawer-action-btn .icon {
-    font-size: 1.2rem;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.drawer-action-btn.primary .icon {
-    background: #007aff;
-}
-
-.drawer-action-btn.danger .icon {
-    background: rgba(255, 69, 58, 0.2);
-    color: #ff453a;
-}
-
-.full-width-btn {
-    width: 100%;
-    padding: 16px;
-    border-radius: 16px;
-    border: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.full-width-btn.secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-/* --- Album Drawer Layout --- */
-.action-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.list-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 16px;
-    border-radius: 16px;
-    text-align: left;
-}
-
-.list-action-btn .icon {
-    font-size: 1.4rem;
-    min-width: 44px;
-    height: 44px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.list-action-btn .text-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.list-action-btn strong {
-    font-size: 0.95rem;
-}
-
-.list-action-btn span {
-    font-size: 0.75rem;
-    color: #8e8e93;
-}
-
-.list-action-btn.danger .icon {
-    color: #ff453a;
-    background: rgba(255, 69, 58, 0.1);
-}
-
-.list-action-btn:disabled {
-    opacity: 0.4;
 }
