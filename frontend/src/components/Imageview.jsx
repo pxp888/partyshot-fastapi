@@ -238,7 +238,16 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
         <div className="detailRow">
           <span className="meta">
             Uploaded by <strong>{files[focus].username}</strong> on{" "}
-            {new Date(files[focus].created_at).toLocaleString()}
+            {new Date(files[focus].created_at)
+              .toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })
+              .replace(/ (AM|PM)$/, (match) => match.toLowerCase())}
             {files[focus].size && ` • ${formatBytes(files[focus].size)}`}
           </span>
         </div>

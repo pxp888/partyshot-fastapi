@@ -175,6 +175,11 @@ const MobileActions = ({
 
       {/* PERSISTENT MAIN TOOLBAR */}
       <nav className={`mobile-toolbar ${selectMode ? 'selection-mode' : ''}`}>
+        <div className="toolbar-tab uploader-tab">
+          {uploader}
+          <span className="tab-label">Upload</span>
+        </div>
+
         <button 
           className={`toolbar-tab ${activeDrawer === 'view' ? 'active' : ''}`} 
           onClick={() => toggleDrawer('view')}
@@ -182,11 +187,6 @@ const MobileActions = ({
           <span className="tab-icon">▦</span>
           <span className="tab-label">View</span>
         </button>
-
-        <div className="toolbar-tab uploader-tab">
-          {uploader}
-          <span className="tab-label">Upload</span>
-        </div>
 
         <button 
           className={`toolbar-tab ${selectMode ? 'active' : ''}`} 

@@ -440,7 +440,16 @@ function Albumview(currentUser) {
         <div className="spread">
           <div className="vert left">
             <p className="date">
-              {new Date(album.created_at).toLocaleString()}
+              {new Date(album.created_at)
+                .toLocaleString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })
+                .replace(/ (AM|PM)$/, (match) => match.toLowerCase())}
             </p>
             <p
               onClick={() => navigate(`/user/${album.username}`)}

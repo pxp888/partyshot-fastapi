@@ -135,7 +135,16 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
           <p>{album.username}</p>
           {/* <label className="hideMobile">created</label> */}
           <p className="hideMobile">
-            {new Date(album.created_at).toLocaleDateString()}
+            {new Date(album.created_at)
+              .toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })
+              .replace(/ (AM|PM)$/, (match) => match.toLowerCase())}
           </p>
         </div>
 

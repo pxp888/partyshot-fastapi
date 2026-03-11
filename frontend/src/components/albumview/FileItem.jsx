@@ -105,7 +105,18 @@ const FileItem = forwardRef(({
         </div>
         <div className="info">
           <label>uploaded</label>
-          <p>{new Date(file.created_at).toLocaleString()}</p>
+          <p>
+            {new Date(file.created_at)
+              .toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })
+              .replace(/ (AM|PM)$/, (match) => match.toLowerCase())}
+          </p>
         </div>
       </div>
     </div>
