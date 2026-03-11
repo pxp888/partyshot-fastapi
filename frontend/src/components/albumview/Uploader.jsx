@@ -1,4 +1,4 @@
-import { useState, useImperativeHandle, forwardRef, useContext } from "react";
+import { useState, useImperativeHandle, forwardRef, useContext, useRef } from "react";
 import { useMessage } from "../MessageBoxContext";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
@@ -326,6 +326,8 @@ const Uploader = forwardRef(
       }, 3000);
     };
 
+    const inputRef = useRef();
+
     useImperativeHandle(ref, () => ({
       handleFiles,
     }));
@@ -337,7 +339,7 @@ const Uploader = forwardRef(
           name="file"
           accept="image/*"
           multiple
-          id="hiddenFileInput"
+          ref={inputRef}
           style={{ display: "none" }}
           onChange={(e) => {
             handleFiles(e.target.files);
@@ -345,7 +347,7 @@ const Uploader = forwardRef(
           }}
         />
         <button
-          onClick={() => document.getElementById("hiddenFileInput").click()}
+          onClick={() => inputRef.current.click()}
           className="btn"
           disabled={disabled || totalFiles > 0}
         >
