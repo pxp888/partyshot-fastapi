@@ -98,6 +98,11 @@ async def setCookie():
     return resp
 
 
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
+
+
 @app.post("/api/login")
 def login(user: User, response: Response, Authorize: AuthJWT = Depends()):
     db_user = db.check_password(user.username, user.password)
