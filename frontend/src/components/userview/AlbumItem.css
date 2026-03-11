@@ -41,7 +41,8 @@
 }
 
 .album-item.is-private p {
-    color: gainsboro;
+    /* color: gainsboro; */
+    color: rgb(200, 200, 200);
 }
 
 .album-item.is-private .clickable {
@@ -99,9 +100,10 @@
 
 .album-details p {
     margin: 0;
-    color: gainsboro;
+    color: rgb(200, 200, 200);
     text-align: left;
     margin: 0.5rem 0;
+    font-size: .9rem;
 }
 
 .clickable {
@@ -169,7 +171,7 @@
     }
 
     .album-item .info {
-        padding: 0.5rem;
+        padding: .5rem;
     }
 
     .thumbnail-container {
@@ -178,7 +180,7 @@
 
     .album-item h3 {
         font-size: 1rem;
-        margin: 5px;
+        /* margin: 5px; */
     }
 
     .hideMobile {
