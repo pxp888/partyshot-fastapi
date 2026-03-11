@@ -186,8 +186,8 @@
 
     .albumFiles,
     .albumListview {
-        padding-bottom: 120px;
-        /* Space for the fixed action bar */
+        padding-bottom: 90px;
+        /* Space for the persistent toolbar */
     }
 }
 
