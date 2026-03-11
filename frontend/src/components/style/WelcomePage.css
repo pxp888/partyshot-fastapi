@@ -164,7 +164,7 @@
 
 .workitem {
     display: grid;
-    grid-template-columns: 180px 1fr;
+    grid-template-columns: 120px 1fr;
     align-items: flex-start;
     gap: 2rem;
     border-top: 1px solid #eaeaea;
@@ -260,9 +260,7 @@
                 text-align: center;
             }
 
-            .workitem {
-                grid-template-columns: 120px 1fr;
-            }
+
 
 
             .features,
@@ -288,9 +286,11 @@
             }
         }
 
-        .workitem .name {
-            font-size: 1.2rem;
-            color: #888;
-        }
     }
+
+    .workitem {
+        grid-template-columns: 60px 1fr;
+    }
+
+
 }
