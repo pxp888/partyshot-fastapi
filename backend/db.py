@@ -23,18 +23,29 @@ _pool = None
 _db_pool = None
 
 
-async def enqueue_delete_key(key: str):
+async def _get_arq_pool():
+    """Helper to lazily initialize the arq Redis pool with correct DSN/Host settings."""
     global _pool
     if _pool is None:
-        _pool = await arq.create_pool(RedisSettings.from_dsn(env.REDIS_URL2_DSN))
-    await _pool.enqueue_job("delete_s3_object", key)
+        # If it looks like a full DSN (or specifically for Amazon/Production), use from_dsn
+        if "redis://" in env.REDIS_URL2_DSN or "rediss://" in env.REDIS_URL2_DSN or "amazon" in env.REDIS_URL2_DSN:
+            redis_settings = RedisSettings.from_dsn(env.REDIS_URL2_DSN)
+        else:
+            # Otherwise treat as a bare host (common in local IP testing)
+            redis_settings = RedisSettings(host=env.REDIS_URL2_DSN)
+        
+        _pool = await arq.create_pool(redis_settings)
+    return _pool
+
+
+async def enqueue_delete_key(key: str):
+    pool = await _get_arq_pool()
+    await pool.enqueue_job("delete_s3_object", key)
 
 
 async def enqueue_delete_keys(keys: list):
-    global _pool
-    if _pool is None:
-        _pool = await arq.create_pool(RedisSettings.from_dsn(env.REDIS_URL2_DSN))
-    await _pool.enqueue_job("delete_s3_objects", keys)
+    pool = await _get_arq_pool()
+    await pool.enqueue_job("delete_s3_objects", keys)
 
 
 async def enqueue_record_atomic_photo(
@@ -45,10 +56,8 @@ async def enqueue_record_atomic_photo(
     filename: str,
     action: str,
 ):
-    global _pool
-    if _pool is None:
-        _pool = await arq.create_pool(RedisSettings.from_dsn(env.REDIS_URL2_DSN))
-    await _pool.enqueue_job(
+    pool = await _get_arq_pool()
+    await pool.enqueue_job(
         "record_atomic_photo", photo_id, user_id, album_id, size, filename, action
     )
 
@@ -1371,72 +1380,72 @@ def getEmail(username: str) -> str:
                 return None
 
 
-def getUsage(username: str) -> dict | None:
-    """
-    Returns a dictionary with usage statistics for the given user.
-    """
-    user = getUser(username)
-    if not user:
-        return None
-    user_id = user["id"]
+# def getUsage(username: str) -> dict | None:
+#     """
+#     Returns a dictionary with usage statistics for the given user.
+#     """
+#     user = getUser(username)
+#     if not user:
+#         return None
+#     user_id = user["id"]
 
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            # number of photos
-            cursor.execute("SELECT COUNT(*) FROM photos WHERE user_id = %s", (user_id,))
-            num_photos = cursor.fetchone()[0]
+#     with get_db_connection() as conn:
+#         with conn.cursor() as cursor:
+#             # number of photos
+#             cursor.execute("SELECT COUNT(*) FROM photos WHERE user_id = %s", (user_id,))
+#             num_photos = cursor.fetchone()[0]
 
-            # number of albums
-            cursor.execute("SELECT COUNT(*) FROM albums WHERE user_id = %s", (user_id,))
-            num_albums = cursor.fetchone()[0]
+#             # number of albums
+#             cursor.execute("SELECT COUNT(*) FROM albums WHERE user_id = %s", (user_id,))
+#             num_albums = cursor.fetchone()[0]
 
-            # number of other peoples photos in users albums
-            cursor.execute(
-                """
-                SELECT COUNT(*)
-                FROM photos p
-                JOIN albums a ON p.album_id = a.id
-                WHERE a.user_id = %s AND p.user_id != %s
-                """,
-                (user_id, user_id),
-            )
-            num_other_photos = cursor.fetchone()[0]
+#             # number of other peoples photos in users albums
+#             cursor.execute(
+#                 """
+#                 SELECT COUNT(*)
+#                 FROM photos p
+#                 JOIN albums a ON p.album_id = a.id
+#                 WHERE a.user_id = %s AND p.user_id != %s
+#                 """,
+#                 (user_id, user_id),
+#             )
+#             num_other_photos = cursor.fetchone()[0]
 
-            # total size of photos
-            cursor.execute(
-                "SELECT SUM(COALESCE(size, 0) + COALESCE(thumb_size, 0)) FROM photos WHERE user_id = %s",
-                (user_id,),
-            )
-            total_size_photos = cursor.fetchone()[0] or 0
+#             # total size of photos
+#             cursor.execute(
+#                 "SELECT SUM(COALESCE(size, 0)) FROM photos WHERE user_id = %s",
+#                 (user_id,),
+#             )
+#             total_size_photos = cursor.fetchone()[0] or 0
 
-            # total size in user albums
-            cursor.execute(
-                """
-                SELECT SUM(COALESCE(p.size, 0) + COALESCE(p.thumb_size, 0))
-                FROM photos p
-                JOIN albums a ON p.album_id = a.id
-                WHERE a.user_id = %s
-                """,
-                (user_id,),
-            )
-            total_size_albums = cursor.fetchone()[0] or 0
+#             # total size in user albums
+#             cursor.execute(
+#                 """
+#                 SELECT SUM(COALESCE(p.size, 0))
+#                 FROM photos p
+#                 JOIN albums a ON p.album_id = a.id
+#                 WHERE a.user_id = %s
+#                 """,
+#                 (user_id,),
+#             )
+#             total_size_albums = cursor.fetchone()[0] or 0
 
-            # total space used from spaceused table (single row per user)
-            cursor.execute(
-                "SELECT space FROM spaceused WHERE user_id = %s",
-                (user_id,),
-            )
-            row = cursor.fetchone()
-            space_used_table = row[0] if row else 0
+#             # total space used from spaceused table (single row per user)
+#             cursor.execute(
+#                 "SELECT space FROM spaceused WHERE user_id = %s",
+#                 (user_id,),
+#             )
+#             row = cursor.fetchone()
+#             space_used_table = row[0] if row else 0
 
-            return {
-                "number of photos": num_photos,
-                "number of albums": num_albums,
-                "number of other peoples photos in users albums": num_other_photos,
-                "total size of photos": int(total_size_photos),
-                "total size in user albums": int(total_size_albums),
-                "spaceused_table": int(space_used_table),
-            }
+#             return {
+#                 "number of photos": num_photos,
+#                 "number of albums": num_albums,
+#                 "number of other peoples photos in users albums": num_other_photos,
+#                 "total size of photos": int(total_size_photos),
+#                 "total size in user albums": int(total_size_albums),
+#                 "spaceused_table": int(space_used_table),
+#             }
 
 
 def getAccountData(username: str) -> dict | None:
@@ -1453,8 +1462,8 @@ def getAccountData(username: str) -> dict | None:
                     (SELECT COUNT(*) FROM photos WHERE user_id = u.id) as num_photos,
                     (SELECT COUNT(*) FROM albums WHERE user_id = u.id) as num_albums,
                     (SELECT COUNT(*) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id AND p.user_id != u.id) as num_other_photos,
-                    (SELECT SUM(COALESCE(size, 0) + COALESCE(thumb_size, 0)) FROM photos WHERE user_id = u.id) as total_size_photos,
-                    (SELECT SUM(COALESCE(p.size, 0) + COALESCE(p.thumb_size, 0)) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id) as total_size_albums,
+                    (SELECT SUM(COALESCE(size, 0)) FROM photos WHERE user_id = u.id) as total_size_photos,
+                    (SELECT SUM(COALESCE(p.size, 0)) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id) as total_size_albums,
                     (SELECT space FROM spaceused WHERE user_id = u.id) as space_used_table,
                     COALESCE(ul.max_size, (SELECT max_size FROM user_limits WHERE class = 'free')) as max_size
                 FROM users u
@@ -1566,35 +1575,31 @@ async def cleanup2(ctx=None) -> None:
     Synchronise the S3 bucket with the database.
 
     The function performs the following steps:
-
-    1. Retrieve all :pycode:`s3_key` and :pycode:`thumb_key` values stored in
-       the :pycode:`photos` table.
-    2. Enumerate every object currently present in the S3 bucket.
-    3. For any object that does **not** appear in the set of database keys,
-       the object is deleted from S3.
-
-    This operation is useful during maintenance or after a bulk delete of
-    database records that may leave orphaned objects in S3.
+    1. Retrieve all known keys from the photos table using fetchmany to save memory.
+    2. Enumerate objects in the R2 bucket.
+    3. Delete objects that do not exist in the database.
     """
 
     # --- Step 1: Collect all known keys from the database -----------------
     def get_known_keys():
+        keys: set[str] = set()
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
+                # Use a larger fetch size to balance speed and memory
                 cursor.execute("SELECT s3_key, thumb_key, mid_key FROM photos")
-                rows = cursor.fetchall()
-
-        keys: set[str] = set()
-        for s3_key, thumb_key, mid_key in rows:
-            if s3_key:
-                keys.add(s3_key)
-            if thumb_key:
-                keys.add(thumb_key)
-            if mid_key:
-                keys.add(mid_key)
+                while True:
+                    rows = cursor.fetchmany(10000)
+                    if not rows:
+                        break
+                    for r in rows:
+                        if r[0]: keys.add(r[0])
+                        if r[1]: keys.add(r[1])
+                        if r[2]: keys.add(r[2])
         return keys
 
+    logging.info("Building known_keys set from database...")
     known_keys = await asyncio.to_thread(get_known_keys)
+    logging.info("Known keys retrieved: %d", len(known_keys))
 
     # --- Step 2: List objects in the S3 bucket ----------------------------
     s3 = await asyncio.to_thread(aws.get_s3_client)
@@ -1602,41 +1607,48 @@ async def cleanup2(ctx=None) -> None:
     continuation_token = None
 
     while True:
-        # Fetch one page of objects
         def list_objects():
-            params = {"Bucket": aws.BUCKET_NAME}
+            params = {"Bucket": aws.BUCKET_NAME, "MaxKeys": 1000}
             if continuation_token:
                 params["ContinuationToken"] = continuation_token
             return s3.list_objects_v2(**params)
 
         page = await asyncio.to_thread(list_objects)
+        contents = page.get("Contents", [])
+        
+        if not contents:
+            break
 
-        for obj in page.get("Contents", []):
+        for obj in contents:
             key = obj["Key"]
+            
+            # Safeguard: Skip directory markers if they exist in R2
+            if key.endswith("/"):
+                continue
 
             if key not in known_keys:
                 delete_buffer.append({"Key": key})
 
-            # Once we hit 1,000 keys, perform a bulk delete
+            # Perform bulk delete at the 1,000 key limit
             if len(delete_buffer) >= 1000:
-                logging.info("Deleting batch of %s objects...", len(delete_buffer))
+                logging.info("Deleting batch of %d orphaned objects...", len(delete_buffer))
                 await asyncio.to_thread(
                     s3.delete_objects,
                     Bucket=aws.BUCKET_NAME,
                     Delete={"Objects": delete_buffer},
                 )
-                delete_buffer = []  # Reset the buffer
+                delete_buffer = []
 
         if not page.get("IsTruncated"):
             break
 
         continuation_token = page.get("NextContinuationToken")
-        # Yield control between pages to remain responsive
-        await asyncio.sleep(0.1)
+        # Yield control between pages
+        await asyncio.sleep(0.05)
 
     # Clean up any remaining keys in the buffer
     if delete_buffer:
-        logging.info("Deleting final batch of %s objects...", len(delete_buffer))
+        logging.info("Deleting final batch of %d orphaned objects...", len(delete_buffer))
         await asyncio.to_thread(
             s3.delete_objects, Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer}
         )
@@ -1757,23 +1769,23 @@ def updatePhotoSizes(
                 logging.error("Error updating photo sizes for %s: %s", photo_id, e)
 
 
-def addSpaceUsed(user_id: int, space: int):
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            try:
-                cursor.execute(
-                    """
-                    INSERT INTO spaceused (user_id, space)
-                    VALUES (%s, %s)
-                    ON CONFLICT (user_id) DO UPDATE
-                    SET space = spaceused.space + EXCLUDED.space;
-                    """,
-                    (user_id, space),
-                )
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                logging.error("Error adding space used for %s: %s", user_id, e)
+# def addSpaceUsed(user_id: int, space: int):
+#     with get_db_connection() as conn:
+#         with conn.cursor() as cursor:
+#             try:
+#                 cursor.execute(
+#                     """
+#                     INSERT INTO spaceused (user_id, space)
+#                     VALUES (%s, %s)
+#                     ON CONFLICT (user_id) DO UPDATE
+#                     SET space = spaceused.space + EXCLUDED.space;
+#                     """,
+#                     (user_id, space),
+#                 )
+#                 conn.commit()
+#             except Exception as e:
+#                 conn.rollback()
+#                 logging.error("Error adding space used for %s: %s", user_id, e)
 
 
 def recordAtomicPhoto(

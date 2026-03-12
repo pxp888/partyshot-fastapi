@@ -770,10 +770,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     await setUserData(websocket, payload, username)
                 elif action == "getEmail":
                     await getEmail(websocket, payload, username)
-                elif action == "getUsage":
-                    await getUsage(websocket, payload, username)
-                elif action == "getUserInfo":
-                    await getUserInfo(websocket, payload, username)
+                # elif action == "getUsage":
+                #     await getUsage(websocket, payload, username)
+                # elif action == "getUserInfo":
+                #     await getUserInfo(websocket, payload, username)
                 elif action == "getAccountData":
                     await getAccountData(websocket, payload, username)
                 elif action == "subscribe":
