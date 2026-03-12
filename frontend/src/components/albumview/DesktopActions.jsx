@@ -71,6 +71,7 @@ const DesktopActions = ({
         <div className="toolbar-left">
           <div className={`dt-tab dt-uploader-tab ${!userLoggedIn ? 'disabled' : ''}`}>
             {uploader}
+            <span className="dt-tab-icon">↑</span>
             <span className="dt-tab-label">Upload</span>
           </div>
 
@@ -104,12 +105,12 @@ const DesktopActions = ({
           </button>
 
           {isOwner ? (
-            <button className="dt-tab" onClick={handleDeleteAlbum}>
+            <button className="dt-tab dt-tab-danger" onClick={handleDeleteAlbum}>
               <span className="dt-tab-icon">⊘</span>
               <span className="dt-tab-label">Delete</span>
             </button>
           ) : (
-            <button className="dt-tab" onClick={toggleSubscription} disabled={!userLoggedIn}>
+            <button className={`dt-tab ${album.subscribed ? 'active' : ''}`} onClick={toggleSubscription} disabled={!userLoggedIn}>
               <span className="dt-tab-icon">{album.subscribed ? "★" : "☆"}</span>
               <span className="dt-tab-label">{album.subscribed ? "Sub'd" : "Follow"}</span>
             </button>
@@ -122,21 +123,21 @@ const DesktopActions = ({
             onClick={() => handleViewTypeChange("list")}
           >
             <span className="dt-tab-icon">☰</span>
-            <span className="dt-tab-label">List</span>
+            <span className="tab-label">List</span>
           </button>
           <button 
             className={`dt-tab ${viewType === 'icon' ? 'active' : ''}`}
             onClick={() => handleViewTypeChange("icon")}
           >
             <span className="dt-tab-icon">▦</span>
-            <span className="dt-tab-label">Icons</span>
+            <span className="tab-label">Icons</span>
           </button>
           <button 
             className={`dt-tab ${viewType === 'grid' ? 'active' : ''}`}
             onClick={() => handleViewTypeChange("grid")}
           >
             <span className="dt-tab-icon">⊞</span>
-            <span className="dt-tab-label">Grid</span>
+            <span className="tab-label">Grid</span>
           </button>
           
           <div className="dt-divider" />
@@ -159,19 +160,19 @@ const DesktopActions = ({
             <div className="action-pane">
               <button className="pane-item" onClick={selectAll}>
                 <span className="item-icon">✓✓</span>
-                <span className="item-label">Select All</span>
+                <span className="item-label">All</span>
               </button>
               <button className="pane-item" onClick={selectNone}>
                 <span className="item-icon">◻</span>
-                <span className="item-label">Select None</span>
+                <span className="item-label">None</span>
               </button>
               <button className="pane-item" onClick={downloadSelected} disabled={!userLoggedIn}>
                 <span className="item-icon">↓</span>
-                <span className="item-label">Download Selected</span>
+                <span className="item-label">Get</span>
               </button>
               <button className="pane-item" onClick={deleteSelected} disabled={!userLoggedIn}>
                 <span className="item-icon">⊘</span>
-                <span className="item-label">Delete Selected</span>
+                <span className="item-label">Del</span>
               </button>
             </div>
           )}

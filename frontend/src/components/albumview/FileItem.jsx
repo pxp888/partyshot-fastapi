@@ -94,28 +94,21 @@ const FileItem = forwardRef(({
           />
         )}
       </div>
-      {isSelected && <div className="selectscreen" />}
+      <div className="selectscreen" />
+      <div className="selection-indicator">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
       <div className="fileInfo">
+        <p className="title">{file.filename}</p>
         <div className="info">
-          <p className="title">{file.filename}</p>
-        </div>
-        <div className="info">
-          <label>user</label>
-          <p>{file.username}</p>
-        </div>
-        <div className="info">
-          <label>uploaded</label>
+          <label>By {file.username}</label>
           <p>
             {new Date(file.created_at)
               .toLocaleString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })
-              .replace(/ (AM|PM)$/, (match) => match.toLowerCase())}
+              })}
           </p>
         </div>
       </div>

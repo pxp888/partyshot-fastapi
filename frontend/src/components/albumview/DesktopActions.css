@@ -33,35 +33,30 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     background: transparent;
     border: none;
-    color: #8e8e93;
-    padding: 4px 9px;
-    /* Slightly tighter for desktop toolbar */
+    color: #a1a1aa;
+    padding: 8px 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 65px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 70px;
+    border-radius: 8px;
 }
 
 .dt-tab:hover {
     color: #fff;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .dt-tab.active {
-    /* color: var(--bright-color, salmon); */
-    color: white;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-.dt-tab:active {
-    transform: scale(0.92);
-}
-
-.dt-tab:disabled,
-.dt-tab.disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    pointer-events: none;
+.dt-tab-danger:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
 }
 
 .dt-tab-icon {
@@ -70,42 +65,48 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.dt-tab:hover .dt-tab-icon {
+    transform: translateY(-1px);
 }
 
 .dt-tab-label {
-    font-size: 0.6rem;
-    font-weight: 700;
+    font-size: 0.65rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.05em;
     white-space: nowrap;
 }
 
 .dt-divider {
     width: 1px;
-    height: 30px;
-    background: rgba(255, 255, 255, 0.12);
-    margin: 0 10px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 12px;
 }
 
 /* --- Uploader Tab Specifics --- */
-.dt-uploader-tab .btn {
-    background: transparent !important;
-    border: none !important;
-    color: inherit !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: 0 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    box-shadow: none !important;
-    width: auto !important;
-    height: auto !important;
+.dt-uploader-tab {
+    position: relative;
 }
 
-.dt-uploader-tab .btn::before {
-    content: "↑";
-    font-size: 1.4rem;
+.dt-uploader-tab .btn {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.dt-uploader-tab .dt-tab-icon::before {
+    content: none;
+}
+
+.dt-uploader-tab .dt-tab-icon {
     color: inherit;
 }
 

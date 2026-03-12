@@ -11,13 +11,31 @@
     --text-muted: var(--text-muted, #666);
 }
 
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    text-align: center;
+}
+
 .helptext {
-    margin: 0 var(--gap-md);
-    padding: var(--gap-lg) 0;
-    /* color: var(--text-muted); */
+    margin: 0;
+    padding: 1rem 2rem;
     color: white;
+    font-size: 1.1rem;
+    font-weight: 400;
     font-style: italic;
     text-align: center;
+}
+
+.empty-state .helptext {
+    color: #333;
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-style: normal;
+    padding-bottom: 0.5rem;
 }
 
 /* ----- Album details ----------------------------------------------- */
@@ -153,57 +171,72 @@
 
 /* ----- adetails ------------ */
 .adetails {
-    background-color: hsl(0 0 93%);
-    /*background-color: #434343;*/
-    padding: 2rem 3rem;
+    background-color: #ffffff;
+    padding: 2.5rem 3rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    color: hsl(0 0 30%);
+    gap: 1.25rem;
+    border-bottom: 1px solid #eee;
 }
 
 .adetails .title {
-    font-size: 1.8rem;
+    font-size: 2.25rem;
     font-weight: 500;
     text-align: left;
+    letter-spacing: -0.02em;
 }
 
 .adetails .title p,
 .adetails .username,
 .adetails .date {
-    color: hsl(0 0 20%);
+    color: #1a1a1a;
     margin: 0;
 }
 
-.adetails .qr-trigger-text {
-    color: hsl(0 0 40%);
-    margin: 0;
+.adetails .date {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 500;
 }
 
-.adetails .date,
 .adetails .username {
-    /* font-size: 0.9rem; */
-    color: hsl(0 0 40%);
+    font-size: 1rem;
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 .album-controls {
     display: flex;
     flex-direction: row;
-    gap: 1.5rem;
+    gap: 1rem;
+    align-items: center;
 }
 
 .status-word {
-    color: #888888;
+    font-size: 0.85rem;
+    font-weight: 500;
     text-transform: lowercase;
-    transition: all 0.2s ease;
+    letter-spacing: 0.02em;
+    color: #888;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: default;
     user-select: none;
-    -webkit-user-select: none;
 }
 
 .status-word.active {
-    /*color: white !important;*/
-    color: black !important;
+    color: #000;
+}
+
+.status-word.active[data-type="open"] {
+    color: #000;
+}
+
+.status-word.active[data-type="private"] {
+    color: #000;
+}
+
+.status-word.active[data-type="profile"] {
+    color: #000;
 }
 
 .status-word.clickable {
@@ -211,8 +244,7 @@
 }
 
 .status-word.clickable:hover {
-    filter: brightness(1.4);
-    text-decoration: underline rgba(255, 255, 255, 0.5);
+    text-decoration: underline;
 }
 
 .spread {
@@ -221,18 +253,21 @@
     justify-content: space-between;
     align-items: flex-end;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .vert {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
+    gap: 0.35rem;
 }
 
 .vert.left {
     text-align: left;
+}
+
+.vert.right {
+    text-align: right;
 }
 
 .vert.right {
@@ -246,13 +281,14 @@
 
 .renamer-input {
     padding: 0;
-    font-size: 1.8rem;
+    font-size: 2.25rem;
     font-weight: 500;
     font-family: inherit;
+    letter-spacing: -0.02em;
     border: none;
     border-bottom: 2px solid var(--primary-color, #3b82f6);
     background-color: transparent;
-    color: hsl(0 0 20%);
+    color: #1a1a1a;
     width: 100%;
     outline: none;
     margin: 0;

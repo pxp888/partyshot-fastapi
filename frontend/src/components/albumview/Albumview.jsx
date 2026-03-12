@@ -190,19 +190,19 @@ function Albumview(currentUser) {
         break;
 
       case "toggleOpen":
-        if (payload && payload.code === albumcode) {
+        if (payload && payload.code?.toLowerCase() === albumcode?.toLowerCase()) {
           setAlbum((prev) => ({ ...prev, ...payload }));
         }
         break;
 
       case "toggleProfile":
-        if (payload && payload.code === albumcode) {
+        if (payload && payload.code?.toLowerCase() === albumcode?.toLowerCase()) {
           setAlbum((prev) => ({ ...prev, ...payload }));
         }
         break;
 
       case "togglePrivate":
-        if (payload && payload.code === albumcode) {
+        if (payload && payload.code?.toLowerCase() === albumcode?.toLowerCase()) {
           setAlbum((prev) => ({ ...prev, ...payload }));
         }
         break;
@@ -464,6 +464,7 @@ function Albumview(currentUser) {
             <div className="album-controls">
               <span
                 className={`status-word ${album.open ? "active" : ""} ${isOwner ? "clickable" : ""}`}
+                data-type="open"
                 onClick={() => {
                   if (isOwner) toggleOpen();
                 }}
@@ -472,6 +473,7 @@ function Albumview(currentUser) {
               </span>
               <span
                 className={`status-word ${album.profile ? "active" : ""} ${isOwner || album.subscribed ? "clickable" : ""}`}
+                data-type="profile"
                 onClick={() => {
                   if (isOwner || album.subscribed) toggleProfile();
                 }}
@@ -480,6 +482,7 @@ function Albumview(currentUser) {
               </span>
               <span
                 className={`status-word ${album.private ? "active" : ""} ${isOwner ? "clickable" : ""}`}
+                data-type="private"
                 onClick={() => {
                   if (isOwner) togglePrivate();
                 }}
