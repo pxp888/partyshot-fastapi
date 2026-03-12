@@ -26,7 +26,8 @@
     padding-bottom: env(safe-area-inset-bottom, 10px);
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
     position: relative;
-    z-index: 20; /* High z-index to stay above background but can be under drawer if needed, though here it sits below drawer */
+    z-index: 20;
+    /* High z-index to stay above background but can be under drawer if needed, though here it sits below drawer */
     transition: background 0.3s ease;
 }
 
@@ -126,7 +127,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.0);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -140,7 +141,8 @@
 
 .mobile-drawer {
     position: absolute;
-    bottom: 70px; /* Sits exactly on top of toolbar */
+    bottom: 70px;
+    /* Sits exactly on top of toolbar */
     left: 0;
     right: 0;
     background: #1c1c1e;
@@ -153,7 +155,7 @@
 
 .mobile-drawer.is-active {
     transform: translateY(0);
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .drawer-handle {
