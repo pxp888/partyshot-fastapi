@@ -97,23 +97,27 @@ const DesktopActions = ({
             <span className="dt-tab-label">Select</span>
           </button>
 
-          <div className="dt-divider" />
+          {!selectMode && (
+            <>
+              <div className="dt-divider" />
 
-          <button className="dt-tab" onClick={downloadAll} disabled={!userLoggedIn}>
-            <span className="dt-tab-icon">⇓</span>
-            <span className="dt-tab-label">ZIP All</span>
-          </button>
+              <button className="dt-tab" onClick={downloadAll} disabled={!userLoggedIn}>
+                <span className="dt-tab-icon">⇓</span>
+                <span className="dt-tab-label">ZIP All</span>
+              </button>
 
-          {isOwner ? (
-            <button className="dt-tab dt-tab-danger" onClick={handleDeleteAlbum}>
-              <span className="dt-tab-icon">⊘</span>
-              <span className="dt-tab-label">Delete</span>
-            </button>
-          ) : (
-            <button className={`dt-tab ${album.subscribed ? 'active' : ''}`} onClick={toggleSubscription} disabled={!userLoggedIn}>
-              <span className="dt-tab-icon">{album.subscribed ? "★" : "☆"}</span>
-              <span className="dt-tab-label">{album.subscribed ? "Sub'd" : "Follow"}</span>
-            </button>
+              {isOwner ? (
+                <button className="dt-tab dt-tab-danger" onClick={handleDeleteAlbum}>
+                  <span className="dt-tab-icon">⊘</span>
+                  <span className="dt-tab-label">Delete</span>
+                </button>
+              ) : (
+                <button className={`dt-tab ${album.subscribed ? 'active' : ''}`} onClick={toggleSubscription} disabled={!userLoggedIn}>
+                  <span className="dt-tab-icon">{album.subscribed ? "★" : "☆"}</span>
+                  <span className="dt-tab-label">{album.subscribed ? "Sub'd" : "Follow"}</span>
+                </button>
+              )}
+            </>
           )}
         </div>
 
