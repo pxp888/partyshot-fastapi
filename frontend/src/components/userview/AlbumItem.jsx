@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMessage } from "../MessageBoxContext";
-import { receiveJson } from "../helpers";
 import "./AlbumItem.css";
 import blankImage from "../../assets/blank.jpg";
 
@@ -38,28 +37,8 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
 
   useEffect(() => {
     if (!isVisible) return;
-    let isMounted = true;
-
-    const fetchThumbnail = async () => {
-      try {
-        const data = await receiveJson(`/api/album-thumbnail/${album.code}`);
-        if (isMounted) {
-          setThumbnailUrl(data.thumbnail || blankImage);
-        }
-      } catch (error) {
-        console.error("Error fetching thumbnail:", error);
-        if (isMounted) {
-          setThumbnailUrl(blankImage);
-        }
-      }
-    };
-
-    fetchThumbnail();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [album.code, isVisible]);
+    setThumbnailUrl(album.thumbnail || blankImage);
+  }, [album.thumbnail, isVisible]);
 
   function handleClick(event) {
     event.preventDefault();

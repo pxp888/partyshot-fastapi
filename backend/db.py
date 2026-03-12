@@ -824,11 +824,15 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         with conn.cursor() as cursor:
             try:
                 # Include owned and subscribed albums (owned by the user whose profile is being viewed)
+                # Also join with photos to get the latest thumbnail
                 cursor.execute(
                     """
                     SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, 
                            CASE WHEN a.user_id = %s THEN a.profile ELSE s.profile END AS display_profile, 
-                           a.private, a.created_at, u.username
+                           a.private, a.created_at, u.username,
+                           (SELECT p.thumb_key FROM photos p 
+                            WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
+                            ORDER BY p.created_at DESC LIMIT 1) as thumb_key
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
                     LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
@@ -850,7 +854,8 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         album_id = row[0]
         # Check permissions: if not admin or owner, only show profile albums
         # If private, only show if owner OR if user has photos in it
-        is_owner = authuser == username
+        album_owner = row[8]
+        is_owner = authuser == album_owner
         is_profile = bool(row[5])
         is_private = bool(row[6])
 
@@ -865,12 +870,17 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         # Allow if: owner OR profile OR has photos
         if not is_owner and not is_profile and not has_photos:
             continue
-        # if is_private and authuser != row[8]:
-        #     continue
 
         created_at = row[7]
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
+
+        # Privacy rule for thumbnails: only owners see thumbnails for private albums
+        thumb_key = row[9]
+        if is_private and not is_owner:
+            thumb_key = None
+        
+        thumb_url = aws.create_presigned_url(thumb_key) if thumb_key else None
 
         albums.append(
             {
@@ -882,6 +892,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "profile": is_profile,
                 "private": is_private,
                 "created_at": created_at,
+                "thumbnail": thumb_url,
             }
         )
     return {"albums": albums}
@@ -896,9 +907,13 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
         with conn.cursor() as cursor:
             try:
                 # Find distinct albums where this user has photos
+                # Also join with photos to get the latest thumbnail
                 cursor.execute(
                     """
-                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username
+                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
+                           (SELECT p.thumb_key FROM photos p 
+                            WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
+                            ORDER BY p.created_at DESC LIMIT 1) as thumb_key
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
                     JOIN photos p ON a.id = p.album_id
@@ -921,6 +936,14 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
         if isinstance(created_at, datetime.datetime):
             created_at = created_at.isoformat()
 
+        is_owner = authuser == row[8]
+        is_private = bool(row[6])
+        thumb_key = row[9]
+        if is_private and not is_owner:
+            thumb_key = None
+        
+        thumb_url = aws.create_presigned_url(thumb_key) if thumb_key else None
+
         albums.append(
             {
                 "id": row[0],
@@ -929,43 +952,12 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 "username": row[8],
                 "open": bool(row[4]),
                 "profile": bool(row[5]),
-                "private": bool(row[6]),
+                "private": is_private,
                 "created_at": created_at,
+                "thumbnail": thumb_url,
             }
         )
     return {"albums": albums}
-
-
-def get_album_thumbnail(album_code: str) -> dict | None:
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            # We join albums and users to get the owner and privacy,
-            # then left join photos to get the oldest thumbnail if it exists.
-            cursor.execute(
-                """
-                SELECT p.thumb_key, u.username, a.private
-                FROM albums a
-                JOIN users u ON a.user_id = u.id
-                LEFT JOIN photos p ON p.album_id = a.id AND p.thumb_key IS NOT NULL
-                WHERE a.code = %s
-                ORDER BY p.created_at DESC
-                LIMIT 1
-                """,
-                (album_code,),
-            )
-            row = cursor.fetchone()
-
-    if not row:
-        return None
-
-    thumb_key, username, private = row
-    thumb_url = aws.create_presigned_url(thumb_key) if thumb_key else "none"
-
-    return {
-        "thumbkey": thumb_url,
-        "username": username,
-        "private": bool(private),
-    }
 
 
 def createAlbum(username: str, album_name: str) -> str | None:

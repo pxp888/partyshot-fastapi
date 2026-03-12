@@ -197,6 +197,8 @@
     text-transform: lowercase;
     transition: all 0.2s ease;
     cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .status-word.active {
