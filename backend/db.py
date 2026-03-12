@@ -820,6 +820,14 @@ def getAlbums(username: str, authuser: str) -> dict | None:
     if not user:
         return None
 
+    # Determine if requester is the profile owner or an admin
+    is_profile_owner = (username == authuser)
+    
+    auth_user_record = user if is_profile_owner else getUser(authuser)
+    is_admin = False
+    if auth_user_record and auth_user_record.get("class") == "admin":
+        is_admin = True
+
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
@@ -852,23 +860,20 @@ def getAlbums(username: str, authuser: str) -> dict | None:
     albums = []
     for row in rows:
         album_id = row[0]
-        # Check permissions: if not admin or owner, only show profile albums
-        # If private, only show if owner OR if user has photos in it
+        # Permissions check
         album_owner = row[8]
-        is_owner = authuser == album_owner
+        is_owner = (authuser == album_owner)
         is_profile = bool(row[5])
         is_private = bool(row[6])
 
         has_photos = False
-        if not is_owner:
-            auth_user_record = getUser(authuser)
-            if auth_user_record:
-                has_photos = check_user_has_photos_in_album(
-                    auth_user_record["id"], album_id
-                )
+        if not is_owner and auth_user_record:
+            has_photos = check_user_has_photos_in_album(
+                auth_user_record["id"], album_id
+            )
 
-        # Allow if: owner OR profile OR has photos
-        if not is_owner and not is_profile and not has_photos:
+        # Allow if: admin OR profile owner OR album owner OR profile OR has photos
+        if not (is_admin or is_profile_owner or is_owner or is_profile or has_photos):
             continue
 
         created_at = row[7]
