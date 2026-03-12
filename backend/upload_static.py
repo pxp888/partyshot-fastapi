@@ -5,18 +5,17 @@ import re
 from botocore.config import Config
 
 # Import your existing environment variables
-import env
+import env2
 
 # --- CONFIGURATION ---
 # We use the existing credentials from env.py
-R2_ACCESS_KEY_ID = env.R2_ACCESS_KEY_ID
-R2_SECRET_ACCESS_KEY = env.R2_SECRET_ACCESS_KEY
-R2_ENDPOINT_URL = env.R2_ENDPOINT_URL
+R2_ACCESS_KEY_ID = env2.R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY = env2.R2_SECRET_ACCESS_KEY
+R2_ENDPOINT_URL = env2.R2_STATIC_ENDPOINT_URL
 
 # These are specific to the static assets deployment
-# You can also add these to backend/env.py if you prefer
-R2_STATIC_BUCKET = os.environ.get('R2_STATIC_BUCKET', 'static')
-R2_STATIC_DOMAIN = os.environ.get('R2_STATIC_DOMAIN', '').rstrip('/')
+R2_STATIC_BUCKET = 'static'
+R2_STATIC_DOMAIN = 'https://static.shareshot.eu/static'
 
 # Local path where Vite builds the files (relative to this script in backend/)
 BUILD_DIR = os.path.join(os.path.dirname(__file__), "static")
@@ -44,6 +43,8 @@ def upload_files():
         for file in files:
             local_path = os.path.join(root, file)
             # The key in R2 should be relative to the BUILD_DIR
+            # This ensures if local_path is 'backend/static/assets/foo.js', 
+            # relative_path is 'assets/foo.js' (uploaded to root)
             relative_path = os.path.relpath(local_path, BUILD_DIR)
             
             content_type, _ = mimetypes.guess_type(local_path)
@@ -57,8 +58,6 @@ def upload_files():
             print(f"Uploading {relative_path} ({content_type})...")
             
             # Set Cache-Control based on file type
-            # Hashed assets in /assets can be cached forever
-            # index.html and root SVGs should always be revalidated (no-cache)
             if relative_path == "index.html" or not relative_path.startswith("assets/"):
                 cache_control = "no-cache, no-store, must-revalidate"
             else:
@@ -84,6 +83,7 @@ def modify_asset_paths():
         return
 
     print(f"--- Modifying asset paths to use domain: {R2_STATIC_DOMAIN} ---")
+    print(f"--- Verification: Assets will be expected at {R2_STATIC_DOMAIN}/assets/ ---")
     
     patterns = [
         (re.compile(r'([\'"])/assets/'), rf'\1{R2_STATIC_DOMAIN}/assets/'),
@@ -111,10 +111,11 @@ def modify_asset_paths():
 
 if __name__ == "__main__":
     if not all([R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT_URL]):
-        print("Error: R2 credentials missing in backend/env.py")
+        print(f"Error: R2 credentials missing. Checked: ID={bool(R2_ACCESS_KEY_ID)}, Key={bool(R2_SECRET_ACCESS_KEY)}, Endpoint={bool(R2_ENDPOINT_URL)}")
     else:
         # 1. Modify the local files first
         modify_asset_paths()
         # 2. Upload the modified files
         upload_files()
-        print("--- Static deployment complete! ---")
+        print("\n--- Deployment Complete! ---")
+        print(f"Test URL: {R2_STATIC_DOMAIN}/index.html")
