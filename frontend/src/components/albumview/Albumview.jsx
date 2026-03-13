@@ -564,6 +564,15 @@ function Albumview(currentUser) {
         />
       )}
 
+      {album?.private &&
+        album?.username !== currentUser?.currentUser &&
+        album?.open && (
+          <p className="helptext">
+            This album is private, so you cannot access the photos, but you can
+            upload photos.
+          </p>
+        )}
+
       {viewType === "icon" && (
         <Iconlist
           photos={photos}
@@ -605,14 +614,7 @@ function Albumview(currentUser) {
           onDrop={handleUpload}
         />
       )}
-      {album?.private &&
-        album?.username !== currentUser?.currentUser &&
-        album?.open && (
-          <p className="helptext">
-            This album is private, so you cannot access the photos, but you can
-            upload photos.
-          </p>
-        )}
+
     </section>
   );
 }
