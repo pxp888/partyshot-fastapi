@@ -208,35 +208,32 @@
 .album-controls {
     display: flex;
     flex-direction: row;
-    gap: 1rem;
+    gap: 0.5rem;
     align-items: center;
 }
 
 .status-word {
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.75rem;
+    font-weight: 600;
     text-transform: lowercase;
-    letter-spacing: 0.02em;
-    color: #888;
+    padding: 4px 12px;
+    border-radius: 100px;
+    border: 1px solid transparent;
+    background: rgba(0, 0, 0, 0.04);
+    color: #777;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: default;
     user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .status-word.active {
-    color: #000;
-}
-
-.status-word.active[data-type="open"] {
-    color: #000;
-}
-
-.status-word.active[data-type="private"] {
-    color: #000;
-}
-
-.status-word.active[data-type="profile"] {
-    color: #000;
+    background: rgba(0, 0, 0, 0.08);
+    color: #222;
+    border-color: rgba(0, 0, 0, 0.1);
 }
 
 .status-word.clickable {
@@ -244,7 +241,8 @@
 }
 
 .status-word.clickable:hover {
-    text-decoration: underline;
+    background: rgba(0, 0, 0, 0.1);
+    text-decoration: none;
 }
 
 .spread {
