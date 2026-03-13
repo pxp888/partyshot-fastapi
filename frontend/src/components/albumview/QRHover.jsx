@@ -32,7 +32,7 @@ const QRHover = ({ text, children }) => {
       title="Click to copy URL & show QR Code"
     >
       {children || <p className="qr-trigger-text">{text}</p>}
-      {copied && <span className="copy-feedback">Copied!</span>}
+      {copied && <span className="copy-feedback">Copied URL!</span>}
       {showQR && (
         <div className="qr-code-popup" onClick={(e) => e.stopPropagation()}>
           <div className="qr-inner">

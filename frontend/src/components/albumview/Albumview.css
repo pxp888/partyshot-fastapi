@@ -240,8 +240,7 @@
     cursor: pointer;
 }
 
-.status-word.clickable:hover {
-    background: rgba(0, 0, 0, 0.1);
+.album-controls .clickable:hover {
     text-decoration: none;
 }
 

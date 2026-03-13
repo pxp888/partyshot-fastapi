@@ -88,7 +88,7 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
   return (
     <div
       ref={localRef}
-      className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.profile ? "not-profile" : ""} ${album.private ? "is-private" : ""}`}
+      className={`album-item ${isOtherUser ? "other-user" : ""} ${!album.profile ? "not-profile" : ""} ${album.private ? "is-private" : ""} ${album.open ? "is-open" : ""}`}
       onClick={handleClick}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
