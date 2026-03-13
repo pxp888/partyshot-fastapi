@@ -89,8 +89,6 @@ def modify_asset_paths():
         (re.compile(r'([\'"])/assets/'), rf'\1{R2_STATIC_DOMAIN}/assets/'),
         (re.compile(r'([\'"])/vite\.svg'), rf'\1{R2_STATIC_DOMAIN}/vite.svg'),
         (re.compile(r'([\'"])/test\.svg'), rf'\1{R2_STATIC_DOMAIN}/test.svg'),
-        (re.compile(r'src="/'), f'src="{R2_STATIC_DOMAIN}/'),
-        (re.compile(r'href="/'), f'href="{R2_STATIC_DOMAIN}/'),
     ]
 
     for root, dirs, files in os.walk(BUILD_DIR):
