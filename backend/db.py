@@ -772,12 +772,22 @@ async def deletePhoto(id: str, username: str) -> bool:
                     return False
 
                 # Enqueue S3 deletions if they exist
+                
+                # if s3_key:
+                #     await enqueue_delete_key(s3_key)
+                # if thumb_key:
+                #     await enqueue_delete_key(thumb_key)
+                # if mid_key:
+                #     await enqueue_delete_key(mid_key)
+
+                batch = []
                 if s3_key:
-                    await enqueue_delete_key(s3_key)
+                    batch.append(s3_key)
                 if thumb_key:
-                    await enqueue_delete_key(thumb_key)
+                    batch.append(thumb_key)
                 if mid_key:
-                    await enqueue_delete_key(mid_key)
+                    batch.append(mid_key)
+                await enqueue_delete_keys(batch)
 
                 # Perform the delete from DB
                 cursor.execute(
