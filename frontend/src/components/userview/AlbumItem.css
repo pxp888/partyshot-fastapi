@@ -1,7 +1,8 @@
 .album-item {
     display: flex;
     flex-direction: column;
-    background-color: #434343;
+    /* background-color: #434343; */
+    background-color: #545454;
     color: gainsboro;
     border: 1px solid rgba(255, 255, 255, 0.05);
     overflow: hidden;
@@ -23,7 +24,8 @@
 } */
 
 .album-item.not-profile {
-    background-color: #1b1b1b;
+    /* background-color: #1b1b1b; */
+    background-color: #272727;
     color: white;
 }
 
