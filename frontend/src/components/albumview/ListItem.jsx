@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import "./ListItem.css";
-import blankImage from '../../assets/blank.jpg';
-import videoImage from '../../assets/video.webp'; function ListItem({
+import videoImage from '../../assets/video.webp'; 
+
+function ListItem({
   index,
   file,
   selectMode,
@@ -16,7 +17,11 @@ import videoImage from '../../assets/video.webp'; function ListItem({
 
   const videoExtensions = /\.(mp4|webm|ogg|mov|avi|wmv|mkv|flv)$/i;
   const isVideo = videoExtensions.test(file.filename);
-  const placeholder = isVideo ? videoImage : blankImage;
+  const [imgSrc, setImgSrc] = useState(file.thumb_key || (isVideo ? videoImage : null));
+
+  useEffect(() => {
+    setImgSrc(file.thumb_key || (isVideo ? videoImage : null));
+  }, [file.thumb_key, isVideo]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
@@ -69,18 +74,28 @@ import videoImage from '../../assets/video.webp'; function ListItem({
       onClick={handleClick}
     >
       {isSelected && <div className="listItemSelectscreen" />}
-      <div className="listItemThumbnail">
+      <div className="listItemThumbnail" style={{ position: 'relative' }}>
         {isVisible && (
-          <img
-            src={file.thumb_key || placeholder}
-            alt={`${file.filename}`}
-            className={isLoaded ? "loaded" : ""}
-            onLoad={() => setIsLoaded(true)}
-            onError={(e) => {
-              e.target.src = placeholder;
-              setIsLoaded(true);
-            }}
-          />
+          imgSrc ? (
+            <img
+              src={imgSrc}
+              alt={`${file.filename}`}
+              className={isLoaded ? "loaded" : ""}
+              onLoad={() => setIsLoaded(true)}
+              onError={() => {
+                if (isVideo && imgSrc !== videoImage) {
+                  setImgSrc(videoImage);
+                } else {
+                  setImgSrc(null);
+                  setIsLoaded(true);
+                }
+              }}
+            />
+          ) : (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+            </svg>
+          )
         )}
       </div>
       <div className="listItemInfo">
