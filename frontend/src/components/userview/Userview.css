@@ -34,7 +34,7 @@
  * ------------------------------------------------------------------ */
 /* userActions and sortControls migrated to UserActions component */
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .album-list {
         grid-template-columns: 1fr 1fr;
         gap: 0.25rem;

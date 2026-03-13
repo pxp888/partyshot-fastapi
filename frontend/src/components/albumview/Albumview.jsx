@@ -37,7 +37,7 @@ function Albumview(currentUser) {
   const [viewType, setViewType] = useState(
     localStorage.getItem("viewType") || "icon",
   );
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 900px)");
 
   const handleViewTypeChange = (type) => {
     setViewType(type);

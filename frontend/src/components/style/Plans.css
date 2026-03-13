@@ -196,7 +196,7 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .pricing-section {
         padding: 2rem 1rem;
     }

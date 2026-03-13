@@ -177,7 +177,7 @@
     text-decoration: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .album-item {
         border-radius: 0px;
         box-shadow: none;

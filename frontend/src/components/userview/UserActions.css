@@ -84,7 +84,7 @@
     margin: 0 10px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .user-actions-system {
         /* If we want to keep it floating at bottom on mobile like Userview did before */
         position: fixed;

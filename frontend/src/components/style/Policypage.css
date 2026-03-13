@@ -61,7 +61,7 @@
 }
 
 /* Mobile adjustments */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .policy-page {
         padding: 5vh 1.5rem;
     }

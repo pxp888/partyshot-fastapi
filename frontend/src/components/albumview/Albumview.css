@@ -87,7 +87,7 @@
 }
 
 /* ----- Responsive tweaks ------------------------------------------- */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .fileList {
         margin: 0 var(--gap-sm);
         gap: var(--gap-sm);
