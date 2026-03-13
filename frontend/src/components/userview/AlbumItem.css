@@ -135,6 +135,12 @@
     margin-top: auto;
     padding-top: 1.6rem;
     justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.album-item:hover .album-actions {
+    opacity: 1;
 }
 
 .status-word {
