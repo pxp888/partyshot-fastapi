@@ -666,6 +666,13 @@ def addPhoto(data: dict) -> dict | None:
                     ),
                 )
                 row = cursor.fetchone()
+                # Update the album's created_at time
+                if row:
+                    cursor.execute(
+                        "UPDATE albums SET created_at = CURRENT_TIMESTAMP WHERE id = %s",
+                        (row[2],),  # row[2] is album_id
+                    )
+
                 # If we got a row, fetch the username for the user_id we just inserted.
                 if row:
                     cursor.execute(

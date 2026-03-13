@@ -82,7 +82,11 @@
 }
 
 @media (max-width: 768px) {
-    .register-btn {
+    /* .register-btn {
         display: none;
+    } */
+
+    .topLeft a {
+        font-size: 1.2rem;
     }
 }
