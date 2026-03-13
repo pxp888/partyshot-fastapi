@@ -13,7 +13,7 @@ env/
 venv/
 pip-log.txt
 pip-delete-this-directory.txt
-env2.py
+backend/env2.py
 
 
 # Docker
