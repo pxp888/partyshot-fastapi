@@ -6,7 +6,10 @@ const CookieConsent = () => {
   const { showMessage } = useMessage();
 
   useEffect(() => {
-    // Disable cookie consent locally
+    if (import.meta.env.DEV) {
+      return;
+    }
+
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return;
     }
