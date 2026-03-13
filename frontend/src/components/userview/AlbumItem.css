@@ -39,11 +39,11 @@
 
 
 /* Animated pulsing dot in the top right of the info section */
-.album-item.is-open .info::after {
+/* .album-item.is-open .info::after {
     content: '';
     position: absolute;
     top: 10px;
-    left: 10px;
+    right: 10px;
     width: 8px;
     height: 8px;
     background-color: white;
@@ -67,7 +67,28 @@
         transform: scale(1);
         opacity: 1;
     }
+} */
+
+
+
+.album-item.is-open .thumbnail-container::before {
+    content: 'open';
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    z-index: 10;
 }
+
+
 
 
 

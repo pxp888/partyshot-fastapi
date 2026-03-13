@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMessage } from "../MessageBoxContext";
 import "./AlbumItem.css";
-import blankImage from "../../assets/blank.jpg";
 
 function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
   const navigate = useNavigate();
@@ -37,7 +36,7 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
 
   useEffect(() => {
     if (!isVisible) return;
-    setThumbnailUrl(album.thumbnail || blankImage);
+    setThumbnailUrl(album.thumbnail);
   }, [album.thumbnail, isVisible]);
 
   function handleClick(event) {
@@ -94,17 +93,23 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
       onDrop={handleDrop}
     >
       <div className="thumbnail-container">
-        {isVisible && thumbnailUrl && (
-          <img
-            src={thumbnailUrl}
-            alt={album.name}
-            className={isLoaded ? "loaded" : ""}
-            onLoad={() => setIsLoaded(true)}
-            onError={(e) => {
-              e.target.src = blankImage;
-              setIsLoaded(true);
-            }}
-          />
+        {isVisible && (
+          thumbnailUrl ? (
+            <img
+              src={thumbnailUrl}
+              alt={album.name}
+              className={isLoaded ? "loaded" : ""}
+              onLoad={() => setIsLoaded(true)}
+              onError={() => {
+                setThumbnailUrl(null);
+                setIsLoaded(true);
+              }}
+            />
+          ) : (
+            <svg width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+            </svg>
+          )
         )}
       </div>
       <div className="info">
