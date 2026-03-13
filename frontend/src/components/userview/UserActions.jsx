@@ -57,15 +57,16 @@ const UserActions = ({
           )}
 
           {currentUser && (
-            <button 
-              className={`dt-tab ${sortField === 'my_photos' ? 'active' : ''}`} 
+            <button
+              className={`dt-tab ${sortField === 'my_photos' ? 'active' : ''}`}
               onClick={toggleMyPhotos}
             >
               <span className="dt-tab-icon">□</span>
-              <span className="dt-tab-label">All Photos</span>
+              <span className="dt-tab-label">
+                {sortField === 'my_photos' ? 'my albums' : 'my photos'}
+              </span>
             </button>
-          )}
-        </div>
+          )}        </div>
 
         <div className="toolbar-right">
           <button 

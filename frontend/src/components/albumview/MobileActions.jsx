@@ -108,7 +108,7 @@ const MobileActions = ({
                   onClick={() => handleViewTypeChange("grid")}
                 >
                   <span className="tab-icon">⊞</span>
-                  <span className="tab-label">Grid</span>
+                  <span className="tab-label">Large</span>
                 </button>
                 <div className="toolbar-divider" />
                 <button className="toolbar-tab" onClick={cycleSortField}>

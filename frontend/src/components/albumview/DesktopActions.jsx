@@ -141,7 +141,7 @@ const DesktopActions = ({
             onClick={() => handleViewTypeChange("grid")}
           >
             <span className="dt-tab-icon">⊞</span>
-            <span className="tab-label">Grid</span>
+            <span className="tab-label">Large</span>
           </button>
           
           <div className="dt-divider" />
