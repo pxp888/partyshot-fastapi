@@ -18,73 +18,81 @@
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OMQ2AABAAsSNhYMEBIpD4ArCJDyywEZJWQZeZOaorAAD+4l6rrTq/ngAA8Nr+AEqmA1hl45m5AAAAAElFTkSuQmCC)  
 **🚀 Key Features**  
 - **🔐 Secure Authentication**: JWT-based user accounts with persistent sessions and authorized WebSocket connections.  
-- **📁 Collaborative Albums**: Create albums with granular permissions:  
-- **Open**: Allow anyone to contribute photos to your event.  
-- **Profile**: Showcase your best work on your profile.  
-- **☁️ Direct R2 Uploads**: Files bypass the server and go straight to Cloudflare R2 via presigned URLs, ensuring maximum performance and minimal server load.  
-- **⚡ Real-time Updates**: Instant UI refreshes across all devices using Redis Pub/Sub and WebSockets.  
+- **💳 Integrated Payments**: Subscription-based model powered by **Stripe**, featuring tiered storage plans and a self-service billing portal.  
+- **📁 Collaborative Albums**: Create albums with granular privacy settings:  
+  - **Open**: Allow anyone to contribute photos to your event.  
+  - **Private**: Restrict access to authorized users.  
+  - **Profile**: Showcase your best work publicly on your profile.  
+- **☁️ Direct-to-R2 Uploads**: Files bypass the server and go straight to Cloudflare R2 via presigned URLs, ensuring maximum performance. Supports original, mid-sized, and thumbnail assets.  
+- **⚡ Real-time Updates**: Instant UI refreshes across all devices using Redis Pub/Sub and WebSockets (via `react-use-websocket`).  
 - **🖼️ Smart Metadata**: Automatic tracking of photo sizes and dimensions via background workers.  
-- **🛠️ Cloud-Native Stack**: Fully serverless container architecture with zero open inbound ports.  
+- **📦 Bulk Operations**: Download entire albums as a ZIP file (using JSZip) or manage multiple files simultaneously.  
+- **📱 Mobile Optimized**: Responsive design with touch-friendly navigation and QR code sharing for instant album access.  
+- **📧 Notifications**: Automated email delivery for contact form submissions and secure password recovery.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OQQmAABRAsSfYxZo/kSGMYQLPJrCCNxG2BFtmZquOAAD4i3Ot7mr/egIAwGvXA4qrBdGuSdJuAAAAAElFTkSuQmCC)  
 **🛠️ Tech Stack**  
 **Backend & Infrastructure**  
 - **FastAPI**: Asynchronous Python framework for high-concurrency APIs.  
-- **AWS Fargate**: Serverless container execution for API and background workers.  
-- **Amazon RDS**: Managed PostgreSQL database for reliable metadata storage.  
-- **Amazon ElastiCache (Redis OSS)**: Powering real-time messaging and WebSocket synchronization.  
-- **Arq**: Distributed background job processing.  
+- **PostgreSQL**: Reliable metadata storage with a focus on atomic transactions and storage tracking.  
+- **AWS Fargate**: Serverless container execution for the API and background workers.  
+- **Amazon ElastiCache (Redis)**: Powering real-time messaging, WebSocket synchronization, and job queuing.  
+- **Arq**: Distributed background job processing for image validation and email delivery.  
 - **Cloudflare R2**: Scalable S3-compatible object storage for high-resolution images.  
 - **Cloudflare Tunnel**: Secure outbound-only connection bypassing the need for AWS ALBs or open ports.  
+- **Stripe API**: Secure payment processing and subscription lifecycle management.  
 **Frontend**  
-- **React 18**: Modern UI development with Hooks and Context API.  
-- **Vite**: Lightning-fast build tool and development server.  
-- **Vanilla CSS**: Premium, custom-crafted styles with a focus on aesthetics.  
+- **React 19**: Latest React features for a highly interactive and performant UI.  
+- **Vite 7**: Lightning-fast build tool and development server.  
+- **Vanilla CSS**: Premium, custom-crafted styles for a unique and modern aesthetic.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANElEQVR4nO3OQQmAABRAsad4FCtY9ecwnkms4E2ELcGWmTmrKwAA/uLeqrU6vp4AAPDa/gDzUgM9+S8z3AAAAABJRU5ErkJggg==)  
 **Performance Optimizations**  
-- **Client‑side thumbnail generation** – Thumbnails are created in the browser before upload, eliminating server‑side image processing.  
-- **Direct R2 uploads** – Images are sent straight to R2 via presigned URLs, bypassing the application server.  
-- **Background size sync** – A worker polls R2 for photo and thumbnail sizes and updates the database with this metadata.  
-- **Stateless Design** – Containers carry no local state, allowing for seamless horizontal scaling (ASG).  
-**Browsing Experience**  
-- The front‑end fetches presigned URLs for thumbnails and full‑size images, while the backend caches them in **Redis** to avoid repeated R2 look‑ups.  
-- Album items that are off‑screen are not rendered (lazy loading).  
-- Thumbnails are paginated; the client requests presigned URLs only for thumbnails currently in view.  
-**Downloads & Deletions**  
-- Files are downloaded directly from R2.
-- Background workers also handle deletion of items from R2, keeping storage in sync with the database.  
+- **Client-side asset generation**: Thumbnails and mid-sized previews are created in the browser before upload, eliminating server-side image processing costs.  
+- **Presigned URL Caching**: The backend caches retrieval URLs in Redis to minimize R2 metadata lookups.  
+- **Lazy Loading & Virtualization**: Only off-screen album items are not rendered, and thumbnails are paginated based on viewport visibility.  
+- **Stateless Architecture**: Horizontal scaling enabled via ASG and stateless containers.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OMQ2AABAAsSNBCkJfFSqwwIgHRiywEZJWQZeZ2ao9AAD+4lyruzq+ngAA8Nr1AOH8BeZxN/IIAAAAAElFTkSuQmCC)  
+**💰 Subscription Plans**  
+| Plan | Storage | Features |
+| :--- | :--- | :--- |
+| **Free** | 100 MB | Core sharing features, collaborative albums. |
+| **Starter** | 1 GB | Increased storage for personal events. |
+| **Basic** | 5 GB | Standard storage for active photographers. |
+| **Pro** | 100 GB | Professional grade storage for large events and studios. |  
+![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OMQ2AABAAsSNBCUpfDq4wwIAABiywEZJWQZeZ2ao9AAD+4liruzq/ngAA8Nr1ABweBgdur/QFAAAAAElFTkSuQmCC)  
 **⚙️ Getting Started**  
 **Prerequisites**  
 - Podman or Docker  
 - AWS Account (ECR, ECS, RDS, ElastiCache)  
 - Cloudflare Account (R2, Tunnels)  
-- Node.js (for local frontend development)  
+- Stripe Account (for payments)  
+- Gmail App Password (for email notifications)  
+**Local Development**  
+1. **Configure Environment**: Create a `.env` file in `backend/` based on `blankenv.py`.  
+2. **Frontend Setup**:  
+   ```bash
+   cd frontend && npm install && npm run dev
+   ```
+3. **Backend Setup**:  
+   ```bash
+   pip install -r requirements.txt
+   python backend/main.py
+   ```
 **Cloud Deployment Workflow**  
-1. **Build the Frontend**:  
+1. **Build and Push**:  
    ```bash
-   cd frontend && npm run build
-   cp -r dist/* ../backend/static/
+   ./buildup.sh  # Build frontend, copy to static, and push container to ECR
    ```
-2. **Build and Push the Image**:  
-   ```bash
-   podman build --platform linux/amd64 -t shareshot1 .
-   podman tag localhost/shareshot1:latest YOUR_ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/shareshot1:latest
-   podman push YOUR_ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/shareshot1:latest
-   ```
-3. **Trigger Redeployment**:  
-   Update the ECS Service with the **"Force new deployment"** option to pull the latest image.  
-4. **Environment Configuration**:  
-   The application uses a "Smart" `env.py` that handles injection from AWS ECS Task Definitions. Key variables include `DB_HOST`, `REDIS_URL` (Full DSN), and `REDIS_URL2` (Full DSN).  
+2. **Redeploy**: Update the ECS Service with **"Force new deployment"** to pull the latest image.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANUlEQVR4nO3OQQmAABRAsSdYxZ4/mJjEsxE8W8GbCFuCLTOzVXsAAPzFuVZ3dXw9AQDgtesBxPEF3bv7x0IAAAAASUVORK5CYII=)  
 **📦 Infrastructure Notes**  
 - **Fargate Services**: Split into `shareshot-api` (API + Tunnel sidecar) and `shareshot-worker` (arq background tasks).  
-- **Networking**: Tasks reside in Public Subnets with security groups restricting all inbound traffic. Access is mediated exclusively via Cloudflare Tunnels.  
-- **Redis Connectivity**: Uses a single-node ElastiCache (Non-Cluster Mode) to avoid `CROSSSLOT` errors with arq.  
+- **Security**: Zero open inbound ports on AWS; all traffic is routed through encrypted Cloudflare Tunnels.  
+- **Redis Connectivity**: Uses non-cluster mode to ensure compatibility with `arq` atomic operations.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OMQ2AABAAsSNBCUpfDq4wwIAABiywEZJWQZeZ2ao9AAD+4liruzq/ngAA8Nr1ABweBgdur/QFAAAAAElFTkSuQmCC)  
 **🗺️ Roadmap**  
-- Mobile-first progressive web app (PWA) features.  
-- Native Cloudflare Pages hosting for frontend assets.  
-- Enhanced monitoring via CloudWatch dashboards.  
+- Mobile-first Progressive Web App (PWA) installation.  
+- Native Cloudflare Pages hosting for frontend assets to reduce Fargate load.  
+- Advanced analytics dashboard for album engagement.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANUlEQVR4nO3OMQ2AUBBAsUfyNTCi9VwgEA3sWGAjJK2CbjNzVGcAAPzFtapV7V9PAAB47X4AEW4ELQDBN+AAAAAASUVORK5CYII=)  
 **📄 License**  
 Individual/Private Use. See repository owner for details.  
