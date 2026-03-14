@@ -127,21 +127,21 @@ const DesktopActions = ({
             onClick={() => handleViewTypeChange("list")}
           >
             <span className="dt-tab-icon">☰</span>
-            <span className="tab-label">List</span>
+            <span className="dt-tab-label">List</span>
           </button>
           <button 
             className={`dt-tab ${viewType === 'icon' ? 'active' : ''}`}
             onClick={() => handleViewTypeChange("icon")}
           >
             <span className="dt-tab-icon">▦</span>
-            <span className="tab-label">Icons</span>
+            <span className="dt-tab-label">Icons</span>
           </button>
           <button 
             className={`dt-tab ${viewType === 'grid' ? 'active' : ''}`}
             onClick={() => handleViewTypeChange("grid")}
           >
             <span className="dt-tab-icon">⊞</span>
-            <span className="tab-label">Large</span>
+            <span className="dt-tab-label">Large</span>
           </button>
           
           <div className="dt-divider" />

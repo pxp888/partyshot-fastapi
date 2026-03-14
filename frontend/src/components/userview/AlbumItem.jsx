@@ -132,21 +132,21 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
           </p>
         </div>
 
-        <div className="album-actions hideMobile">
+        <div className="ai-controls hideMobile">
           <span
-            className={`status-word ${album.open ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
+            className={`ai-status ${album.open ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
             onClick={handleToggleOpen}
           >
             open
           </span>
           <span
-            className={`status-word ${album.profile ? "selected" : ""} ${isOwnProfile ? "clickable" : ""}`}
+            className={`ai-status ${album.profile ? "selected" : ""} ${isOwnProfile ? "clickable" : ""}`}
             onClick={handleToggleProfile}
           >
             profile
           </span>
           <span
-            className={`status-word ${album.private ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
+            className={`ai-status ${album.private ? "selected" : ""} ${!isOtherUser ? "clickable" : ""}`}
             onClick={handleTogglePrivate}
           >
             private

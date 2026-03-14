@@ -33,10 +33,6 @@
     color: white;
 }
 
-.album-item.not-profile .clickable {
-    color: white;
-}
-
 
 /* Animated pulsing dot in the top right of the info section */
 /* .album-item.is-open .info::after {
@@ -103,10 +99,6 @@
 .album-item.is-private p {
     /* color: gainsboro; */
     color: rgb(200, 200, 200);
-}
-
-.album-item.is-private .clickable {
-    color: white;
 }
 
 .thumbnail-container {
@@ -188,7 +180,7 @@
     background: rgba(255, 255, 255, 0.05);
 } */
 
-.album-actions {
+.ai-controls {
     display: flex;
     gap: 0.6rem;
     margin-top: auto;
@@ -198,11 +190,11 @@
     transition: opacity 0.2s ease-in-out;
 }
 
-.album-item:hover .album-actions {
+.album-item:hover .ai-controls {
     opacity: 1;
 }
 
-.status-word {
+.ai-status {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: lowercase;
@@ -210,7 +202,7 @@
     border-radius: 100px;
     border: 1px solid transparent;
     background: rgba(255, 255, 255, 0.08);
-    color: #aaa;
+    color: #999;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: default;
     user-select: none;
@@ -221,17 +213,17 @@
     line-height: 1;
 }
 
-.album-actions .status-word.selected {
+.ai-controls .ai-status.selected {
     color: white !important;
     background: rgba(255, 255, 255, 0.15) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.status-word.clickable {
+.ai-status.clickable {
     cursor: pointer;
 }
 
-.album-actions .clickable:hover {
+.ai-controls .clickable:hover {
     text-decoration: none;
 }
 

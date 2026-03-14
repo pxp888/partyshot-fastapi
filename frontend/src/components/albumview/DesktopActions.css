@@ -75,7 +75,6 @@
 .dt-tab-label {
     font-size: 0.65rem;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
 }
@@ -206,7 +205,6 @@
 .item-label {
     font-size: 0.6rem;
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: 0.03em;
     white-space: nowrap;
 }

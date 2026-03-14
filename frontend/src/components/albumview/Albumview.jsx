@@ -461,9 +461,9 @@ function Albumview(currentUser) {
           </div>
           <div className="vert right">
 
-            <div className="album-controls">
+            <div className="av-controls">
               <span
-                className={`status-word ${album.open ? "active" : ""} ${isOwner ? "clickable" : ""}`}
+                className={`av-status ${album.open ? "active" : ""} ${isOwner ? "clickable" : ""}`}
                 data-type="open"
                 onClick={() => {
                   if (isOwner) toggleOpen();
@@ -472,7 +472,7 @@ function Albumview(currentUser) {
                 open
               </span>
               <span
-                className={`status-word ${album.profile ? "active" : ""} ${isOwner || album.subscribed ? "clickable" : ""}`}
+                className={`av-status ${album.profile ? "active" : ""} ${isOwner || album.subscribed ? "clickable" : ""}`}
                 data-type="profile"
                 onClick={() => {
                   if (isOwner || album.subscribed) toggleProfile();
@@ -481,7 +481,7 @@ function Albumview(currentUser) {
                 profile
               </span>
               <span
-                className={`status-word ${album.private ? "active" : ""} ${isOwner ? "clickable" : ""}`}
+                className={`av-status ${album.private ? "active" : ""} ${isOwner ? "clickable" : ""}`}
                 data-type="private"
                 onClick={() => {
                   if (isOwner) togglePrivate();

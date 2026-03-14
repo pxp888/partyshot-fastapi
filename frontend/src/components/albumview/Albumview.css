@@ -202,25 +202,25 @@
 .adetails .username {
     font-size: 1rem;
     color: var(--primary-color);
-    font-weight: 600;
+    font-weight: 500;
 }
 
-.album-controls {
+.av-controls {
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
     align-items: center;
 }
 
-.status-word {
-    font-size: 0.75rem;
-    font-weight: 600;
+.av-status {
+    font-size: .9rem;
+    font-weight: 500;
     text-transform: lowercase;
-    padding: 4px 12px;
-    border-radius: 100px;
-    border: 1px solid transparent;
-    background: rgba(0, 0, 0, 0.04);
-    color: #777;
+    padding-right: .8rem;
+    border-radius: 10px;
+    border: none;
+    background: none;
+    color: #999;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: default;
     user-select: none;
@@ -230,18 +230,22 @@
     line-height: 1;
 }
 
-.status-word.active {
-    background: rgba(0, 0, 0, 0.08);
-    color: #222;
-    border-color: rgba(0, 0, 0, 0.1);
+.av-status.active {
+    background: none;
+    color: var(--bright-color);
+    color: black;
+    border: none;
+    /* border: 1px solid rgba(150, 150, 150, 1) !important;
+    border-radius: 100px; */
+
 }
 
-.status-word.clickable {
+.av-status.clickable {
     cursor: pointer;
 }
 
-.album-controls .clickable:hover {
-    text-decoration: none;
+.av-controls .clickable:hover {
+    text-decoration: underline;
 }
 
 .spread {
