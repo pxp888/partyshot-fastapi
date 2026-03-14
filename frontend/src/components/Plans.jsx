@@ -57,9 +57,9 @@ function Plans() {
             <tbody>
               {[
                 { name: "Free", storage: "1 GB", price: "Free" },
-                { name: "Starter", storage: "10 GB", price: "50 SEK/mo" },
-                { name: "Basic", storage: "50 GB", price: "100 SEK/mo" },
-                { name: "Pro", storage: "250 GB", price: "200 SEK/mo" },
+                { name: "Starter", storage: "5 GB", price: "2 € / month" },
+                { name: "Basic", storage: "15 GB", price: "5 € / month" },
+                { name: "Pro", storage: "50 GB", price: "10 € / month" },
               ].map((plan, idx) => (
                 <tr key={idx}>
                   <td>

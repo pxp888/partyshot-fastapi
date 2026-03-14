@@ -67,6 +67,7 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
               type="text"
               value={credentials.username}
               onChange={handleChange}
+              autoComplete="username"
               required
             />
           </div>
@@ -78,6 +79,7 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
               type="email"
               value={credentials.email}
               onChange={handleChange}
+              autoComplete="email"
               required
             />
           </div>
@@ -89,6 +91,7 @@ function RegisterBox({ setCurrentUser, setShowRegister }) {
               type="password"
               value={credentials.password}
               onChange={handleChange}
+              autoComplete="new-password"
               required
             />
           </div>

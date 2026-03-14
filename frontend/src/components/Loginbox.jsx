@@ -80,7 +80,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
 
         <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
           {!showForgotPassword ? (
-            <>
+            <React.Fragment key="login-fields">
               <div className="field">
                 <label htmlFor="username">Username</label>
                 <input
@@ -89,6 +89,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
                   type="text"
                   value={credentials.username}
                   onChange={handleChange}
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -100,15 +101,16 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
                   type="password"
                   value={credentials.password}
                   onChange={handleChange}
+                  autoComplete="current-password"
                   required
                 />
               </div>
               <button className="btn" type="submit">
                 Log In
               </button>
-            </>
+            </React.Fragment>
           ) : (
-            <>
+            <React.Fragment key="reset-fields">
               <div className="field">
                 <label htmlFor="username">Username</label>
                 <input
@@ -117,6 +119,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
                   type="text"
                   value={credentials.username}
                   onChange={handleChange}
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -125,7 +128,7 @@ function Loginbox({ setCurrentUser, setShowLogin }) {
               <button className="btn" type="submit">
                 Send Code
               </button>
-            </>
+            </React.Fragment>
           )}
           <a
             className="forgotButton"
