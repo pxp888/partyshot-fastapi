@@ -563,6 +563,34 @@ async def getPhotos(websocket, data, username):
     await websocket.send_json(message)
 
 
+async def getDownloadList(websocket, data, username):
+    albumcode = data["payload"]["albumcode"]
+
+    album = db.getAlbum(albumcode)
+    if not album:
+        logging.info("getDownloadList - no album found")
+        return
+    user_id_filter = None
+    if album["private"] and album["username"] != username:
+        user_id = await get_user_id(username)
+        if user_id and db.check_user_has_photos_in_album(user_id, album["id"]):
+            user_id_filter = user_id
+        else:
+            logging.info("getDownloadList - not allowed")
+            return
+
+    photos_data = db.getDownloadList(
+        album["id"],
+        user_id_filter=user_id_filter,
+    )
+
+    if photos_data:
+        photos_data = await attach_presigned_urls(photos_data)
+
+    message = {"action": "getDownloadList", "payload": photos_data}
+    await websocket.send_json(message)
+
+
 async def deletePhoto(websocket, data, username):
     albumcode = data["payload"]["album_code"]
     photo_id = data["payload"]["photo_id"]
@@ -738,6 +766,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await deleteAlbum(websocket, payload, username)
                 elif action == "getPhotos":
                     await getPhotos(websocket, payload, username)
+                elif action == "getDownloadList":
+                    await getDownloadList(websocket, payload, username)
                 elif action == "getAlbum":
                     await getAlbum(websocket, payload, username)
                 elif action == "deletePhoto":

@@ -544,6 +544,34 @@ def getPhotos(
     }
 
 
+def getDownloadList(
+    album_id: int,
+    user_id_filter: int = None,
+) -> dict | None:
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            filter_clause = "AND p.user_id = %s" if user_id_filter else ""
+            query = f"""
+                SELECT p.s3_key, p.filename
+                FROM photos p
+                WHERE p.album_id = %s {filter_clause}
+                ORDER BY p.created_at DESC;
+            """
+            params = (album_id, user_id_filter) if user_id_filter else (album_id,)
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+
+    photos = []
+    for row in rows:
+        photos.append(
+            {
+                "s3_key": row[0],
+                "filename": row[1],
+            }
+        )
+    return {"photos": photos}
+
+
 async def deleteAlbum(username: str, code: str) -> str:
     user = getUser(username)
     if not user:

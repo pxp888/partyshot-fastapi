@@ -90,14 +90,14 @@ function Albumview(currentUser) {
     fetchPhotos(0);
   }, [albumcode, sortField, sortOrder]);
 
-  const fetchPhotos = (offset, customLimit) => {
+  const fetchPhotos = (offset) => {
     if (!albumcode) return;
     setIsFetching(true);
     sendJsonMessage({
       action: "getPhotos",
       payload: {
         albumcode: albumcode,
-        limit: customLimit || limit,
+        limit: limit,
         offset: offset,
         sortField: sortField,
         sortOrder: sortOrder,
@@ -125,16 +125,20 @@ function Albumview(currentUser) {
         const batch = payload?.photos ?? [];
         setPhotos((prev) => {
           const newPhotos = payload.offset === 0 ? batch : [...prev, ...batch];
-          if (isDownloadingAll) {
-            // Trigger ZIP after photos are updated
-            setTimeout(() => startZipProcess(newPhotos), 100);
-            setIsDownloadingAll(false);
-          }
           return newPhotos;
         });
         setTotalPhotos(payload.total ?? 0);
         setHasMore(payload.offset + batch.length < payload.total);
         setIsFetching(false);
+        break;
+      }
+
+      case "getDownloadList": {
+        const photosToDownload = payload?.photos ?? [];
+        if (isDownloadingAll) {
+          startZipProcess(photosToDownload);
+          setIsDownloadingAll(false);
+        }
         break;
       }
 
@@ -264,13 +268,11 @@ function Albumview(currentUser) {
   function downloadAll(e) {
     e.preventDefault();
     showConfirm("Download the full album?", "Download Album", () => {
-      if (photos.length >= totalPhotos && totalPhotos > 0) {
-        // Already have all photos, just ZIP them
-        startZipProcess(photos);
-      } else {
-        setIsDownloadingAll(true);
-        fetchPhotos(0, 5000);
-      }
+      setIsDownloadingAll(true);
+      sendJsonMessage({
+        action: "getDownloadList",
+        payload: { albumcode: albumcode },
+      });
     });
   }
 
