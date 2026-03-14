@@ -204,10 +204,51 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
       });
   };
 
+  const handleDownload = (e) => {
+    e.stopPropagation();
+    const photo = files[focus];
+    if (!photo || !photo.s3_key) return;
+
+    fetch(photo.s3_key)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = photo.filename || "download";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      })
+      .catch((err) => console.error("Download failed:", err));
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
   if (focus === -1) return null;
 
   return (
     <div className="imageView" {...handlers} onClick={handleClick}>
+      <div
+        className={`imageActions ${showDetails ? "visible" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="actionRow">
+          <span className="actionIcon" onClick={handleDownload} title="Download">
+            ⇓
+          </span>
+          <span className="actionIcon" onClick={handleCopy} title={copyFeedback}>
+            {copyFeedback === "copied!" ? "✓" : "⇪"}
+          </span>
+          <span className="actionIcon delete" onClick={handleDelete} title="Delete">
+            ⊘
+          </span>
+        </div>
+      </div>
       <div className="primo" onClick={(e) => e.stopPropagation()}>
         {isVideo ? (
           <video
@@ -249,11 +290,6 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
               })
               .replace(/ (AM|PM)$/, (match) => match.toLowerCase())}
             {files[focus].size && ` • ${formatBytes(files[focus].size)}`}
-          </span>
-        </div>
-        <div className="detailRow">
-          <span className="copyLink" onClick={handleCopy}>
-            {copyFeedback}
           </span>
         </div>
       </div>
