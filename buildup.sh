@@ -1,3 +1,7 @@
+cd frontend
+npm run build
+cd ..
+
 cd backend
 python upload_static.py
 cd ..
