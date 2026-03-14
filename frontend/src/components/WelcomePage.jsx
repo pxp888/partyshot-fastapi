@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import "./style/WelcomePage.css";
 import Footer from "./Footer";
+import screen1 from "../assets/screen1.webp";
+import screen2 from "../assets/screen2.webp";
+import screen3 from "../assets/screen3.webp";
+import screen4 from "../assets/screen4.webp";
 
 function Welcomepage() {
   return (
@@ -32,6 +36,12 @@ function Welcomepage() {
           >
             Sample Album
           </button>
+        </div>
+      </section>
+
+      <section className="mid-screenshot">
+        <div className="shot-container">
+          <img src={screen2} alt="Profile View" className="screenshot" />
         </div>
       </section>
 
@@ -132,42 +142,56 @@ function Welcomepage() {
         </div>
       </section>
 
+      <section className="mid-screenshot alternate">
+        <div className="shot-container">
+          <img src={screen1} alt="Album View" className="screenshot" />
+        </div>
+      </section>
+
       <section className="works">
-        <span className="t1">How it works</span>
-        <h2>Three simple controls.</h2>
-        <div className="worklist">
-          <div className="workitem">
-            <h3 className="name">Open</h3>
-            <div className="workitem-content">
-              <h4 className="head">Allow uploads from others</h4>
-              <p className="detail">
-                Users can upload photos to any albums marked <strong>open</strong>.
-              </p>
-            </div>
+        <div className="works-container">
+          <div className="works-image">
+            <img src={screen3} alt="How it works" className="side-screenshot" />
+            <img src={screen4} alt="Controls" className="side-screenshot" />
           </div>
-          <div className="workitem">
-            <h3 className="name">Profile</h3>
-            <div className="workitem-content">
-              <h4 className="head">Let others see your content</h4>
-              <p className="detail">
-                Every user has a <strong>profile</strong> with albums they choose
-                to show. Albums are visible to anyone with the URL.
-              </p>
-            </div>
-          </div>
-          <div className="workitem">
-            <h3 className="name">Private</h3>
-            <div className="workitem-content">
-              <h4 className="head">Other users can be blocked, even with the URL</h4>
-              <p className="detail">
-                Other users cannot see photos in private albums unless they
-                uploaded them. Users will <strong>always</strong> be able to see their own
-                photos, even in your private albums.
-              </p>
-              <p className="detail">
-                <strong>Private + open</strong> can be useful for allowing uploads
-                without users seeing the current collection.
-              </p>
+          <div className="works-content">
+            <span className="t1">How it works</span>
+            <h2>Three simple controls.</h2>
+            <div className="worklist">
+              <div className="workitem">
+                <h3 className="name">Open</h3>
+                <div className="workitem-content">
+                  <h4 className="head">Allow uploads from others</h4>
+                  <p className="detail">
+                    Users can upload photos to any albums marked <strong>open</strong>.
+                  </p>
+                </div>
+              </div>
+              <div className="workitem">
+                <h3 className="name">Profile</h3>
+                <div className="workitem-content">
+                  <h4 className="head">Let others see your content</h4>
+                  <p className="detail">
+                    Every user has a <strong>profile</strong> with albums they choose
+                    to show. Albums are visible to anyone with the URL.
+                  </p>
+                </div>
+              </div>
+              <div className="workitem">
+                <h3 className="name">Private</h3>
+                <div className="workitem-content">
+                  <h4 className="head">Other users can be blocked, even with the URL</h4>
+                  <p className="detail">
+                    Other users cannot see photos in private albums unless they
+                    uploaded them. Users will <strong>always</strong> be able to see their own
+                    photos, even in your private albums.
+                  </p>
+                  <p className="detail">
+                    <strong>Private + open</strong> can be useful for allowing uploads
+                    without users seeing the current collection.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
