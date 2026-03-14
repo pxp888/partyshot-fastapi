@@ -7,7 +7,7 @@
 ![screen1](frontend/src/assets/screen1.webp)
 
 
-**shareShots** is a high-performance, real-time photo-sharing platform designed for seamless event photography and collaborative albums. Built with a modern tech stack, it features direct-to-R2 uploads, real-time WebSocket updates, and a glassmorphic React interface.  
+**shareShots** is a high-performance, real-time photo-sharing platform designed for seamless event photography and collaborative albums. Built with a modern tech stack, it features direct-to-R2 uploads, real-time WebSocket updates, and a modern React interface.  
 [www.shareshot.eu](https://www.shareshot.eu/ "https://www.shareshot.eu/")  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANElEQVR4nO3OMQ0AIAwAwZIgBKn1gjJsdGLBABMhuZt+/JaZIyJmAADwi9VP1NMNAABu1AaU4gUeBSGW2wAAAABJRU5ErkJggg==)  
 **✨ Project Preview**  
