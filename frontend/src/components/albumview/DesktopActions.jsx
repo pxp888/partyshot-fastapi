@@ -48,23 +48,6 @@ const DesktopActions = ({
     setActivePane(activePane === pane ? null : pane);
   };
 
-  const cycleSortField = () => {
-    const fields = ["created_at", "filename", "username", "size"];
-    const currentIndex = fields.indexOf(sortField);
-    const nextIndex = (currentIndex + 1) % fields.length;
-    setSortField(fields[nextIndex]);
-  };
-
-  const getSortFieldLabel = () => {
-    switch (sortField) {
-      case "created_at": return "Date";
-      case "filename": return "Name";
-      case "username": return "User";
-      case "size": return "Size";
-      default: return "Sort";
-    }
-  };
-
   return (
     <div className="desktop-actions-system">
       <nav className={`desktop-toolbar ${selectMode ? 'selection-mode' : ''}`}>
@@ -146,20 +129,19 @@ const DesktopActions = ({
           
           <div className="dt-divider" />
           
-          <button className="dt-tab" onClick={cycleSortField}>
+          <button 
+            className={`dt-tab ${activePane === 'sort' ? 'active' : ''}`} 
+            onClick={() => togglePane('sort')}
+          >
             <span className="dt-tab-icon">⇅</span>
-            <span className="dt-tab-label">{getSortFieldLabel()}</span>
-          </button>
-          <button className="dt-tab" onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
-            <span className="dt-tab-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-            <span className="dt-tab-label">{sortOrder === 'asc' ? 'Asc' : 'Desc'}</span>
+            <span className="dt-tab-label">Sort</span>
           </button>
         </div>
       </nav>
 
       {/* Action Pane Area */}
       <div className={`desktop-pane-container ${activePane ? "is-active" : ""}`}>
-        <div className="pane-content">
+        <div className="pane-content" style={activePane === 'sort' ? { paddingRight: '4rem' } : {}}>
           {activePane === "select" && (
             <div className="action-pane">
               <button className="pane-item" onClick={selectAll}>
@@ -177,6 +159,56 @@ const DesktopActions = ({
               <button className="pane-item" onClick={deleteSelected} disabled={!userLoggedIn}>
                 <span className="item-icon">⊘</span>
                 <span className="item-label">Del</span>
+              </button>
+            </div>
+          )}
+
+          {activePane === "sort" && (
+            <div className="action-pane pane-right">
+              <button 
+                className={`pane-item ${sortField === 'created_at' ? 'active' : ''}`} 
+                onClick={() => setSortField('created_at')}
+              >
+                <span className="item-icon">12</span>
+                <span className="item-label">Date</span>
+              </button>
+              <button 
+                className={`pane-item ${sortField === 'filename' ? 'active' : ''}`} 
+                onClick={() => setSortField('filename')}
+              >
+                <span className="item-icon">Aa</span>
+                <span className="item-label">Name</span>
+              </button>
+              <button 
+                className={`pane-item ${sortField === 'username' ? 'active' : ''}`} 
+                onClick={() => setSortField('username')}
+              >
+                <span className="item-icon">☺</span>
+                <span className="item-label">User</span>
+              </button>
+              <button 
+                className={`pane-item ${sortField === 'size' ? 'active' : ''}`} 
+                onClick={() => setSortField('size')}
+              >
+                <span className="item-icon">▤</span>
+                <span className="item-label">Size</span>
+              </button>
+              
+              <div className="pane-divider" />
+              
+              <button 
+                className={`pane-item ${sortOrder === 'asc' ? 'active' : ''}`} 
+                onClick={() => setSortOrder('asc')}
+              >
+                <span className="item-icon">↑</span>
+                <span className="item-label">Asc</span>
+              </button>
+              <button 
+                className={`pane-item ${sortOrder === 'desc' ? 'active' : ''}`} 
+                onClick={() => setSortOrder('desc')}
+              >
+                <span className="item-icon">↓</span>
+                <span className="item-label">Desc</span>
               </button>
             </div>
           )}

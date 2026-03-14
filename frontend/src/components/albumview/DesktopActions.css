@@ -134,6 +134,10 @@
     animation: fadeInPane 0.2s ease-out;
 }
 
+.action-pane.pane-right {
+    justify-content: flex-end;
+}
+
 @keyframes fadeInPane {
     from {
         opacity: 0;
@@ -166,7 +170,7 @@
 }
 
 .pane-item.active {
-    color: var(--bright-color, salmon);
+    color: #fff;
 }
 
 .pane-item:disabled {
