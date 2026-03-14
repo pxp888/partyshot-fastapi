@@ -234,7 +234,10 @@ function Albumview(currentUser) {
     const zip = new JSZip();
 
     const fetchBlob = async (url, filename) => {
-      const res = await fetch(url, { mode: "cors", cache: "no-cache" });
+      const res = await fetch(url, {
+        mode: "cors",
+        cache: "no-cache",
+      });
       if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
       return await res.blob();
     };
@@ -293,7 +296,10 @@ function Albumview(currentUser) {
     const zip = new JSZip();
 
     const fetchBlob = async (url, filename) => {
-      const res = await fetch(url, { mode: "cors", cache: "no-cache" });
+      const res = await fetch(url, {
+        mode: "cors",
+        cache: "no-cache",
+      });
       if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
       return await res.blob();
     };

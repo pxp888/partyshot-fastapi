@@ -4,6 +4,7 @@ import "./style/Imageview.css";
 import MessageBox from "./MessageBox";
 import blankImage from "../assets/blank.jpg";
 import videoImage from "../assets/video.webp";
+import { saveAs } from "file-saver";
 
 function Imageview({ files, focus, setFocus, deletedPhoto }) {
   const [showDetails, setShowDetails] = useState(false);
@@ -168,7 +169,13 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     }
   }, [focus]);
 
-  const handleClick = (e) => {
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    if (focus === -1 || !files) return;
+    setShowDetails(!showDetails);
+  };
+
+  const handleBackgroundClick = (e) => {
     if (focus === -1 || !files) return;
     hide();
   };
@@ -206,19 +213,18 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     const photo = files[focus];
     if (!photo || !photo.s3_key) return;
 
-    fetch(photo.s3_key)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = photo.filename || "download";
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+    // Standard fetch without credentials for compatibility with CORS * policies
+    fetch(photo.s3_key, { mode: "cors" })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.blob();
       })
-      .catch((err) => console.error("Download failed:", err));
+      .then((blob) => {
+        saveAs(blob, photo.filename || "download");
+      })
+      .catch((err) => {
+        console.error("Download failed:", err);
+      });
   };
 
   const handleDelete = (e) => {
@@ -229,7 +235,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   if (focus === -1) return null;
 
   return (
-    <div className="imageView" {...handlers} onClick={handleClick}>
+    <div className="imageView" {...handlers} onClick={handleBackgroundClick}>
       <div
         className={`imageActions ${showDetails ? "visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
@@ -246,7 +252,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           </span>
         </div>
       </div>
-      <div className="primo" onClick={(e) => e.stopPropagation()}>
+      <div className="primo" onClick={handleImageClick}>
         {isVideo ? (
           <video
             src={files[focus].s3_key}
