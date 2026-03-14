@@ -175,7 +175,7 @@ const MobileActions = ({
 
       {/* PERSISTENT MAIN TOOLBAR */}
       <nav className={`mobile-toolbar ${selectMode ? 'selection-mode' : ''}`}>
-        <div className={`toolbar-tab uploader-tab ${!userLoggedIn ? 'disabled' : ''}`}>
+        <div className={`toolbar-tab uploader-tab ${(!userLoggedIn && !album.open) ? 'disabled' : ''}`}>
           {uploader}
           <span className="tab-label">Upload</span>
         </div>

@@ -69,7 +69,7 @@ const DesktopActions = ({
     <div className="desktop-actions-system">
       <nav className={`desktop-toolbar ${selectMode ? 'selection-mode' : ''}`}>
         <div className="toolbar-left">
-          <div className={`dt-tab dt-uploader-tab ${!userLoggedIn ? 'disabled' : ''}`}>
+          <div className={`dt-tab dt-uploader-tab ${(!userLoggedIn && !album.open) ? 'disabled' : ''}`}>
             {uploader}
             <span className="dt-tab-icon">↑</span>
             <span className="dt-tab-label">Upload</span>

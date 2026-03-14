@@ -115,9 +115,9 @@ function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
 }
 
 const Uploader = forwardRef(
-  ({ album, isOwner, disabled, photos, setPhotos, setTotalPhotos, sortOrder },
+  ({ album, isOwner, userLoggedIn, disabled, photos, setPhotos, setTotalPhotos, sortOrder },
     ref) => {
-    const { showMessage } = useMessage();
+    const { showMessage, showConfirm } = useMessage();
     const { albumcode } = useParams();
     const [totalFiles, setTotalFiles] = useState(0);
     const [completedFiles, setCompletedFiles] = useState(0);
@@ -138,13 +138,18 @@ const Uploader = forwardRef(
      * @param {File} file - The user‑selected file.
      */
     async function uploadFile(file) {
+      const token = localStorage.getItem("access_token");
+      const headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       // 1️⃣  Ask for presigned data (returns both original and thumbnail info)
       const presignRes = await fetch("/api/s3-presigned", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+        headers,
         body: new URLSearchParams({
           filename: file.name,
           album_code: album.code,
@@ -251,12 +256,16 @@ const Uploader = forwardRef(
       await Promise.all(uploadTasks);
 
       // 4️⃣  Notify backend of metadata via REST
+      const metaHeaders = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        metaHeaders["Authorization"] = `Bearer ${token}`;
+      }
+
       const metadataRes = await fetch("/api/add-photo-metadata", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          "Content-Type": "application/json",
-        },
+        headers: metaHeaders,
         body: JSON.stringify({
           album_id: album.id,
           filename: file.name,
@@ -267,6 +276,7 @@ const Uploader = forwardRef(
           size: file.size,
           thumb_size: thumbnailBlob ? thumbnailBlob.size : null,
           mid_size: midBlob ? midBlob.size : null,
+          username: userLoggedIn ? undefined : "anonymous",
         }),
       });
 
@@ -301,30 +311,44 @@ const Uploader = forwardRef(
       }
 
       // Convert FileList to a static array so that clearing the input value
-      // (e.target.value = "") doesn't empty the list during processing.
+      // doesn't empty the list during processing (especially for anonymous confirmation)
       const fileArray = Array.from(files);
-      setTotalFiles(fileArray.length);
-      setCompletedFiles(0);
 
-      for (const file of fileArray) {
-        try {
-          await uploadFile(file);
-          setCompletedFiles((prev) => prev + 1);
-        } catch (err) {
-          console.error("Upload failed for file:", file.name, err);
-          if (err.message === "QUOTA_EXCEEDED") {
-            break; // Stop further uploads in this batch
+      const executeUpload = async () => {
+        setTotalFiles(fileArray.length);
+        setCompletedFiles(0);
+
+        for (const file of fileArray) {
+          try {
+            await uploadFile(file);
+            setCompletedFiles((prev) => prev + 1);
+          } catch (err) {
+            console.error("Upload failed for file:", file.name, err);
+            if (err.message === "QUOTA_EXCEEDED") {
+              break; // Stop further uploads in this batch
+            }
           }
         }
-      }
 
-      // Reset progress after a delay
-      setTimeout(() => {
-        setTotalFiles(0);
-        setCompletedFiles(0);
-        setSpaceRemaining(null);
-      }, 3000);
+        // Reset progress after a delay
+        setTimeout(() => {
+          setTotalFiles(0);
+          setCompletedFiles(0);
+          setSpaceRemaining(null);
+        }, 3000);
+      };
+
+      if (!userLoggedIn && !isOwner) {
+        showConfirm(
+          "If you upload without logging in you are giving complete control to the album owner.",
+          "Anonymous Upload",
+          executeUpload
+        );
+      } else {
+        executeUpload();
+      }
     };
+
 
     const inputRef = useRef();
 

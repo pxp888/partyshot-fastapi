@@ -520,7 +520,8 @@ function Albumview(currentUser) {
               album={album}
               ref={uploaderRef}
               isOwner={isOwner}
-              disabled={!userLoggedIn}
+              userLoggedIn={userLoggedIn}
+              disabled={!isOwner && !album.open}
               photos={photos}
               setPhotos={setPhotos}
               setTotalPhotos={setTotalPhotos}
@@ -554,7 +555,8 @@ function Albumview(currentUser) {
               album={album}
               ref={uploaderRef}
               isOwner={isOwner}
-              disabled={!userLoggedIn}
+              userLoggedIn={userLoggedIn}
+              disabled={!isOwner && !album.open}
               photos={photos}
               setPhotos={setPhotos}
               setTotalPhotos={setTotalPhotos}

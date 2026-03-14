@@ -213,6 +213,11 @@ def init_db() -> None:
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD, "admin")
     setUserData(env.ADMIN_USERNAME, user_class="admin")
 
+    # create anonymous user if it doesn't exist
+    if getUser("anonymous") is None:
+        setUser("anonymous", "anonymous@shareshot.eu", "anonymous_password_not_used", "free")
+    setUserData("anonymous", user_class="free")
+
 
 def init_user_limits() -> None:
     """Initialize user_limits table with hardcoded defaults if empty."""
