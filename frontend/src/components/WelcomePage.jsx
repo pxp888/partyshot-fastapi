@@ -10,38 +10,37 @@ function Welcomepage() {
   return (
     <div className="welcome-container">
       <section className="hero">
-        <span className="t1">Shared Photo Albums, Simplified</span>
-        <h1>Simple by design.</h1>
-        <p>
-          Create shared albums anyone can contribute to. Share the link —
-          friends drop their photos in, and the memories build themselves.
-        </p>
-        <p>No hashtags, no friction, just sharing.</p>
+        <div className="hero-content">
+          <span className="t1">Shared Photo Albums, Simplified</span>
+          <h1>Simple by design.</h1>
+          <p>
+            Create shared albums anyone can contribute to. Share the link —
+            friends drop their photos in, and the memories build themselves.
+          </p>
+          <p>No hashtags, no friction, just sharing.</p>
 
-        <div className="btn-group">
-          <button
-            className="btn demo"
-            onClick={() =>
-              (window.location.href = "https://shareshot.eu/user/alice")
-            }
-          >
-            Sample Profile
-          </button>
-          <button
-            className="btn demo outline"
-            onClick={() =>
-            (window.location.href =
-              "https://shareshot.eu/album/79504e976f894bb99f566847683be8a3")
-            }
-          >
-            Sample Album
-          </button>
+          <div className="btn-group">
+            <button
+              className="btn demo"
+              onClick={() =>
+                (window.location.href = "https://shareshot.eu/user/alice")
+              }
+            >
+              Sample Profile
+            </button>
+            <button
+              className="btn demo outline"
+              onClick={() =>
+              (window.location.href =
+                "https://shareshot.eu/album/79504e976f894bb99f566847683be8a3")
+              }
+            >
+              Sample Album
+            </button>
+          </div>
         </div>
-      </section>
-
-      <section className="mid-screenshot">
-        <div className="shot-container">
-          <img src={screen2} alt="Profile View" className="screenshot" />
+        <div className="hero-image">
+          <img src={screen2} alt="Interface Preview" className="hero-screenshot" />
         </div>
       </section>
 
