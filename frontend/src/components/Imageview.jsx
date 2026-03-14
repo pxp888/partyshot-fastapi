@@ -23,7 +23,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     onSwipedUp: () => !skipSwipe.current && hide(),
     delta: 75, // Higher threshold to avoid accidental swipes during zoom
     preventScrollOnSwipe: true,
-    trackMouse: true,
+    trackMouse: false,
   });
 
   const updateUrl = (newFocus, mode = "replace") => {
@@ -50,9 +50,9 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
     // Use pushState only when opening from a closed state, otherwise replaceState
     if (mode === "push" || (lastFocus.current === -1 && newFocus !== -1)) {
-      window.history.pushState({}, "", newUrl);
+      window.history.pushState({ pushed: true }, "", newUrl);
     } else {
-      window.history.replaceState({}, "", newUrl);
+      window.history.replaceState(window.history.state, "", newUrl);
     }
 
     lastFocus.current = newFocus;
@@ -73,8 +73,11 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   };
 
   const hide = () => {
-    setFocus(-1);
-    window.history.back();
+    if (window.history.state?.pushed) {
+      window.history.back();
+    } else {
+      setFocus(-1);
+    }
   };
 
   /* ----------------------------------------------
@@ -185,13 +188,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
 
   const handleCopy = (e) => {
     e.stopPropagation();
-    const originalUrl = files[focus].s3_key;
-    if (!originalUrl) return;
-
-    const fullUrl = originalUrl.startsWith("http")
-      ? originalUrl
-      : `${window.location.origin}${originalUrl.startsWith("/") ? "" : "/"
-      }${originalUrl}`;
+    const fullUrl = window.location.href;
 
     navigator.clipboard
       .writeText(fullUrl)
