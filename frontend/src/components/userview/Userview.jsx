@@ -10,7 +10,7 @@ function Userview({ currentUser }) {
   const navigate = useNavigate();
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← websocket
   const [albums, setAlbums] = useState([]);
-  const [sortField, setSortField] = useState("created_at");
+  const [sortField, setSortField] = useState("modified_at");
   const [sortOrder, setSortOrder] = useState("desc");
 
   // --------------------------------------------------------
@@ -112,7 +112,7 @@ function Userview({ currentUser }) {
     let valA = a[sortField];
     let valB = b[sortField];
 
-    if (sortField === "created_at") {
+    if (sortField === "created_at" || sortField === "modified_at") {
       valA = new Date(valA);
       valB = new Date(valB);
     } else {

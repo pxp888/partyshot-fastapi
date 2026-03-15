@@ -133,7 +133,9 @@ def init_db() -> None:
                     open BOOLEAN DEFAULT TRUE,
                     profile BOOLEAN DEFAULT FALSE,
                     private BOOLEAN DEFAULT FALSE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    opened_at TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS photos (
@@ -156,6 +158,7 @@ def init_db() -> None:
                     album_id INTEGER REFERENCES albums(id) ON DELETE CASCADE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     profile BOOLEAN DEFAULT TRUE,
+                    opened_at TIMESTAMP,
                     UNIQUE(user_id, album_id)
                 );
 
@@ -199,8 +202,11 @@ def init_db() -> None:
                 """
             )
             
-            # Migration for adding profile column to subscription
+            # Migration for album and subscription tables
             cursor.execute("ALTER TABLE subscription ADD COLUMN IF NOT EXISTS profile BOOLEAN DEFAULT TRUE;")
+            cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+            cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
+            cursor.execute("ALTER TABLE subscription ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
             conn.commit()
 
     logging.info("Database schema initialized.")
@@ -360,7 +366,7 @@ def getAlbum(code: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username
+                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username, a.modified_at, a.opened_at
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
                 WHERE a.code = %s;
@@ -382,6 +388,8 @@ def getAlbum(code: str) -> dict | None:
             if isinstance(row[7], datetime.datetime)
             else row[7],
             "username": row[8],
+            "modified_at": row[9].isoformat() if isinstance(row[9], datetime.datetime) else row[9],
+            "opened_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
         }
     return None
 
@@ -435,7 +443,8 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
                 SELECT a.id, a.code, a.name, a.user_id, a.open, 
                        CASE WHEN u.username = %s THEN a.profile ELSE COALESCE(s.profile, a.profile) END AS display_profile, 
                        a.private, a.created_at, u.username,
-                       s.album_id IS NOT NULL AS subscribed
+                       s.album_id IS NOT NULL AS subscribed,
+                       a.modified_at, a.opened_at, s.opened_at AS sub_opened_at
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
                 LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = (SELECT id FROM users WHERE username = %s)
@@ -459,6 +468,9 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             else row[7],
             "username": row[8],
             "subscribed": bool(row[9]),
+            "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
+            "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
+            "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
         }
     return None
 
@@ -542,6 +554,36 @@ def getPhotos(
         "limit": limit,
         "offset": offset,
     }
+
+
+def recordAlbumVisit(album_code: str, username: str) -> None:
+    """Update opened_at for both the album (if owner) and the subscription (if subscriber)."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                # Update album opened_at if the user is the owner
+                cursor.execute(
+                    """
+                    UPDATE albums
+                    SET opened_at = CURRENT_TIMESTAMP
+                    WHERE code = %s AND user_id = (SELECT id FROM users WHERE username = %s);
+                    """,
+                    (album_code, username),
+                )
+                # Update subscription opened_at if the user is a subscriber
+                cursor.execute(
+                    """
+                    UPDATE subscription
+                    SET opened_at = CURRENT_TIMESTAMP
+                    WHERE album_id = (SELECT id FROM albums WHERE code = %s)
+                      AND user_id = (SELECT id FROM users WHERE username = %s);
+                    """,
+                    (album_code, username),
+                )
+                conn.commit()
+            except Exception as e:
+                logging.error(f"Error recording album visit: {e}")
+                conn.rollback()
 
 
 def getDownloadList(
@@ -699,10 +741,10 @@ def addPhoto(data: dict) -> dict | None:
                     ),
                 )
                 row = cursor.fetchone()
-                # Update the album's created_at time
+                # Update the album's modified_at time
                 if row:
                     cursor.execute(
-                        "UPDATE albums SET created_at = CURRENT_TIMESTAMP WHERE id = %s",
+                        "UPDATE albums SET modified_at = CURRENT_TIMESTAMP WHERE id = %s",
                         (row[2],),  # row[2] is album_id
                     )
 
@@ -890,12 +932,13 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                            a.private, a.created_at, u.username,
                            (SELECT p.thumb_key FROM photos p 
                             WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
-                            ORDER BY p.created_at DESC LIMIT 1) as thumb_key
+                            ORDER BY p.created_at DESC LIMIT 1) as thumb_key,
+                           a.modified_at, a.opened_at, s.opened_at AS sub_opened_at
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
                     LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
                     WHERE a.user_id = %s OR s.user_id = %s
-                    ORDER BY a.created_at DESC;
+                    ORDER BY a.modified_at DESC;
                     """,
                     (user["id"], user["id"], user["id"], user["id"]),
                 )
@@ -948,6 +991,9 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "private": is_private,
                 "created_at": created_at,
                 "thumbnail": thumb_url,
+                "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
+                "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
+                "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
             }
         )
     return {"albums": albums}
@@ -968,12 +1014,13 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                     SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
                            (SELECT p.thumb_key FROM photos p 
                             WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
-                            ORDER BY p.created_at DESC LIMIT 1) as thumb_key
+                            ORDER BY p.created_at DESC LIMIT 1) as thumb_key,
+                           a.modified_at, a.opened_at
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
                     JOIN photos p ON a.id = p.album_id
                     WHERE p.user_id = %s
-                    ORDER BY a.created_at DESC;
+                    ORDER BY a.modified_at DESC;
                     """,
                     (user["id"],),
                 )
@@ -1010,6 +1057,8 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 "private": is_private,
                 "created_at": created_at,
                 "thumbnail": thumb_url,
+                "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
+                "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
             }
         )
     return {"albums": albums}

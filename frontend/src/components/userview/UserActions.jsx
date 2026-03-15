@@ -14,15 +14,15 @@ const UserActions = ({
   const isOwner = username === currentUser;
 
   const cycleSortField = () => {
-    const fields = ["created_at", "name", "username"];
-    const currentIndex = fields.indexOf(sortField === "my_photos" ? "created_at" : sortField);
+    const fields = ["modified_at", "name", "username"];
+    const currentIndex = fields.indexOf(sortField === "my_photos" ? "modified_at" : sortField);
     const nextIndex = (currentIndex + 1) % fields.length;
     setSortField(fields[nextIndex]);
   };
 
   const getSortFieldLabel = () => {
     switch (sortField) {
-      case "created_at": return "Date";
+      case "modified_at": return "Date";
       case "name": return "Name";
       case "username": return "User";
       case "my_photos": return "Date";
@@ -32,7 +32,7 @@ const UserActions = ({
 
   const toggleMyPhotos = () => {
     if (sortField === "my_photos") {
-      setSortField("created_at");
+      setSortField("modified_at");
       sendJsonMessage({
         action: "getAlbums",
         payload: { target: username },
