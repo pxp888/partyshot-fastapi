@@ -69,6 +69,14 @@ function Albumview(currentUser) {
       action: "getAlbum",
       payload: { albumcode: albumcode },
     });
+    return () => {
+      if (albumcode) {
+        sendJsonMessage({
+          action: "recordVisit",
+          payload: { albumcode: albumcode },
+        });
+      }
+    };
   }, [albumcode, sendJsonMessage]);
 
   useEffect(() => {

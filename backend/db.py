@@ -926,6 +926,8 @@ def getAlbums(username: str, authuser: str) -> dict | None:
     if auth_user_record and auth_user_record.get("class") == "admin":
         is_admin = True
 
+    auth_user_id = auth_user_record.get("id") if auth_user_record else None
+
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
@@ -934,19 +936,22 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 cursor.execute(
                     """
                     SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, 
-                           CASE WHEN a.user_id = %s THEN a.profile ELSE s.profile END AS display_profile, 
+                           CASE WHEN a.user_id = %s THEN a.profile ELSE s_prof.profile END AS display_profile, 
                            a.private, a.created_at, u.username,
                            (SELECT p.thumb_key FROM photos p 
                             WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
                             ORDER BY p.created_at DESC LIMIT 1) as thumb_key,
-                           a.modified_at, a.opened_at, s.opened_at AS sub_opened_at
+                           a.modified_at, 
+                           CASE WHEN a.user_id = %s THEN a.opened_at ELSE NULL END, 
+                           s_auth.opened_at AS sub_opened_at
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
-                    LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
-                    WHERE a.user_id = %s OR s.user_id = %s
+                    LEFT JOIN subscription s_prof ON a.id = s_prof.album_id AND s_prof.user_id = %s
+                    LEFT JOIN subscription s_auth ON a.id = s_auth.album_id AND s_auth.user_id = %s
+                    WHERE a.user_id = %s OR s_prof.user_id = %s
                     ORDER BY a.modified_at DESC;
                     """,
-                    (user["id"], user["id"], user["id"], user["id"]),
+                    (user["id"], auth_user_id, user["id"], auth_user_id, user["id"], user["id"]),
                 )
                 rows = cursor.fetchall()
             except Exception as e:
@@ -1018,17 +1023,20 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 cursor.execute(
                     """
                     SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
-                           (SELECT p.thumb_key FROM photos p 
-                            WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
-                            ORDER BY p.created_at DESC LIMIT 1) as thumb_key,
-                           a.modified_at, a.opened_at
+                           (SELECT p2.thumb_key FROM photos p2 
+                            WHERE p2.album_id = a.id AND p2.thumb_key IS NOT NULL 
+                            ORDER BY p2.created_at DESC LIMIT 1) as thumb_key,
+                           a.modified_at,
+                           CASE WHEN a.user_id = %s THEN a.opened_at ELSE NULL END,
+                           s.opened_at AS sub_opened_at
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
                     JOIN photos p ON a.id = p.album_id
+                    LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
                     WHERE p.user_id = %s
                     ORDER BY a.modified_at DESC;
                     """,
-                    (user["id"],),
+                    (user["id"], user["id"], user["id"]),
                 )
                 rows = cursor.fetchall()
             except Exception as e:
@@ -1065,6 +1073,7 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 "thumbnail": thumb_url,
                 "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
                 "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
+                "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
             }
         )
     return {"albums": albums}

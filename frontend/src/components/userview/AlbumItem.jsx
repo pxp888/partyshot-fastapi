@@ -86,8 +86,8 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
 
   const isUnread = album.modified_at && (
     isOtherUser
-      ? new Date(album.modified_at) > new Date(album.sub_opened_at || 0)
-      : new Date(album.modified_at) > new Date(album.opened_at || 0)
+      ? album.sub_opened_at && new Date(album.modified_at) > new Date(album.sub_opened_at)
+      : album.opened_at && new Date(album.modified_at) > new Date(album.opened_at)
   );
 
   return (

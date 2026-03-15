@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -507,11 +508,6 @@ async def getAlbum(websocket, data, username):
     if not album:
         logging.info("getAlbum - no album found")
         return
-
-    # Record the visit to update opened_at timestamps
-    if username:
-        db.recordAlbumVisit(albumcode, username)
-
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
 
@@ -715,6 +711,21 @@ async def unsubscribe(websocket, data, username):
     message = {"action": "unsubscribe", "payload": ok}
     await websocket.send_json(message)
 
+async def recordVisit(websocket, data, username):
+    albumcode = data["payload"].get("albumcode")
+    if albumcode and username:
+        db.recordAlbumVisit(albumcode, username)
+        # Notify subscribers that the album has been "read"
+        msg = {
+            "action": "albumOpened",
+            "payload": {
+                "code": albumcode,
+                "viewer": username,
+                "opened_at": datetime.datetime.now().isoformat()
+            }
+        }
+        await redis_client.publish(f"album-{albumcode}", json.dumps(msg))
+
 
 async def toggleOpen(websocket, data, username):
     album_id = data["payload"]["album_id"]
@@ -807,6 +818,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await subscribe(websocket, payload, username)
                 elif action == "unsubscribe":
                     await unsubscribe(websocket, payload, username)
+                elif action == "recordVisit":
+                    await recordVisit(websocket, payload, username)
                 elif action == "getAlbumsWithUserPhotos":
                     result = db.getAlbumsWithUserPhotos(username)
                     message = {"action": "getAlbums", "payload": result}

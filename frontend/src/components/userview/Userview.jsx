@@ -99,6 +99,20 @@ function Userview({ currentUser }) {
           );
         }
         break;
+      case "albumOpened":
+        if (payload && payload.code && payload.viewer === currentUser) {
+          setAlbums((prev) =>
+            prev.map((a) => {
+              if (a.code === payload.code) {
+                return a.username === currentUser
+                  ? { ...a, opened_at: payload.opened_at }
+                  : { ...a, sub_opened_at: payload.opened_at };
+              }
+              return a;
+            })
+          );
+        }
+        break;
       default:
         break;
     }
