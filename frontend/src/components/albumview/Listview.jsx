@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import ListItem from "./ListItem";
 
-function Listview({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selected, setSelected, setFocus, isFetching, onDrop }) {
+const Listview = memo(({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selected, setSelected, setFocus, isFetching, onDrop }) => {
     const [isDragging, setIsDragging] = useState(false);
+
+    const toggleSelect = (id) => {
+        setSelected((prev) => 
+          prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+      };
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -43,6 +49,7 @@ function Listview({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selec
             ) : (
                 <div className="listview">
                     {sortedPhotos.map((file, index) => {
+                        const isSelected = selected.includes(file.id);
                         if (sortedPhotos.length === index + 1) {
                             return (
                                 <div ref={lastPhotoElementRef} key={file.id}>
@@ -50,8 +57,8 @@ function Listview({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selec
                                         index={index}
                                         file={file}
                                         selectMode={selectMode}
-                                        selected={selected}
-                                        setSelected={setSelected}
+                                        isSelected={isSelected}
+                                        toggleSelect={toggleSelect}
                                         setFocus={setFocus}
                                     />
                                 </div>
@@ -63,8 +70,8 @@ function Listview({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selec
                                     key={file.id}
                                     file={file}
                                     selectMode={selectMode}
-                                    selected={selected}
-                                    setSelected={setSelected}
+                                    isSelected={isSelected}
+                                    toggleSelect={toggleSelect}
                                     setFocus={setFocus}
                                 />
                             );
@@ -79,6 +86,6 @@ function Listview({ photos, sortedPhotos, lastPhotoElementRef, selectMode, selec
             )}
         </div>
     );
-}
+});
 
 export default Listview;

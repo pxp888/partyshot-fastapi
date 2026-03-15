@@ -1,55 +1,75 @@
-import { useState, useImperativeHandle, forwardRef, useContext, useRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useRef } from "react";
 import { useMessage } from "../MessageBoxContext";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import "./Uploader.css";
 
-function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
+/**
+ * Loads an image or video and resizes it.
+ */
+async function processMedia(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
 
-    // Handle video files
     if (file.type.startsWith("video/")) {
       const video = document.createElement("video");
       video.preload = "metadata";
       video.muted = true;
       video.src = objectUrl;
 
+      const cleanup = () => {
+        video.onloadeddata = null;
+        video.onseeked = null;
+        video.onerror = null;
+        video.src = "";
+        video.load();
+        URL.revokeObjectURL(objectUrl);
+      };
+
       video.onloadeddata = () => {
         const duration = video.duration;
         const seekTime = isNaN(duration) ? 0 : duration / 2;
 
         const captureFrame = () => {
-          const { videoWidth, videoHeight } = video;
-          let width = videoWidth;
-          let height = videoHeight;
-          const aspect = width / height;
-          if (width > height) {
-            width = Math.min(width, maxWidth);
-            height = Math.round(width / aspect);
-          } else {
-            height = Math.min(height, maxHeight);
-            width = Math.round(height * aspect);
+          try {
+            const { videoWidth, videoHeight } = video;
+            if (!videoWidth || !videoHeight) {
+                cleanup();
+                return reject(new Error("Video dimensions are 0."));
+            }
+            let width = videoWidth;
+            let height = videoHeight;
+            const aspect = width / height;
+            if (width > height) {
+              width = Math.min(width, maxWidth);
+              height = Math.round(width / aspect);
+            } else {
+              height = Math.min(height, maxHeight);
+              width = Math.round(height * aspect);
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, width, height);
+
+            canvas.toBlob(
+              (blob) => {
+                cleanup();
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error("Canvas resize failed."));
+                }
+              },
+              "image/webp",
+              quality,
+            );
+          } catch (err) {
+            cleanup();
+            reject(err);
           }
-
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(video, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              URL.revokeObjectURL(objectUrl);
-              if (blob) {
-                resolve(blob);
-              } else {
-                reject(new Error("Canvas resize failed."));
-              }
-            },
-            "image/webp",
-            quality,
-          );
         };
 
         if (isNaN(duration) || duration === 0) {
@@ -61,51 +81,59 @@ function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
       };
 
       video.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
+        cleanup();
         reject(new Error("Failed to load video for resizing."));
       };
     } else {
-      // Handle image files
       const img = new Image();
+      const cleanup = () => {
+        img.onload = null;
+        img.onerror = null;
+        URL.revokeObjectURL(objectUrl);
+      };
 
       img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-
-        let { width, height } = img;
-        const aspect = width / height;
-        if (width > height) {
-          if (width > maxWidth) {
-            width = maxWidth;
-            height = Math.round(width / aspect);
-          }
-        } else {
-          if (height > maxHeight) {
-            height = maxHeight;
-            width = Math.round(height * aspect);
-          }
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error("Canvas resize failed."));
+        try {
+          let { width, height } = img;
+          const aspect = width / height;
+          if (width > height) {
+            if (width > maxWidth) {
+              width = maxWidth;
+              height = Math.round(width / aspect);
             }
-          },
-          "image/webp",
-          quality,
-        );
+          } else {
+            if (height > maxHeight) {
+              height = maxHeight;
+              width = Math.round(height * aspect);
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              cleanup();
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error("Canvas resize failed."));
+              }
+            },
+            "image/webp",
+            quality,
+          );
+        } catch (err) {
+          cleanup();
+          reject(err);
+        }
       };
 
       img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
+        cleanup();
         reject(new Error("Failed to load image for resizing."));
       };
 
@@ -115,10 +143,15 @@ function resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
 }
 
 const Uploader = forwardRef(
-  ({ album, isOwner, userLoggedIn, disabled, photos, setPhotos, setTotalPhotos, sortOrder },
+  ({ album, isOwner, userLoggedIn, disabled, setPhotos, setTotalPhotos, sortOrder },
     ref) => {
     const { showMessage, showConfirm } = useMessage();
     const { albumcode } = useParams();
+    
+    const isUploadingRef = useRef(false);
+    const timeoutRef = useRef(null);
+    const inputRef = useRef();
+
     const [totalFiles, setTotalFiles] = useState(0);
     const [completedFiles, setCompletedFiles] = useState(0);
     const [spaceRemaining, setSpaceRemaining] = useState(null);
@@ -132,29 +165,17 @@ const Uploader = forwardRef(
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     };
 
-    /**
-     * Uploads the original file and its thumbnail.
-     *
-     * @param {File} file - The user‑selected file.
-     */
     async function uploadFile(file) {
       const token = localStorage.getItem("access_token");
-      const headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      const headers = { "Content-Type": "application/x-www-form-urlencoded" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      // 1️⃣  Ask for presigned data (returns both original and thumbnail info)
       const presignRes = await fetch("/api/s3-presigned", {
         method: "POST",
         headers,
-        body: new URLSearchParams({
-          filename: file.name,
-          album_code: album.code,
-        }),
+        body: new URLSearchParams({ filename: file.name, album_code: album.code }),
       });
+      
       if (!presignRes.ok) {
         const errData = await presignRes.json();
         if (presignRes.status === 403) {
@@ -165,103 +186,56 @@ const Uploader = forwardRef(
       }
 
       const {
-        s3_key,
-        presigned,
-        thumb_key: t_key,
-        thumb_presigned,
-        mid_key: m_key,
-        mid_presigned,
-        space_remaining,
+        s3_key, presigned, thumb_key, thumb_presigned, mid_key, mid_presigned, space_remaining
       } = await presignRes.json();
       setSpaceRemaining(space_remaining);
 
-      // 2️⃣  Upload everything in parallel (Original + Thumbnail + Mid-size)
       let thumbnailBlob = null;
       let final_thumb_key = null;
       let midBlob = null;
       let final_mid_key = null;
 
-      const uploadTasks = [];
-
-      // Task A: Original file upload
-      uploadTasks.push((async () => {
-        const s3Res = await fetch(presigned, {
-          method: "PUT",
-          body: file,
-          headers: {
-            "Content-Type": file.type,
-          },
-        });
-        if (!s3Res.ok) {
-          const errText = await s3Res.text();
-          throw new Error(`Upload failed: ${s3Res.status} ${errText}`);
-        }
-      })());
-
-      // Task B: Thumbnail Generation & Upload
-      uploadTasks.push((async () => {
-        try {
-          thumbnailBlob = await resizeImage(file, 500, 500, 0.6);
-          if (thumbnailBlob) {
-            const thumbS3Res = await fetch(thumb_presigned, {
-              method: "PUT",
-              body: thumbnailBlob,
-              headers: {
-                "Content-Type": "image/webp",
-              },
-            });
-            if (thumbS3Res.ok) {
-              final_thumb_key = t_key;
-            } else {
-              console.warn("Thumbnail upload failed, continuing without thumb");
-            }
-          }
-        } catch (err) {
-          console.warn("Thumbnail creation or upload failed:", err);
-        }
-      })());
-
-      // Task C: Mid-sized Generation & Upload (Images only)
+      const processingTasks = [];
+      processingTasks.push(processMedia(file, 500, 500, 0.6).then(blob => { thumbnailBlob = blob; }));
       if (!file.type.startsWith("video/")) {
-        uploadTasks.push((async () => {
-          try {
-            midBlob = await resizeImage(file, 2560, 2560, 0.85);
-            if (midBlob) {
-              // Only upload if generation succeeded and size is significantly smaller than original
-              if (midBlob.size <= file.size / 2) {
-                const midS3Res = await fetch(mid_presigned, {
-                  method: "PUT",
-                  body: midBlob,
-                  headers: {
-                    "Content-Type": "image/webp",
-                  },
-                });
-                if (midS3Res.ok) {
-                  final_mid_key = m_key;
-                } else {
-                  console.warn("Mid-size upload failed, continuing without mid version");
-                }
-              } else {
-                console.info("Mid-sized image larger than 50% of original, skipping upload");
-                midBlob = null;
-              }
-            }
-          } catch (err) {
-            console.warn("Mid-size creation or upload failed:", err);
-          }
-        })());
+        processingTasks.push(processMedia(file, 2560, 2560, 0.8).then(blob => {
+          if (blob && blob.size <= file.size * 0.75) midBlob = blob;
+        }));
+      }
+      
+      try {
+        await Promise.all(processingTasks);
+      } catch (err) {
+        console.warn("Processing failed for", file.name, err);
       }
 
-      // Wait for all upload tasks to complete
+      const uploadTasks = [];
+      uploadTasks.push(fetch(presigned, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      }).then(res => { if (!res.ok) throw new Error("Original upload failed"); }));
+
+      if (thumbnailBlob) {
+        uploadTasks.push(fetch(thumb_presigned, {
+          method: "PUT",
+          body: thumbnailBlob,
+          headers: { "Content-Type": "image/webp" },
+        }).then(res => { if (res.ok) final_thumb_key = thumb_key; }));
+      }
+
+      if (midBlob) {
+        uploadTasks.push(fetch(mid_presigned, {
+          method: "PUT",
+          body: midBlob,
+          headers: { "Content-Type": "image/webp" },
+        }).then(res => { if (res.ok) final_mid_key = mid_key; }));
+      }
+
       await Promise.all(uploadTasks);
 
-      // 4️⃣  Notify backend of metadata via REST
-      const metaHeaders = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        metaHeaders["Authorization"] = `Bearer ${token}`;
-      }
+      const metaHeaders = { "Content-Type": "application/json" };
+      if (token) metaHeaders["Authorization"] = `Bearer ${token}`;
 
       const metadataRes = await fetch("/api/add-photo-metadata", {
         method: "POST",
@@ -272,7 +246,7 @@ const Uploader = forwardRef(
           s3_key,
           thumb_key: final_thumb_key || null,
           mid_key: final_mid_key || null,
-          albumcode: albumcode,
+          albumcode,
           size: file.size,
           thumb_size: thumbnailBlob ? thumbnailBlob.size : null,
           mid_size: midBlob ? midBlob.size : null,
@@ -286,35 +260,31 @@ const Uploader = forwardRef(
         if (newPhoto && setPhotos) {
           setPhotos((prev) => {
             if (prev.find((p) => p.id === newPhoto.id)) return prev;
-            if (sortOrder === "desc") {
-              return [newPhoto, ...prev];
-            } else {
-              return [...prev, newPhoto];
-            }
+            return sortOrder === "desc" ? [newPhoto, ...prev] : [...prev, newPhoto];
           });
-          if (setTotalPhotos) {
-            setTotalPhotos((prev) => prev + 1);
-          }
+          if (setTotalPhotos) setTotalPhotos((prev) => prev + 1);
         }
-      } else {
-        const errText = await metadataRes.text();
-        console.warn(`Metadata upload failed: ${metadataRes.status} ${errText}`);
       }
     }
 
     const handleFiles = async (files) => {
-      if (!files || files.length === 0) return;
-
+      if (!files || files.length === 0 || isUploadingRef.current) return;
       if (!isOwner && !album.open) {
         showMessage("this album is not open for uploads", "Warning");
         return;
       }
 
-      // Convert FileList to a static array so that clearing the input value
-      // doesn't empty the list during processing (especially for anonymous confirmation)
       const fileArray = Array.from(files);
 
       const executeUpload = async () => {
+        if (isUploadingRef.current) return;
+        isUploadingRef.current = true;
+        
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+
         setTotalFiles(fileArray.length);
         setCompletedFiles(0);
 
@@ -324,17 +294,16 @@ const Uploader = forwardRef(
             setCompletedFiles((prev) => prev + 1);
           } catch (err) {
             console.error("Upload failed for file:", file.name, err);
-            if (err.message === "QUOTA_EXCEEDED") {
-              break; // Stop further uploads in this batch
-            }
+            if (err.message === "QUOTA_EXCEEDED") break;
           }
         }
 
-        // Reset progress after a delay
-        setTimeout(() => {
+        isUploadingRef.current = false;
+        timeoutRef.current = setTimeout(() => {
           setTotalFiles(0);
           setCompletedFiles(0);
           setSpaceRemaining(null);
+          timeoutRef.current = null;
         }, 3000);
       };
 
@@ -349,34 +318,51 @@ const Uploader = forwardRef(
       }
     };
 
-
-    const inputRef = useRef();
-
-    useImperativeHandle(ref, () => ({
-      handleFiles,
-    }));
+    useImperativeHandle(ref, () => ({ handleFiles }));
 
     return (
-      <>
+      <div 
+        className={`uploader-wrapper ${totalFiles > 0 ? 'is-uploading' : ''}`}
+        onClick={(e) => {
+          // If the click originated from the input itself (bubbling), ignore it
+          // to prevent an infinite recursion of .click() calls.
+          if (e.target === inputRef.current) return;
+          
+          if (!disabled && totalFiles === 0 && inputRef.current) {
+            inputRef.current.click();
+          }
+        }}
+        style={{
+          cursor: (disabled || totalFiles > 0) ? "default" : "pointer",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "6px"
+        }}
+      >
         <input
           type="file"
           name="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           ref={inputRef}
           style={{ display: "none" }}
+          onClick={(e) => e.stopPropagation()}
           onChange={(e) => {
             handleFiles(e.target.files);
             e.target.value = "";
           }}
         />
-        <button
-          onClick={() => inputRef.current.click()}
-          className="btn"
-          disabled={disabled || totalFiles > 0}
-        >
-          {totalFiles > 0 ? "Uploading..." : "Upload Files"}
-        </button>
+
+        <span className="dt-tab-icon" style={{ fontSize: "1.4rem" }}>
+          {totalFiles > 0 ? "⋯" : "↑"}
+        </span>
+        <span className="dt-tab-label" style={{ fontSize: "0.65rem", fontWeight: 600 }}>
+          {totalFiles > 0 ? "Wait..." : "Upload"}
+        </span>
 
         {totalFiles > 0 &&
           createPortal(
@@ -386,10 +372,7 @@ const Uploader = forwardRef(
                   ? "All files uploaded!"
                   : `Uploading ${completedFiles + 1} of ${totalFiles}...`}
                 {spaceRemaining !== null && (
-                  <div
-                    className="uploader-space-text"
-                    style={{ fontSize: "0.8em", marginTop: "4px" }}
-                  >
+                  <div className="uploader-space-text" style={{ fontSize: "0.8em", marginTop: "4px" }}>
                     Remaining Storage: {formatBytes(spaceRemaining)}
                   </div>
                 )}
@@ -397,15 +380,13 @@ const Uploader = forwardRef(
               <div className="uploader-progress-track">
                 <div
                   className="uploader-progress-bar"
-                  style={{
-                    width: `${(completedFiles / totalFiles) * 100}%`,
-                  }}
+                  style={{ width: `${(completedFiles / totalFiles) * 100}%` }}
                 />
               </div>
             </div>,
             document.body,
           )}
-      </>
+      </div>
     );
   });
 

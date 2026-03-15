@@ -54,8 +54,6 @@ const DesktopActions = ({
         <div className="toolbar-left">
           <div className={`dt-tab dt-uploader-tab ${(!userLoggedIn && !album.open) ? 'disabled' : ''}`}>
             {uploader}
-            <span className="dt-tab-icon">↑</span>
-            <span className="dt-tab-label">Upload</span>
           </div>
 
           <QRHover text="Share">

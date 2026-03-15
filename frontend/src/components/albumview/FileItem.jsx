@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef, forwardRef } from "react";
+import { useState, useEffect, useRef, forwardRef, memo } from "react";
 import "./FileItem.css";
 import videoImage from '../../assets/video.webp';
 
-const FileItem = forwardRef(({
+const FileItem = memo(forwardRef(({
   index,
   file,
   selectMode,
-  selected,
-  setSelected,
+  isSelected,
+  toggleSelect,
   setFocus,
 }, ref) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -23,8 +23,6 @@ const FileItem = forwardRef(({
       ref.current = node;
     }
   };
-
-  const isSelected = selected.includes(file.id);
 
   const videoExtensions = /\.(mp4|webm|ogg|mov|avi|wmv|mkv|flv)$/i;
   const isVideo = videoExtensions.test(file.filename);
@@ -60,11 +58,7 @@ const FileItem = forwardRef(({
   function handleClick(e) {
     e.preventDefault();
     if (selectMode) {
-      if (isSelected) {
-        setSelected(selected.filter((id) => id !== file.id));
-      } else {
-        setSelected([...selected, file.id]);
-      }
+      toggleSelect(file.id);
     } else {
       setFocus(index);
     }
@@ -127,6 +121,6 @@ const FileItem = forwardRef(({
       </div>
     </div>
   );
-});
+}));
 
 export default FileItem;

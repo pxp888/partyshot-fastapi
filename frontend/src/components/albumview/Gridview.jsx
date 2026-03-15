@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import FileItem from "./FileItem";
 import "./Gridview.css";
 
-function Gridview({
+const Gridview = memo(({
     photos,
     sortedPhotos,
     lastPhotoElementRef,
@@ -12,8 +12,14 @@ function Gridview({
     setFocus,
     isFetching,
     onDrop,
-}) {
+}) => {
     const [isDragging, setIsDragging] = useState(false);
+
+    const toggleSelect = (id) => {
+        setSelected((prev) => 
+          prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+    };
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -54,6 +60,7 @@ function Gridview({
             ) : (
                 <div className="fileList">
                     {sortedPhotos.map((file, index) => {
+                        const isSelected = selected.includes(file.id);
                         if (sortedPhotos.length === index + 1) {
                             return (
                                 <FileItem
@@ -62,8 +69,8 @@ function Gridview({
                                     index={index}
                                     file={file}
                                     selectMode={selectMode}
-                                    selected={selected}
-                                    setSelected={setSelected}
+                                    isSelected={isSelected}
+                                    toggleSelect={toggleSelect}
                                     setFocus={setFocus}
                                 />
                             );
@@ -74,8 +81,8 @@ function Gridview({
                                     key={file.id}
                                     file={file}
                                     selectMode={selectMode}
-                                    selected={selected}
-                                    setSelected={setSelected}
+                                    isSelected={isSelected}
+                                    toggleSelect={toggleSelect}
                                     setFocus={setFocus}
                                 />
                             );
@@ -90,6 +97,6 @@ function Gridview({
             )}
         </div>
     );
-}
+});
 
 export default Gridview;

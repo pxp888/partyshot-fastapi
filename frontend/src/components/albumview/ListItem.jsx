@@ -1,16 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import "./ListItem.css";
 import videoImage from '../../assets/video.webp'; 
 
-function ListItem({
+const ListItem = memo(function ListItem({
   index,
   file,
   selectMode,
-  selected,
-  setSelected,
+  isSelected,
+  toggleSelect,
   setFocus,
 }) {
-  const isSelected = selected.includes(file.id);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const localRef = useRef();
@@ -57,11 +56,7 @@ function ListItem({
   function handleClick(e) {
     e.preventDefault();
     if (selectMode) {
-      if (isSelected) {
-        setSelected(selected.filter((id) => id !== file.id));
-      } else {
-        setSelected([...selected, file.id]);
-      }
+      toggleSelect(file.id);
     } else {
       setFocus(index);
     }
@@ -128,6 +123,6 @@ function ListItem({
       </div>
     </div>
   );
-}
+});
 
 export default ListItem;

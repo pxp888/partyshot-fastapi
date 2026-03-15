@@ -18,9 +18,9 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 import "./Albumview.css";
 
-function Albumview(currentUser) {
+function Albumview({ currentUser }) {
   const { albumcode } = useParams();
-  const userLoggedIn = !!currentUser.currentUser;
+  const userLoggedIn = !!currentUser;
   const [album, setAlbum] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [totalPhotos, setTotalPhotos] = useState(0);
@@ -47,22 +47,11 @@ function Albumview(currentUser) {
   const observer = useRef();
   const uploaderRef = useRef();
 
-  const lastPhotoElementRef = useCallback(
-    (node) => {
-      if (isFetching) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          loadMore();
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [isFetching, hasMore],
-  );
   const { sendJsonMessage, lastJsonMessage } = useSocket();
   const { showMessage, showConfirm } = useMessage();
   const navigate = useNavigate();
+
+  const isOwner = album && currentUser && album.username === currentUser;
 
   useEffect(() => {
     sendJsonMessage({
@@ -91,14 +80,7 @@ function Albumview(currentUser) {
     return () => clearInterval(keepAliveInterval);
   }, [albumcode, sendJsonMessage]);
 
-  useEffect(() => {
-    setPhotos([]);
-    setTotalPhotos(0);
-    setHasMore(true);
-    fetchPhotos(0);
-  }, [albumcode, sortField, sortOrder]);
-
-  const fetchPhotos = (offset) => {
+  const fetchPhotos = useCallback((offset) => {
     if (!albumcode) return;
     setIsFetching(true);
     sendJsonMessage({
@@ -111,12 +93,33 @@ function Albumview(currentUser) {
         sortOrder: sortOrder,
       },
     });
-  };
+  }, [albumcode, limit, sortField, sortOrder, sendJsonMessage]);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     if (isFetching || !hasMore) return;
     fetchPhotos(photos.length);
-  };
+  }, [isFetching, hasMore, photos.length, fetchPhotos]);
+
+  useEffect(() => {
+    setPhotos([]);
+    setTotalPhotos(0);
+    setHasMore(true);
+    fetchPhotos(0);
+  }, [albumcode, sortField, sortOrder, fetchPhotos]);
+
+  const lastPhotoElementRef = useCallback(
+    (node) => {
+      if (isFetching) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMore();
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isFetching, hasMore, loadMore],
+  );
 
   // React to messages that come from the WS
   useEffect(() => {
@@ -176,7 +179,7 @@ function Albumview(currentUser) {
 
       case "deleteAlbum":
         if (payload === albumcode) {
-          window.location.href = `/user/${currentUser.currentUser}`;
+          window.location.href = `/user/${currentUser}`;
         } else {
           showMessage(`Album deletion failed: ${payload}`, "Error");
         }
@@ -399,7 +402,7 @@ function Albumview(currentUser) {
     });
   }
 
-  const handleUpload = (files) => {
+  const handleUpload = useCallback((files) => {
     if (!isOwner && !album.open) {
       showMessage("this album is not open for uploads", "Warning");
       return;
@@ -407,7 +410,7 @@ function Albumview(currentUser) {
     if (uploaderRef.current) {
       uploaderRef.current.handleFiles(files);
     }
-  };
+  }, [isOwner, album?.open, showMessage]);
 
   const sortedPhotos = photos; // Photos are now sorted by the backend
 
@@ -419,9 +422,6 @@ function Albumview(currentUser) {
       </div>
     );
   }
-
-  const isOwner =
-    album.username?.toLowerCase() === currentUser.currentUser?.toLowerCase();
 
   return (
     <section>
@@ -583,7 +583,7 @@ function Albumview(currentUser) {
       )}
 
       {album?.private &&
-        album?.username !== currentUser?.currentUser &&
+        album?.username !== currentUser &&
         album?.open && (
           <p className="helptext">
             This album is private, so you cannot access the photos, but you can

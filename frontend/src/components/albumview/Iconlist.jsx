@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import FileItem from "./FileItem";
 import "./Iconlist.css";
 
-function Iconlist({
+const Iconlist = memo(({
   photos,
   sortedPhotos,
   lastPhotoElementRef,
@@ -12,8 +12,14 @@ function Iconlist({
   setFocus,
   isFetching,
   onDrop,
-}) {
+}) => {
   const [isDragging, setIsDragging] = useState(false);
+
+  const toggleSelect = (id) => {
+    setSelected((prev) => 
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -60,6 +66,7 @@ function Iconlist({
       ) : (
         <div className="fileList">
           {sortedPhotos.map((file, index) => {
+            const isSelected = selected.includes(file.id);
             if (sortedPhotos.length === index + 1) {
               return (
                 <FileItem
@@ -68,8 +75,8 @@ function Iconlist({
                   index={index}
                   file={file}
                   selectMode={selectMode}
-                  selected={selected}
-                  setSelected={setSelected}
+                  isSelected={isSelected}
+                  toggleSelect={toggleSelect}
                   setFocus={setFocus}
                 />
               );
@@ -80,8 +87,8 @@ function Iconlist({
                   key={file.id}
                   file={file}
                   selectMode={selectMode}
-                  selected={selected}
-                  setSelected={setSelected}
+                  isSelected={isSelected}
+                  toggleSelect={toggleSelect}
                   setFocus={setFocus}
                 />
               );
@@ -96,6 +103,6 @@ function Iconlist({
       )}
     </div>
   );
-}
+});
 
 export default Iconlist;
