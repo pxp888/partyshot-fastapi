@@ -744,9 +744,13 @@ def addPhoto(data: dict) -> dict | None:
                 # Update the album's modified_at time
                 if row:
                     cursor.execute(
-                        "UPDATE albums SET modified_at = CURRENT_TIMESTAMP WHERE id = %s",
+                        "UPDATE albums SET modified_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING modified_at",
                         (row[2],),  # row[2] is album_id
                     )
+                    mod_row = cursor.fetchone()
+                    album_modified_at = mod_row[0] if mod_row else None
+                else:
+                    album_modified_at = None
 
                 # If we got a row, fetch the username for the user_id we just inserted.
                 if row:
@@ -767,6 +771,7 @@ def addPhoto(data: dict) -> dict | None:
                 conn.rollback()
                 row = None
                 username = None
+                album_modified_at = None
 
     if row is None:
         return None
@@ -788,6 +793,7 @@ def addPhoto(data: dict) -> dict | None:
         "thumb_size": row[9],
         "mid_size": row[10],
         "username": username,
+        "album_modified_at": album_modified_at.isoformat() if isinstance(album_modified_at, datetime.datetime) else album_modified_at,
     }
 
 

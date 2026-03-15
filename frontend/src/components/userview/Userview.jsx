@@ -90,6 +90,15 @@ function Userview({ currentUser }) {
           );
         }
         break;
+      case "albumModified":
+        if (payload && payload.code) {
+          setAlbums((prev) =>
+            prev.map((a) =>
+              a.code === payload.code ? { ...a, modified_at: payload.modified_at } : a
+            )
+          );
+        }
+        break;
       default:
         break;
     }

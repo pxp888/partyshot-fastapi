@@ -370,6 +370,18 @@ async def add_photo_metadata(
         await redis_client.publish(
             f"albumadd-{payload['albumcode']}", json.dumps(message)
         )
+        
+        # Also publish the updated modified_at time to general album subscribers
+        if photo_resp.get("album_modified_at"):
+            mod_message = {
+                "action": "albumModified",
+                "payload": {
+                    "code": payload["albumcode"],
+                    "modified_at": photo_resp["album_modified_at"],
+                },
+            }
+            await redis_client.publish(f"album-{payload['albumcode']}", json.dumps(mod_message))
+
     return {"photo_id": photo_resp}
 
 
@@ -495,6 +507,11 @@ async def getAlbum(websocket, data, username):
     if not album:
         logging.info("getAlbum - no album found")
         return
+
+    # Record the visit to update opened_at timestamps
+    if username:
+        db.recordAlbumVisit(albumcode, username)
+
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
 

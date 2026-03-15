@@ -133,6 +133,18 @@
     padding: 1rem;
 }
 
+.unread-dot {
+    position: absolute;
+    top: 1.2rem;
+    right: 1rem;
+    width: 8px;
+    height: 8px;
+    background-color: #ff453a;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255, 69, 58, 0.6);
+    z-index: 5;
+}
+
 .album-item h3 {
     font-size: 1.6rem;
     font-weight: 300;

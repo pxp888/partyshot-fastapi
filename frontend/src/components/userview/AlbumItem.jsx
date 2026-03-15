@@ -84,6 +84,12 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
     });
   }
 
+  const isUnread = album.modified_at && (
+    isOtherUser
+      ? new Date(album.modified_at) > new Date(album.sub_opened_at || 0)
+      : new Date(album.modified_at) > new Date(album.opened_at || 0)
+  );
+
   return (
     <div
       ref={localRef}
@@ -113,6 +119,7 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
         )}
       </div>
       <div className="info">
+        {isUnread && <div className="unread-dot"></div>}
         <h3>{album.name}</h3>
         <div className="album-details">
           {/* <label>user</label> */}
