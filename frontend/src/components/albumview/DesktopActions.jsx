@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import QRHover from "./QRHover";
 import "./DesktopActions.css";
 
-const DesktopActions = ({
+const DesktopActions = memo(({
   selectMode,
   setSelectMode,
   cancelSelect,
@@ -214,6 +214,6 @@ const DesktopActions = ({
       </div>
     </div>
   );
-};
+});
 
 export default DesktopActions;

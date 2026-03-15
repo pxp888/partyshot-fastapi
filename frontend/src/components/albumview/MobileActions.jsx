@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import QRHover from "./QRHover";
 import "./MobileActions.css";
 
-const MobileActions = ({
+const MobileActions = memo(({
   selectMode,
   setSelectMode,
   cancelSelect,
@@ -219,6 +219,6 @@ const MobileActions = ({
       </nav>
     </div>
   );
-};
+});
 
 export default MobileActions;

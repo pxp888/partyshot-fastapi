@@ -1,4 +1,4 @@
-import { useState, useImperativeHandle, forwardRef, useRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useRef, memo } from "react";
 import { useMessage } from "../MessageBoxContext";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
@@ -142,7 +142,7 @@ async function processMedia(file, maxWidth = 300, maxHeight = 300, quality = 0.8
   });
 }
 
-const Uploader = forwardRef(
+const Uploader = memo(forwardRef(
   ({ album, isOwner, userLoggedIn, disabled, setPhotos, setTotalPhotos, sortOrder },
     ref) => {
     const { showMessage, showConfirm } = useMessage();
@@ -150,7 +150,7 @@ const Uploader = forwardRef(
     
     const isUploadingRef = useRef(false);
     const timeoutRef = useRef(null);
-    const inputRef = useRef();
+    const uploaderId = useRef(`uploader-${Math.random().toString(36).substr(2, 9)}`);
 
     const [totalFiles, setTotalFiles] = useState(0);
     const [completedFiles, setCompletedFiles] = useState(0);
@@ -323,46 +323,46 @@ const Uploader = forwardRef(
     return (
       <div 
         className={`uploader-wrapper ${totalFiles > 0 ? 'is-uploading' : ''}`}
-        onClick={(e) => {
-          // If the click originated from the input itself (bubbling), ignore it
-          // to prevent an infinite recursion of .click() calls.
-          if (e.target === inputRef.current) return;
-          
-          if (!disabled && totalFiles === 0 && inputRef.current) {
-            inputRef.current.click();
-          }
-        }}
         style={{
-          cursor: (disabled || totalFiles > 0) ? "default" : "pointer",
           width: "100%",
           height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "6px"
+          display: "flex"
         }}
       >
         <input
           type="file"
+          id={uploaderId.current}
           name="file"
           accept="image/*,video/*"
           multiple
-          ref={inputRef}
           style={{ display: "none" }}
-          onClick={(e) => e.stopPropagation()}
           onChange={(e) => {
             handleFiles(e.target.files);
             e.target.value = "";
           }}
+          disabled={disabled || totalFiles > 0}
         />
 
-        <span className="dt-tab-icon" style={{ fontSize: "1.4rem" }}>
-          {totalFiles > 0 ? "⋯" : "↑"}
-        </span>
-        <span className="dt-tab-label" style={{ fontSize: "0.65rem", fontWeight: 600 }}>
-          {totalFiles > 0 ? "Wait..." : "Upload"}
-        </span>
+        <label 
+          htmlFor={uploaderId.current}
+          style={{
+            cursor: (disabled || totalFiles > 0) ? "default" : "pointer",
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px"
+          }}
+        >
+          <span className="dt-tab-icon" style={{ fontSize: "1.4rem" }}>
+            {totalFiles > 0 ? "⋯" : "↑"}
+          </span>
+          <span className="dt-tab-label" style={{ fontSize: "0.65rem", fontWeight: 600 }}>
+            {totalFiles > 0 ? "Wait..." : "Upload"}
+          </span>
+        </label>
 
         {totalFiles > 0 &&
           createPortal(
@@ -388,6 +388,6 @@ const Uploader = forwardRef(
           )}
       </div>
     );
-  });
+  }));
 
 export default Uploader;

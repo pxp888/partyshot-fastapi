@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSocket } from "../WebSocketContext";
 import { useMessage } from "../MessageBoxContext";
 import JSZip from "jszip";
@@ -11,7 +11,6 @@ import AlbumRenamer from "./AlbumRenamer";
 import Iconlist from "./Iconlist";
 import Listview from "./Listview";
 import Gridview from "./Gridview";
-import QRHover from "./QRHover";
 import MobileActions from "./MobileActions";
 import DesktopActions from "./DesktopActions";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -20,7 +19,6 @@ import "./Albumview.css";
 
 function Albumview({ currentUser }) {
   const { albumcode } = useParams();
-  const userLoggedIn = !!currentUser;
   const [album, setAlbum] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [totalPhotos, setTotalPhotos] = useState(0);
@@ -39,10 +37,10 @@ function Albumview({ currentUser }) {
   );
   const isMobile = useMediaQuery("(max-width: 900px)");
 
-  const handleViewTypeChange = (type) => {
+  const handleViewTypeChange = useCallback((type) => {
     setViewType(type);
     localStorage.setItem("viewType", type);
-  };
+  }, []);
 
   const observer = useRef();
   const uploaderRef = useRef();
@@ -51,7 +49,44 @@ function Albumview({ currentUser }) {
   const { showMessage, showConfirm } = useMessage();
   const navigate = useNavigate();
 
-  const isOwner = album && currentUser && album.username === currentUser;
+  const userLoggedIn = useMemo(() => !!currentUser, [currentUser]);
+  const isOwner = useMemo(() => !!(album && currentUser && album.username === currentUser), [album?.username, currentUser]);
+
+  const startZipProcess = useCallback(async (photosToZip) => {
+    if (!photosToZip || photosToZip.length === 0) {
+      showMessage("No photos available to download.", "Download");
+      return;
+    }
+
+    const zip = new JSZip();
+
+    const fetchBlob = async (url, filename) => {
+      const res = await fetch(url, {
+        mode: "cors",
+        cache: "no-cache",
+      });
+      if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
+      return await res.blob();
+    };
+
+    try {
+      setSelectMode(true);
+      for (const photo of photosToZip) {
+        if (!photo.s3_key) continue;
+        const blob = await fetchBlob(photo.s3_key, photo.filename);
+        zip.file(photo.filename, blob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const zipName = `${album?.name || "album"}_${photosToZip.length}.zip`;
+      saveAs(zipBlob, zipName);
+    } catch (err) {
+      console.error("Error while creating ZIP:", err);
+      showMessage("An error occurred while preparing the ZIP file.", "Error");
+    } finally {
+      setSelectMode(false);
+    }
+  }, [album?.name, showMessage]);
 
   useEffect(() => {
     sendJsonMessage({
@@ -100,6 +135,11 @@ function Albumview({ currentUser }) {
     fetchPhotos(photos.length);
   }, [isFetching, hasMore, photos.length, fetchPhotos]);
 
+  const loadMoreRef = useRef(loadMore);
+  useEffect(() => {
+    loadMoreRef.current = loadMore;
+  }, [loadMore]);
+
   useEffect(() => {
     setPhotos([]);
     setTotalPhotos(0);
@@ -113,12 +153,12 @@ function Albumview({ currentUser }) {
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          loadMore();
+          loadMoreRef.current();
         }
       });
       if (node) observer.current.observe(node);
     },
-    [isFetching, hasMore, loadMore],
+    [isFetching, hasMore],
   );
 
   // React to messages that come from the WS
@@ -225,9 +265,9 @@ function Albumview({ currentUser }) {
       default:
         break;
     }
-  }, [lastJsonMessage, currentUser, albumcode]);
+  }, [lastJsonMessage, currentUser, albumcode, album, sortOrder, isDownloadingAll, showMessage, startZipProcess]);
 
-  async function handleDeleteAlbum() {
+  const handleDeleteAlbum = useCallback(() => {
     showConfirm(
       "Are you sure you want to delete this album?",
       "Delete Album",
@@ -238,45 +278,9 @@ function Albumview({ currentUser }) {
         });
       },
     );
-  }
+  }, [albumcode, sendJsonMessage, showConfirm]);
 
-  const startZipProcess = async (photosToZip) => {
-    if (!photosToZip || photosToZip.length === 0) {
-      showMessage("No photos available to download.", "Download");
-      return;
-    }
-
-    const zip = new JSZip();
-
-    const fetchBlob = async (url, filename) => {
-      const res = await fetch(url, {
-        mode: "cors",
-        cache: "no-cache",
-      });
-      if (!res.ok) throw new Error(`Failed to fetch ${filename}`);
-      return await res.blob();
-    };
-
-    try {
-      setSelectMode(true);
-      for (const photo of photosToZip) {
-        if (!photo.s3_key) continue;
-        const blob = await fetchBlob(photo.s3_key, photo.filename);
-        zip.file(photo.filename, blob);
-      }
-
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      const zipName = `${album.name || "album"}_${photosToZip.length}.zip`;
-      saveAs(zipBlob, zipName);
-    } catch (err) {
-      console.error("Error while creating ZIP:", err);
-      showMessage("An error occurred while preparing the ZIP file.", "Error");
-    } finally {
-      setSelectMode(false);
-    }
-  };
-
-  function downloadAll(e) {
+  const downloadAll = useCallback((e) => {
     e.preventDefault();
     showConfirm("Download the full album?", "Download Album", () => {
       setIsDownloadingAll(true);
@@ -285,23 +289,23 @@ function Albumview({ currentUser }) {
         payload: { albumcode: albumcode },
       });
     });
-  }
+  }, [albumcode, sendJsonMessage, showConfirm]);
 
-  function selectAll() {
+  const selectAll = useCallback(() => {
     const allIds = photos.map((p) => p.id);
     setSelected(allIds);
-  }
+  }, [photos]);
 
-  function selectNone() {
+  const selectNone = useCallback(() => {
     setSelected([]);
-  }
+  }, []);
 
-  function cancelSelect() {
+  const cancelSelect = useCallback(() => {
     setSelectMode(false);
     setSelected([]);
-  }
+  }, []);
 
-  function downloadSelected() {
+  const downloadSelected = useCallback(() => {
     if (selected.length === 0) {
       return showMessage("No files selected for download.", "Download");
     }
@@ -327,27 +331,27 @@ function Albumview({ currentUser }) {
         }
 
         const zipBlob = await zip.generateAsync({ type: "blob" });
-        const zipName = `${album.name || "selected_files"}.zip`;
+        const zipName = `${album?.name || "selected_files"}.zip`;
         saveAs(zipBlob, zipName);
       } catch (err) {
         console.error("Error while creating ZIP:", err);
         showMessage("An error occurred while preparing the ZIP file.", "Error");
       }
     })();
-  }
+  }, [selected, photos, album?.name, showMessage]);
 
-  function deletedPhoto(photoId) {
+  const deletedPhoto = useCallback((photoId) => {
     try {
       sendJsonMessage({
         action: "deletePhoto",
-        payload: { photo_id: photoId, album_code: album.code },
+        payload: { photo_id: photoId, album_code: album?.code },
       });
     } catch (error) {
       console.error(`Failed to delete file with ID ${photoId}:`, error);
     }
-  }
+  }, [album?.code, sendJsonMessage]);
 
-  function deleteSelected() {
+  const deleteSelected = useCallback(() => {
     if (selected.length === 0) {
       return showMessage("No files selected for deletion.", "Delete Files");
     }
@@ -364,46 +368,46 @@ function Albumview({ currentUser }) {
         });
       },
     );
-  }
+  }, [selected, showConfirm, deletedPhoto, showMessage]);
 
-  function toggleOpen() {
+  const toggleOpen = useCallback(() => {
     sendJsonMessage({
       action: "toggleOpen",
-      payload: { album_id: album.id },
+      payload: { album_id: album?.id },
     });
-  }
+  }, [album?.id, sendJsonMessage]);
 
-  function toggleProfile() {
+  const toggleProfile = useCallback(() => {
     sendJsonMessage({
       action: "toggleProfile",
-      payload: { album_id: album.id },
+      payload: { album_id: album?.id },
     });
-  }
+  }, [album?.id, sendJsonMessage]);
 
-  function togglePrivate() {
+  const togglePrivate = useCallback(() => {
     sendJsonMessage({
       action: "togglePrivate",
-      payload: { album_id: album.id },
+      payload: { album_id: album?.id },
     });
-  }
+  }, [album?.id, sendJsonMessage]);
 
-  function handleRename(newName) {
+  const handleRename = useCallback((newName) => {
     sendJsonMessage({
       action: "setAlbumName",
       payload: { albumcode: albumcode, name: newName },
     });
-  }
+  }, [albumcode, sendJsonMessage]);
 
-  function toggleSubscription() {
-    const action = album.subscribed ? "unsubscribe" : "subscribe";
+  const toggleSubscription = useCallback(() => {
+    const action = album?.subscribed ? "unsubscribe" : "subscribe";
     sendJsonMessage({
       action: action,
       payload: { albumcode: albumcode },
     });
-  }
+  }, [album?.subscribed, albumcode, sendJsonMessage]);
 
   const handleUpload = useCallback((files) => {
-    if (!isOwner && !album.open) {
+    if (!isOwner && !album?.open) {
       showMessage("this album is not open for uploads", "Warning");
       return;
     }
@@ -413,6 +417,45 @@ function Albumview({ currentUser }) {
   }, [isOwner, album?.open, showMessage]);
 
   const sortedPhotos = photos; // Photos are now sorted by the backend
+
+  const uploaderElement = useMemo(() => {
+    if (!album) return null;
+    return (
+      <Uploader
+        album={album}
+        ref={uploaderRef}
+        isOwner={isOwner}
+        userLoggedIn={userLoggedIn}
+        disabled={!isOwner && !album?.open}
+        setPhotos={setPhotos}
+        setTotalPhotos={setTotalPhotos}
+        sortOrder={sortOrder}
+      />
+    );
+  }, [album, isOwner, userLoggedIn, sortOrder]);
+
+  const actionsProps = {
+    selectMode,
+    setSelectMode,
+    cancelSelect,
+    selectAll,
+    selectNone,
+    downloadSelected,
+    deleteSelected,
+    downloadAll,
+    handleDeleteAlbum,
+    toggleSubscription,
+    handleViewTypeChange,
+    viewType,
+    sortField,
+    setSortField,
+    sortOrder,
+    setSortOrder,
+    userLoggedIn,
+    isOwner,
+    album,
+    uploader: uploaderElement
+  };
 
   if (!album) {
     return (
@@ -511,75 +554,9 @@ function Albumview({ currentUser }) {
       </section>
 
       {isMobile ? (
-        <MobileActions
-          selectMode={selectMode}
-          setSelectMode={setSelectMode}
-          cancelSelect={cancelSelect}
-          selectAll={selectAll}
-          selectNone={selectNone}
-          downloadSelected={downloadSelected}
-          deleteSelected={deleteSelected}
-          downloadAll={downloadAll}
-          handleDeleteAlbum={handleDeleteAlbum}
-          toggleSubscription={toggleSubscription}
-          handleViewTypeChange={handleViewTypeChange}
-          viewType={viewType}
-          sortField={sortField}
-          setSortField={setSortField}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          userLoggedIn={userLoggedIn}
-          isOwner={isOwner}
-          album={album}
-          uploader={
-            <Uploader
-              album={album}
-              ref={uploaderRef}
-              isOwner={isOwner}
-              userLoggedIn={userLoggedIn}
-              disabled={!isOwner && !album.open}
-              photos={photos}
-              setPhotos={setPhotos}
-              setTotalPhotos={setTotalPhotos}
-              sortOrder={sortOrder}
-            />
-          }
-        />
+        <MobileActions {...actionsProps} />
       ) : (
-        <DesktopActions
-          selectMode={selectMode}
-          setSelectMode={setSelectMode}
-          cancelSelect={cancelSelect}
-          selectAll={selectAll}
-          selectNone={selectNone}
-          downloadSelected={downloadSelected}
-          deleteSelected={deleteSelected}
-          downloadAll={downloadAll}
-          handleDeleteAlbum={handleDeleteAlbum}
-          toggleSubscription={toggleSubscription}
-          handleViewTypeChange={handleViewTypeChange}
-          viewType={viewType}
-          sortField={sortField}
-          setSortField={setSortField}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          userLoggedIn={userLoggedIn}
-          isOwner={isOwner}
-          album={album}
-          uploader={
-            <Uploader
-              album={album}
-              ref={uploaderRef}
-              isOwner={isOwner}
-              userLoggedIn={userLoggedIn}
-              disabled={!isOwner && !album.open}
-              photos={photos}
-              setPhotos={setPhotos}
-              setTotalPhotos={setTotalPhotos}
-              sortOrder={sortOrder}
-            />
-          }
-        />
+        <DesktopActions {...actionsProps} />
       )}
 
       {album?.private &&

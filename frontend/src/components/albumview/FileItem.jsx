@@ -33,26 +33,20 @@ const FileItem = memo(forwardRef(({
   }, [file.thumb_key, isVideo]);
 
   useEffect(() => {
+    const node = localRef.current;
+    if (!node) return;
+
     const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(localRef.current);
-        }
-      });
+      if (entries[0].isIntersecting) {
+        setIsVisible(true);
+        observer.disconnect();
+      }
     }, {
-      rootMargin: '100px',
+      rootMargin: '200px',
     });
 
-    if (localRef.current) {
-      observer.observe(localRef.current);
-    }
-
-    return () => {
-      if (localRef.current) {
-        observer.unobserve(localRef.current);
-      }
-    };
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
 
   function handleClick(e) {
