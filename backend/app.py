@@ -643,8 +643,9 @@ async def setUserData(websocket, data, username):
     newusername = data["payload"].get("newusername")
     email = data["payload"].get("email")
     password = data["payload"].get("password")
+    notify_me = data["payload"].get("notify_me")
     wssecret = data.get("wssecret")
-    ok = db.setUserData(username, newusername, email, password)
+    ok = db.setUserData(username, newusername, email, password, notify_me=notify_me)
 
     if ok == "success":
         # Determine what the effective username is now
@@ -653,7 +654,12 @@ async def setUserData(websocket, data, username):
         )
         message = {
             "action": "setUserData",
-            "payload": {"email": email, "username": effective_username, "message": ok},
+            "payload": {
+                "email": email,
+                "username": effective_username,
+                "notify_me": notify_me,
+                "message": ok,
+            },
         }
         await websocket.send_json(message)
         if wssecret:

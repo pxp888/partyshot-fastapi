@@ -15,6 +15,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
     email: "",
     password: "",
     confirmPassword: "",
+    notify_me: "never",
   });
   const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
@@ -78,6 +79,9 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
         setUserInfo(userInfo);
         setUsage(usage);
         setEmailPlaceholder(email || "No email set");
+        if (userInfo?.notify_me) {
+          setFormData((prev) => ({ ...prev, notify_me: userInfo.notify_me }));
+        }
       }
     }
   }, [lastJsonMessage, currentUser, setCurrentUser, sendJsonMessage]);
@@ -127,6 +131,7 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
         newusername: formData.newusername || null,
         email: formData.email || null,
         password: formData.password || null,
+        notify_me: formData.notify_me,
       },
     });
   };
@@ -258,6 +263,22 @@ const AccountPage = ({ currentUser, setCurrentUser }) => {
               />
             </div>
           )}
+
+          <div className="form-group">
+            <label htmlFor="notify_me">Notifications</label>
+            <select
+              id="notify_me"
+              name="notify_me"
+              value={formData.notify_me}
+              onChange={handleChange}
+              className="notify-select"
+            >
+              <option value="never">Never</option>
+              <option value="daily">Daily</option>
+              <option value="always">Always</option>
+            </select>
+            <p className="form-tip">Choose how often you want to receive email notifications.</p>
+          </div>
 
           <button className="account-btn" type="submit" disabled={loading}>
             {loading ? "Updating..." : "Update Settings"}

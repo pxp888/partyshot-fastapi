@@ -122,7 +122,8 @@ def init_db() -> None:
                     salt TEXT NOT NULL,
                     class TEXT DEFAULT 'free',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    stripe_customer_id TEXT
+                    stripe_customer_id TEXT,
+                    notify_me TEXT DEFAULT 'never'
                 );
 
                 CREATE TABLE IF NOT EXISTS albums (
@@ -207,6 +208,7 @@ def init_db() -> None:
             cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
             cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
             cursor.execute("ALTER TABLE subscription ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_me TEXT DEFAULT 'never';")
             conn.commit()
 
     logging.info("Database schema initialized.")
@@ -307,7 +309,7 @@ def getUser(username: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, username, email, passhash, salt, created_at, class
+                SELECT id, username, email, passhash, salt, created_at, class, notify_me
                 FROM users
                 WHERE username = %s;
                 """,
@@ -324,6 +326,7 @@ def getUser(username: str) -> dict | None:
             "salt": row[4],
             "created_at": row[5],
             "class": row[6],
+            "notify_me": row[7],
         }
     else:
         return None
@@ -1417,6 +1420,7 @@ def setUserData(
     email: str = None,
     password: str = None,
     user_class: str = None,
+    notify_me: str = None,
 ) -> str:
     """Update user information (username, email, password, or class) conditionally."""
     user = getUser(username)
@@ -1456,6 +1460,11 @@ def setUserData(
     if user_class is not None and user_class != user["class"]:
         update_fields.append("class = %s")
         params.append(user_class)
+
+    # Check notify_me
+    if notify_me is not None and notify_me != user.get("notify_me"):
+        update_fields.append("notify_me = %s")
+        params.append(notify_me)
 
     if not update_fields:
         return "no changes"  # Nothing to update, but not an error
@@ -1569,7 +1578,7 @@ def getAccountData(username: str) -> dict | None:
             cursor.execute(
                 """
                 SELECT
-                    u.id, u.username, u.email, u.class,
+                    u.id, u.username, u.email, u.class, u.notify_me,
                     (SELECT COUNT(*) FROM photos WHERE user_id = u.id) as num_photos,
                     (SELECT COUNT(*) FROM albums WHERE user_id = u.id) as num_albums,
                     (SELECT COUNT(*) FROM photos p JOIN albums a ON p.album_id = a.id WHERE a.user_id = u.id AND p.user_id != u.id) as num_other_photos,
@@ -1593,6 +1602,7 @@ def getAccountData(username: str) -> dict | None:
         uname,
         email,
         uclass,
+        notify_me,
         num_photos,
         num_albums,
         num_other_photos,
@@ -1610,6 +1620,7 @@ def getAccountData(username: str) -> dict | None:
             "username": uname,
             "email": email,
             "class": uclass,
+            "notify_me": notify_me,
         },
         "usage": {
             "number of photos": num_photos,
