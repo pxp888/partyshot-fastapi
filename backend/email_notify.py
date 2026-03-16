@@ -182,7 +182,7 @@ def process_notifications(notify_type, throttle_seconds):
 
                 if pending_albums:
                     # 4. Send email
-                    album_list = "\n".join([f"- {a['name']} (https://shareshot.eu/a/{a['code']})" for a in pending_albums])
+                    album_list = "\n".join([f"- {a['name']} (https://shareshot.eu/album/{a['code']})" for a in pending_albums])
                     subject = "New photos in your albums!"
                     if notify_type == "daily":
                         body = f"Hi {username},\n\nHere is your daily summary of new photos in your albums:\n\n{album_list}\n\nCheck them out!"
