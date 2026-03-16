@@ -454,6 +454,8 @@ function Albumview({ currentUser }) {
     userLoggedIn,
     isOwner,
     album,
+    selected,
+    photos,
     uploader: uploaderElement
   };
 

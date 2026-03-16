@@ -22,6 +22,8 @@ const MobileActions = memo(({
   userLoggedIn,
   isOwner,
   album,
+  selected,
+  photos,
   uploader,
 }) => {
   const [activeDrawer, setActiveDrawer] = useState(null);
@@ -67,6 +69,66 @@ const MobileActions = memo(({
       case "username": return "User";
       case "size": return "Size";
       default: return "Sort";
+    }
+  };
+
+  const handleShare = async (e) => {
+    console.log("Mobile share attempt started");
+    console.log("Secure context:", window.isSecureContext);
+    console.log("navigator.share support:", !!navigator.share);
+
+    if (!navigator.share) {
+      console.warn("navigator.share not available");
+      return;
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      if (selected && selected.length > 0) {
+        console.log(`Preparing to share ${selected.length} files...`);
+        const selectedPhotos = photos.filter(p => selected.includes(p.id));
+        const filePromises = selectedPhotos.map(async (photo) => {
+          if (!photo.s3_key) return null;
+          try {
+            const res = await fetch(photo.s3_key);
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            const type = blob.type || "image/jpeg";
+            return new File([blob], photo.filename, { type });
+          } catch (err) {
+            console.error("Error fetching file for share:", err);
+            return null;
+          }
+        });
+
+        const fetchedFiles = (await Promise.all(filePromises)).filter(f => f !== null);
+        console.log(`Fetched ${fetchedFiles.length} files`);
+
+        if (fetchedFiles.length > 0 && navigator.canShare && navigator.canShare({ files: fetchedFiles })) {
+          console.log("Launching native multi-file share...");
+          await navigator.share({
+            files: fetchedFiles,
+            title: album?.name || "PartyShot Photos",
+          });
+          return;
+        } else {
+          console.warn("Multi-file sharing not supported or failed preparation");
+        }
+      }
+
+      console.log("Sharing album URL fallback...");
+      await navigator.share({
+        title: album?.name || "PartyShot Album",
+        url: window.location.href,
+      });
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error("Error sharing:", err);
+      } else {
+        console.log("User cancelled share");
+      }
     }
   };
 
@@ -180,7 +242,7 @@ const MobileActions = memo(({
         </div>
 
         <QRHover text="Share">
-          <div className="toolbar-tab">
+          <div className="toolbar-tab" onClick={handleShare}>
             <span className="tab-icon">⇪</span>
             <span className="tab-label">Share</span>
           </div>
