@@ -72,8 +72,9 @@ function Topbar({ currentUser, setCurrentUser }) {
   }, []); // Only once on mount
 
   async function handleLogout() {
+    const token = localStorage.getItem("access_token");
     try {
-      await fetch("/api/logout", { method: "POST" });
+      if (token) await fetch("/api/logout", { method: "POST" });
     } catch (e) {
       console.warn("Backend logout failed", e);
     }
@@ -82,6 +83,7 @@ function Topbar({ currentUser, setCurrentUser }) {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("wssecret");
     localStorage.removeItem("user");
+    if (token) window.location.reload();
   }
 
   return (
