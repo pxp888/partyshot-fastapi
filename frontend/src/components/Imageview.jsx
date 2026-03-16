@@ -10,7 +10,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   const [showDetails, setShowDetails] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState("copy URL");
-  const [currentBlob, setCurrentBlob] = useState(null);
+  const [isSharing, setIsSharing] = useState(false);
   const lastFocus = useRef(focus);
   const skipSwipe = useRef(false);
 
@@ -170,32 +170,6 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
     }
   }, [focus]);
 
-  // Pre-fetch blob for sharing to avoid activation timeout
-  useEffect(() => {
-    if (focus !== -1 && files && files[focus]) {
-      // Use mid_key if available as it's smaller and likely cached, fallback to s3_key
-      const url = files[focus].mid_key || files[focus].s3_key;
-      if (url) {
-        console.log(`[Share Debug] Pre-fetching image for share: ${url}`);
-        fetch(url, { mode: "cors", cache: "default" })
-          .then(res => {
-            if (res.ok) return res.blob();
-            throw new Error(`Fetch failed with status ${res.status}`);
-          })
-          .then(blob => {
-            console.log(`[Share Debug] Pre-fetch successful: ${blob.type} (${blob.size} bytes)`);
-            setCurrentBlob(blob);
-          })
-          .catch(err => {
-            console.warn(`[Share Debug] Pre-fetch failed:`, err);
-            setCurrentBlob(null);
-          });
-      }
-    } else {
-      setCurrentBlob(null);
-    }
-  }, [focus, files]);
-
   const handleImageClick = (e) => {
     e.stopPropagation();
     if (focus === -1 || !files) return;
@@ -238,54 +212,50 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
   const handleShare = async (e) => {
     if (e) e.stopPropagation();
     const photo = files[focus];
-    if (!photo) return;
+    if (!photo || isSharing) return;
 
     if (!navigator.share) {
-      console.log("[Share Debug] navigator.share not supported, falling back to copy");
       handleCopy(e);
       return;
     }
 
-    console.log("[Share Debug] Share button clicked. Blob ready:", !!currentBlob);
-
-    // Prepare share data
+    setIsSharing(true);
+    const originalUrl = photo.s3_key;
     const shareData = {
       title: photo.filename || "PartyShot Photo",
     };
 
-    // If we have a pre-fetched blob, try to include it
-    if (currentBlob) {
-      const file = new File([currentBlob], photo.filename || "photo.jpg", { 
-        type: currentBlob.type || "image/jpeg" 
-      });
-      
-      const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
-      console.log("[Share Debug] canShare files assessment:", canShareFiles);
-
-      if (canShareFiles) {
-        shareData.files = [file];
-        // We do NOT include url or text here to force apps to show the photo share sheet
-        console.log("[Share Debug] Sharing as FILE");
+    try {
+      // Fetch the original high-res image on demand
+      if (originalUrl) {
+        console.log("[Share Debug] Fetching original image for share...");
+        const res = await fetch(originalUrl, { mode: "cors", cache: "default" });
+        if (res.ok) {
+          const blob = await res.blob();
+          const file = new File([blob], photo.filename || "photo.jpg", { 
+            type: blob.type || "image/jpeg" 
+          });
+          
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            shareData.files = [file];
+          } else {
+            shareData.url = window.location.href;
+          }
+        } else {
+          shareData.url = window.location.href;
+        }
       } else {
-        console.log("[Share Debug] Falling back to URL due to canShare=false");
         shareData.url = window.location.href;
       }
-    } else {
-      console.log("[Share Debug] Falling back to URL because blob not ready");
-      shareData.url = window.location.href;
-    }
 
-    try {
-      console.log("[Share Debug] Calling navigator.share with payload:", Object.keys(shareData));
       await navigator.share(shareData);
-      console.log("[Share Debug] navigator.share call completed");
     } catch (err) {
       if (err.name !== "AbortError") {
-        console.error("[Share Debug] navigator.share error:", err);
+        console.error("[Share Debug] Share failed:", err);
         handleCopy(e); 
-      } else {
-        console.log("[Share Debug] User cancelled share menu");
       }
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -325,8 +295,12 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           <span className="actionIcon" onClick={handleDownload} title="Download">
             ⇓
           </span>
-          <span className="actionIcon" onClick={handleShare} title={copyFeedback}>
-            {copyFeedback === "copied!" ? "✓" : "⇪"}
+          <span 
+            className={`actionIcon ${isSharing ? 'loading' : ''}`} 
+            onClick={handleShare} 
+            title={isSharing ? "Preparing..." : (copyFeedback === "copied!" ? "✓" : "⇪")}
+          >
+            {isSharing ? "..." : (copyFeedback === "copied!" ? "✓" : "⇪")}
           </span>
           <span className="actionIcon delete" onClick={handleDelete} title="Delete">
             ⊘
