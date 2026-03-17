@@ -652,14 +652,26 @@ async def deleteAlbum(username: str, code: str) -> str:
                         (user["id"], total_size),
                     )
 
-                # 7. Soft delete photo records
+                # 7. Soft delete photo records by matching s3_key
+                # Decrement 'count' for all records sharing keys with the deleted album.
+                # Mark 'album_id = NULL' only for records that were in this album.
                 cursor.execute(
                     """
+                    WITH affected_keys AS (
+                        SELECT s3_key, count(*) as count_in_album
+                        FROM photos
+                        WHERE album_id = %s
+                        GROUP BY s3_key
+                    )
                     UPDATE photos
-                    SET album_id = NULL, deleted_at = CURRENT_TIMESTAMP, count = count - 1
-                    WHERE album_id = %s
+                    SET 
+                        album_id = CASE WHEN album_id = %s THEN NULL ELSE album_id END,
+                        deleted_at = CASE WHEN album_id = %s THEN CURRENT_TIMESTAMP ELSE deleted_at END,
+                        count = count - affected_keys.count_in_album
+                    FROM affected_keys
+                    WHERE photos.s3_key = affected_keys.s3_key;
                     """,
-                    (album_id,),
+                    (album_id, album_id, album_id),
                 )
 
                 # 6. Delete the album record itself
@@ -822,13 +834,16 @@ async def deletePhoto(id: str, username: str) -> bool:
                 # S3 deletion logic removed for soft delete
 
                 # Perform the soft delete from DB
+                # This decrements 'count' for all records sharing this photo's s3_key.
                 cursor.execute(
                     """
                     UPDATE photos
-                    SET album_id = NULL, deleted_at = CURRENT_TIMESTAMP, count = count - 1
-                    WHERE id = %s;
+                    SET album_id = CASE WHEN id = %s THEN NULL ELSE album_id END, 
+                        deleted_at = CASE WHEN id = %s THEN CURRENT_TIMESTAMP ELSE deleted_at END, 
+                        count = count - 1
+                    WHERE s3_key = %s;
                     """,
-                    (photo_id,),
+                    (photo_id, photo_id, s3_key),
                 )
 
                 # Update spaceused: subtract the original photo size from the album owner's total
@@ -849,7 +864,7 @@ async def deletePhoto(id: str, username: str) -> bool:
                     return None
 
                 conn.commit()
-                await enqueue_cleanup_deleted_photos(0)
+                # await enqueue_cleanup_deleted_photos(0)
                 return {"id": photo_id, "album_id": album_id}
             except Exception:
                 conn.rollback()

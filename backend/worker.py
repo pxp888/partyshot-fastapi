@@ -11,7 +11,7 @@ from arq.connections import RedisSettings
 from PIL import Image
 
 logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.WARNING, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
@@ -105,6 +105,15 @@ async def cleanup_deleted_photos(ctx, age_hours: int = 0):
     Search the database for photos where deleted_at < now - age_hours and count <= 0.
     Delete the relevant keys from object storage, and then remove those entries from the photos table.
     """
+    # Rate limit: ensure this doesn't run more than once per minute
+    redis = ctx.get("redis")
+    if redis:
+        lock_key = "cleanup_deleted_photos_lock"
+        if await redis.get(lock_key):
+            logging.info("Skipping cleanup; already ran in the last minute.")
+            return {"deleted_count": 0, "status": "rate_limited"}
+        await redis.setex(lock_key, 60, "true")
+
     logging.info("Starting cleanup of old deleted photos (older than %s hours)...", age_hours)
     
     photos_to_delete = await asyncio.to_thread(db.get_deleted_photos_to_clean, age_hours)
