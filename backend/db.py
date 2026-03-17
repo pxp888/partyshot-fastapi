@@ -208,7 +208,14 @@ def init_db() -> None:
             cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
             cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
             cursor.execute("ALTER TABLE subscription ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
-            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_me TEXT DEFAULT 'never';")
+            # Migration to ensure all album owners have a subscription
+            cursor.execute(
+                """
+                INSERT INTO subscription (user_id, album_id, profile, opened_at)
+                SELECT user_id, id, profile, opened_at FROM albums
+                ON CONFLICT (user_id, album_id) DO NOTHING;
+                """
+            )
             conn.commit()
 
     logging.info("Database schema initialized.")
@@ -369,9 +376,10 @@ def getAlbum(code: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username, a.modified_at, a.opened_at
+                SELECT a.id, a.code, a.name, a.user_id, a.open, s.profile, a.private, a.created_at, u.username, a.modified_at, s.opened_at
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
+                LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = a.user_id
                 WHERE a.code = %s;
                 """,
                 (code,),
@@ -385,7 +393,7 @@ def getAlbum(code: str) -> dict | None:
             "name": row[2],
             "user_id": row[3],
             "open": bool(row[4]),
-            "profile": bool(row[5]),
+            "profile": bool(row[5]) if row[5] is not None else False,
             "private": bool(row[6]),
             "created_at": row[7].isoformat()
             if isinstance(row[7], datetime.datetime)
@@ -444,16 +452,17 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             cursor.execute(
                 """
                 SELECT a.id, a.code, a.name, a.user_id, a.open, 
-                       CASE WHEN u.username = %s THEN a.profile ELSE COALESCE(s.profile, a.profile) END AS display_profile, 
+                       COALESCE(s.profile, o_s.profile) AS display_profile, 
                        a.private, a.created_at, u.username,
                        s.album_id IS NOT NULL AS subscribed,
-                       a.modified_at, a.opened_at, s.opened_at AS sub_opened_at
+                       a.modified_at, o_s.opened_at, s.opened_at AS sub_opened_at
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
+                LEFT JOIN subscription o_s ON a.id = o_s.album_id AND o_s.user_id = a.user_id
                 LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = (SELECT id FROM users WHERE username = %s)
                 WHERE a.code = %s;
                 """,
-                (authuser, authuser, code),
+                (authuser, code),
             )
             row = cursor.fetchone()
 
@@ -560,20 +569,11 @@ def getPhotos(
 
 
 def recordAlbumVisit(album_code: str, username: str) -> None:
-    """Update opened_at for both the album (if owner) and the subscription (if subscriber)."""
+    """Update opened_at for the database record mapping the album and the user."""
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                # Update album opened_at if the user is the owner
-                cursor.execute(
-                    """
-                    UPDATE albums
-                    SET opened_at = CURRENT_TIMESTAMP
-                    WHERE code = %s AND user_id = (SELECT id FROM users WHERE username = %s);
-                    """,
-                    (album_code, username),
-                )
-                # Update subscription opened_at if the user is a subscriber
+                # Update subscription opened_at
                 cursor.execute(
                     """
                     UPDATE subscription
@@ -938,23 +938,22 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 # Also join with photos to get the latest thumbnail
                 cursor.execute(
                     """
-                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, 
-                           CASE WHEN a.user_id = %s THEN a.profile ELSE s_prof.profile END AS display_profile, 
+                    SELECT a.id, a.code, a.name, a.user_id, a.open, 
+                           s_prof.profile AS display_profile, 
                            a.private, a.created_at, u.username,
                            (SELECT p.thumb_key FROM photos p 
                             WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
                             ORDER BY p.created_at DESC LIMIT 1) as thumb_key,
                            a.modified_at, 
-                           CASE WHEN a.user_id = %s THEN a.opened_at ELSE NULL END, 
+                           CASE WHEN a.user_id = %s THEN s_prof.opened_at ELSE NULL END, 
                            s_auth.opened_at AS sub_opened_at
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
-                    LEFT JOIN subscription s_prof ON a.id = s_prof.album_id AND s_prof.user_id = %s
+                    JOIN subscription s_prof ON a.id = s_prof.album_id AND s_prof.user_id = %s
                     LEFT JOIN subscription s_auth ON a.id = s_auth.album_id AND s_auth.user_id = %s
-                    WHERE a.user_id = %s OR s_prof.user_id = %s
                     ORDER BY a.modified_at DESC;
                     """,
-                    (user["id"], auth_user_id, user["id"], auth_user_id, user["id"], user["id"]),
+                    (user["id"], user["id"], auth_user_id),
                 )
                 rows = cursor.fetchall()
             except Exception as e:
@@ -1025,16 +1024,17 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 # Also join with photos to get the latest thumbnail
                 cursor.execute(
                     """
-                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, a.profile, a.private, a.created_at, u.username,
+                    SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, o_s.profile, a.private, a.created_at, u.username,
                            (SELECT p2.thumb_key FROM photos p2 
                             WHERE p2.album_id = a.id AND p2.thumb_key IS NOT NULL 
                             ORDER BY p2.created_at DESC LIMIT 1) as thumb_key,
                            a.modified_at,
-                           CASE WHEN a.user_id = %s THEN a.opened_at ELSE NULL END,
+                           CASE WHEN a.user_id = %s THEN o_s.opened_at ELSE NULL END,
                            s.opened_at AS sub_opened_at
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
                     JOIN photos p ON a.id = p.album_id
+                    LEFT JOIN subscription o_s ON a.id = o_s.album_id AND o_s.user_id = a.user_id
                     LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
                     WHERE p.user_id = %s
                     ORDER BY a.modified_at DESC;
@@ -1099,13 +1099,22 @@ def createAlbum(username: str, album_name: str) -> str | None:
 
                 cursor.execute(
                     """
-                    INSERT INTO albums (name, user_id, code, profile)
-                    VALUES (%s, %s, %s, FALSE)
+                    INSERT INTO albums (name, user_id, code)
+                    VALUES (%s, %s, %s)
                     RETURNING id;
                     """,
                     (album_name, user_id, album_code),
                 )
-                cursor.fetchone()  # consume the returned id
+                album_id = cursor.fetchone()[0]  # consume the returned id
+
+                cursor.execute(
+                    """
+                    INSERT INTO subscription (user_id, album_id, profile)
+                    VALUES (%s, %s, FALSE);
+                    """,
+                    (user_id, album_id),
+                )
+
                 conn.commit()
                 return album_code
             except Exception:
@@ -1239,69 +1248,41 @@ def toggleProfile(id: str, username: str) -> dict | None:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
-                # Grab the album's current state and ownership.
+                # Toggle the `profile` flag for the user's subscription.
                 cursor.execute(
                     """
-                    SELECT user_id, code, profile
-                    FROM albums
-                    WHERE id = %s;
+                    SELECT profile
+                    FROM subscription
+                    WHERE user_id = %s AND album_id = %s;
                     """,
-                    (album_id,),
+                    (user["id"], album_id)
                 )
-                row = cursor.fetchone()
-                if row is None:
+                sub_row = cursor.fetchone()
+                if sub_row is None:
                     return None
+                    
+                new_sub_profile = not sub_row[0]
+                cursor.execute(
+                    """
+                    UPDATE subscription
+                    SET profile = %s
+                    WHERE user_id = %s AND album_id = %s;
+                    """,
+                    (new_sub_profile, user["id"], album_id)
+                )
+                conn.commit()
 
-                album_owner_id, album_code, current_profile = row
-
-                if user["id"] == album_owner_id:
-                    # Toggle the `profile` flag.
-                    new_profile = not current_profile
-                    cursor.execute(
-                        """
-                        UPDATE albums
-                        SET profile = %s
-                        WHERE id = %s
-                        RETURNING id, code, profile;
-                        """,
-                        (new_profile, album_id),
-                    )
-                    updated_row = cursor.fetchone()
-                    if updated_row is None:
-                        conn.rollback()
-                        return None
-                    conn.commit()
-                    return getAlbum(album_code)
-                else:
-                    # Toggle the `profile` flag for the user's subscription.
-                    cursor.execute(
-                        """
-                        SELECT profile
-                        FROM subscription
-                        WHERE user_id = %s AND album_id = %s;
-                        """,
-                        (user["id"], album_id)
-                    )
-                    sub_row = cursor.fetchone()
-                    if sub_row is None:
-                        return None
-                        
-                    new_sub_profile = not sub_row[0]
-                    cursor.execute(
-                        """
-                        UPDATE subscription
-                        SET profile = %s
-                        WHERE user_id = %s AND album_id = %s;
-                        """,
-                        (new_sub_profile, user["id"], album_id)
-                    )
-                    conn.commit()
-
-                    album_obj = getAlbum(album_code)
+                # Return the updated album object to the client
+                cursor.execute("SELECT code FROM albums WHERE id = %s", (album_id,))
+                album_row = cursor.fetchone()
+                if album_row:
+                    album_obj = getAlbum(album_row[0])
+                    # Note: since getAlbum returns the owner's profile by default, if the current user isn't the owner,
+                    # we need to inject the sub_profile so the UI shows the modified profile properly
                     if album_obj:
                         album_obj["profile"] = new_sub_profile
                     return album_obj
-
+                return None
             except Exception:
                 conn.rollback()
                 return None
