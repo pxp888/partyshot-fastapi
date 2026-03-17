@@ -202,21 +202,8 @@ def init_db() -> None:
 
                 """
             )
-            
-            # Migration for album and subscription tables
-            cursor.execute("ALTER TABLE subscription ADD COLUMN IF NOT EXISTS profile BOOLEAN DEFAULT TRUE;")
-            cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
-            cursor.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
-            cursor.execute("ALTER TABLE subscription ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP;")
-            # Migration to ensure all album owners have a subscription
-            cursor.execute(
-                """
-                INSERT INTO subscription (user_id, album_id, profile, opened_at)
-                SELECT user_id, id, profile, opened_at FROM albums
-                ON CONFLICT (user_id, album_id) DO NOTHING;
-                """
-            )
             conn.commit()
+
 
     logging.info("Database schema initialized.")
 

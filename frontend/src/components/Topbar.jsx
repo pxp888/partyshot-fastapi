@@ -98,7 +98,8 @@ function Topbar({ currentUser, setCurrentUser }) {
           {currentUser ? (
             <button
               className="btn topbar-btn"
-              onClick={() => navigate(`/user/${currentUser}`)}
+              // onClick={() => navigate(`/user/${currentUser}`)}
+              onClick={() => window.location.href = `/user/${currentUser}`}
             >
               {currentUser}
             </button>

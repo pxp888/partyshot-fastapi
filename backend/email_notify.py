@@ -132,13 +132,14 @@ def process_notifications(notify_type, throttle_seconds):
                     continue
 
                 # 3. Find albums with updates (owned or subscribed)
+                # In the new schema, every relevant relationship (owner or subscriber) 
+                # has a record in the subscription table.
                 cur.execute("""
-                    SELECT a.id, a.name, a.code, a.modified_at, 
-                           COALESCE(s.opened_at, a.opened_at) as effective_opened_at
-                    FROM albums a
-                    LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
-                    WHERE (a.user_id = %s OR s.user_id = %s)
-                """, (user_id, user_id, user_id))
+                    SELECT a.id, a.name, a.code, a.modified_at, s.opened_at
+                    FROM subscription s
+                    JOIN albums a ON s.album_id = a.id
+                    WHERE s.user_id = %s
+                """, (user_id,))
                 all_relevant_albums = cur.fetchall()
 
                 pending_albums = []
