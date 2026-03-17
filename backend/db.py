@@ -1468,74 +1468,6 @@ def getEmail(username: str) -> str:
                 return None
 
 
-# def getUsage(username: str) -> dict | None:
-#     """
-#     Returns a dictionary with usage statistics for the given user.
-#     """
-#     user = getUser(username)
-#     if not user:
-#         return None
-#     user_id = user["id"]
-
-#     with get_db_connection() as conn:
-#         with conn.cursor() as cursor:
-#             # number of photos
-#             cursor.execute("SELECT COUNT(*) FROM photos WHERE user_id = %s", (user_id,))
-#             num_photos = cursor.fetchone()[0]
-
-#             # number of albums
-#             cursor.execute("SELECT COUNT(*) FROM albums WHERE user_id = %s", (user_id,))
-#             num_albums = cursor.fetchone()[0]
-
-#             # number of other peoples photos in users albums
-#             cursor.execute(
-#                 """
-#                 SELECT COUNT(*)
-#                 FROM photos p
-#                 JOIN albums a ON p.album_id = a.id
-#                 WHERE a.user_id = %s AND p.user_id != %s
-#                 """,
-#                 (user_id, user_id),
-#             )
-#             num_other_photos = cursor.fetchone()[0]
-
-#             # total size of photos
-#             cursor.execute(
-#                 "SELECT SUM(COALESCE(size, 0)) FROM photos WHERE user_id = %s",
-#                 (user_id,),
-#             )
-#             total_size_photos = cursor.fetchone()[0] or 0
-
-#             # total size in user albums
-#             cursor.execute(
-#                 """
-#                 SELECT SUM(COALESCE(p.size, 0))
-#                 FROM photos p
-#                 JOIN albums a ON p.album_id = a.id
-#                 WHERE a.user_id = %s
-#                 """,
-#                 (user_id,),
-#             )
-#             total_size_albums = cursor.fetchone()[0] or 0
-
-#             # total space used from spaceused table (single row per user)
-#             cursor.execute(
-#                 "SELECT space FROM spaceused WHERE user_id = %s",
-#                 (user_id,),
-#             )
-#             row = cursor.fetchone()
-#             space_used_table = row[0] if row else 0
-
-#             return {
-#                 "number of photos": num_photos,
-#                 "number of albums": num_albums,
-#                 "number of other peoples photos in users albums": num_other_photos,
-#                 "total size of photos": int(total_size_photos),
-#                 "total size in user albums": int(total_size_albums),
-#                 "spaceused_table": int(space_used_table),
-#             }
-
-
 def getAccountData(username: str) -> dict | None:
     """
     Consolidates getEmail, getUser, and getUsage into one call.
@@ -1857,25 +1789,6 @@ def updatePhotoSizes(
             except Exception as e:
                 conn.rollback()
                 logging.error("Error updating photo sizes for %s: %s", photo_id, e)
-
-
-# def addSpaceUsed(user_id: int, space: int):
-#     with get_db_connection() as conn:
-#         with conn.cursor() as cursor:
-#             try:
-#                 cursor.execute(
-#                     """
-#                     INSERT INTO spaceused (user_id, space)
-#                     VALUES (%s, %s)
-#                     ON CONFLICT (user_id) DO UPDATE
-#                     SET space = spaceused.space + EXCLUDED.space;
-#                     """,
-#                     (user_id, space),
-#                 )
-#                 conn.commit()
-#             except Exception as e:
-#                 conn.rollback()
-#                 logging.error("Error adding space used for %s: %s", user_id, e)
 
 
 def recordAtomicPhoto(

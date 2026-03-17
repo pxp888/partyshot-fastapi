@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Loginbox from "./Loginbox";
 import RegisterBox from "./RegisterBox";
 import { sendJson, receiveJson } from "./helpers";
@@ -16,7 +16,7 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const checkSession = useCallback(() => {
     console.log("topbar protect test");
     receiveJson("/api/protected")
       .then((data) => {
@@ -25,13 +25,36 @@ function Topbar({ currentUser, setCurrentUser }) {
           setCurrentUser(data.user_info.username);
           setUserInfo(data.user_info);
           setUserClass(data.user_info.class);
+        } else {
+          handleLogout();
         }
       })
       .catch((err) => {
         console.error("Logged out:", err);
         handleLogout();
       });
+  }, [setCurrentUser]);
+
+  useEffect(() => {
+    checkSession();
   }, [setCurrentUser]); // Test protected route on mount
+
+  useEffect(() => {
+    const handleWakeup = () => {
+      if (document.visibilityState === "visible") {
+        console.log("Page wakeup/visible: checking session");
+        checkSession();
+      }
+    };
+
+    window.addEventListener("visibilitychange", handleWakeup);
+    window.addEventListener("focus", handleWakeup);
+
+    return () => {
+      window.removeEventListener("visibilitychange", handleWakeup);
+      window.removeEventListener("focus", handleWakeup);
+    };
+  }, [checkSession]);
 
   /* ---- Keep‑alive logic ---- */
   useEffect(() => {
