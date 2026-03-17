@@ -93,27 +93,51 @@ async def delete_s3_object(ctx, key: str):
     return True
 
 
-async def record_atomic_photo(
-    ctx,
-    photo_id: int,
-    user_id: int,
-    album_id: int,
-    size: int,
-    filename: str,
-    action: str,
-):
-    """Background task to record atomic photo transactions."""
-    await asyncio.to_thread(
-        db.recordAtomicPhoto, photo_id, user_id, album_id, size, filename, action
-    )
-    return True
-
-
 async def delete_s3_objects(ctx, keys: list):
     if keys:
         logging.info("Deleting %s objects from S3", len(keys))
         await asyncio.to_thread(aws.delete_files_from_s3, keys)
     return True
+
+
+async def cleanup_deleted_photos(ctx, age_hours: int = 0):
+    """
+    Search the database for photos where deleted_at < now - age_hours and count <= 0.
+    Delete the relevant keys from object storage, and then remove those entries from the photos table.
+    """
+    logging.info("Starting cleanup of old deleted photos (older than %s hours)...", age_hours)
+    
+    photos_to_delete = await asyncio.to_thread(db.get_deleted_photos_to_clean, age_hours)
+    
+    if not photos_to_delete:
+        logging.info("No photos found to clean up.")
+        return {"deleted_count": 0}
+        
+    logging.info("Found %s photos to hard delete.", len(photos_to_delete))
+    
+    keys_to_delete = []
+    photo_ids_to_delete = []
+    
+    for photo_id, s3_key, thumb_key, mid_key in photos_to_delete:
+        photo_ids_to_delete.append(photo_id)
+        if s3_key:
+            keys_to_delete.append(s3_key)
+        if thumb_key:
+            keys_to_delete.append(thumb_key)
+        if mid_key:
+            keys_to_delete.append(mid_key)
+            
+    # Delete from S3 in batches
+    while keys_to_delete:
+        batch = keys_to_delete[:100]
+        keys_to_delete = keys_to_delete[100:]
+        await asyncio.to_thread(aws.delete_files_from_s3, batch)
+        
+    # Delete from DB
+    await asyncio.to_thread(db.hard_delete_photos, photo_ids_to_delete)
+    
+    logging.info("Successfully cleaned up %s photos.", len(photo_ids_to_delete))
+    return {"deleted_count": len(photo_ids_to_delete)}
 
 
 async def send_reset_code_email(ctx, email: str, code: int):
@@ -191,8 +215,8 @@ class WorkerSettings:
         recount_missing_sizes,
         delete_s3_object,
         db.cleanup2,
-        record_atomic_photo,
         delete_s3_objects,
+        cleanup_deleted_photos,
         send_reset_code_email,
         send_contact_email,
     ]

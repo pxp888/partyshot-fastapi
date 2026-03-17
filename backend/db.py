@@ -48,18 +48,9 @@ async def enqueue_delete_keys(keys: list):
     await pool.enqueue_job("delete_s3_objects", keys)
 
 
-async def enqueue_record_atomic_photo(
-    photo_id: int,
-    user_id: int,
-    album_id: int,
-    size: int,
-    filename: str,
-    action: str,
-):
+async def enqueue_cleanup_deleted_photos(age_hours: int = 0):
     pool = await _get_arq_pool()
-    await pool.enqueue_job(
-        "record_atomic_photo", photo_id, user_id, album_id, size, filename, action
-    )
+    await pool.enqueue_job("cleanup_deleted_photos", age_hours)
 
 
 def init_pool():
@@ -150,7 +141,9 @@ def init_db() -> None:
                     size INTEGER,
                     thumb_size INTEGER,
                     mid_size INTEGER,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    deleted_at TIMESTAMP,
+                    count INTEGER DEFAULT 1
                 );
 
                 CREATE TABLE IF NOT EXISTS subscription (
@@ -184,17 +177,6 @@ def init_db() -> None:
                     space BIGINT DEFAULT 0
                 );
 
-                CREATE TABLE IF NOT EXISTS photos_atomic (
-                    id SERIAL PRIMARY KEY,
-                    photo_id INTEGER,
-                    user_id INTEGER,
-                    album_id INTEGER,
-                    size BIGINT,
-                    filename TEXT,
-                    action TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-
                 CREATE TABLE IF NOT EXISTS user_limits (
                     class TEXT PRIMARY KEY,
                     max_size BIGINT NOT NULL
@@ -202,6 +184,16 @@ def init_db() -> None:
 
                 """
             )
+            
+            # Simple migrations for existing databases
+            cursor.execute(
+                """
+                ALTER TABLE photos ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
+                ALTER TABLE photos ADD COLUMN IF NOT EXISTS count INTEGER DEFAULT 1;
+                DROP TABLE IF EXISTS photos_atomic;
+                """
+            )
+            
             conn.commit()
 
 
@@ -635,19 +627,7 @@ async def deleteAlbum(username: str, code: str) -> str:
                 )
                 photo_rows = cursor.fetchall()
 
-                # 4. Enqueue S3 deletions
-                killed_keys = []
-                for s3_key, thumb_key, mid_key in photo_rows:
-                    if s3_key:
-                        killed_keys.append(s3_key)
-                    if thumb_key:
-                        killed_keys.append(thumb_key)
-                    if mid_key:
-                        killed_keys.append(mid_key)
-                while killed_keys:
-                    batch = killed_keys[:100]
-                    killed_keys = killed_keys[100:]
-                    await enqueue_delete_keys(batch)
+                # S3 deletion logic removed for soft delete
 
                 # 5. Get total size of all original photos in the album
                 cursor.execute(
@@ -672,17 +652,11 @@ async def deleteAlbum(username: str, code: str) -> str:
                         (user["id"], total_size),
                     )
 
-                # Record atomic deletions in background
-                for pid, uid, size, fname in photo_records:
-                    if size and size > 0:
-                        await enqueue_record_atomic_photo(
-                            pid, uid, album_id, -size, fname, "delete"
-                        )
-
-                # 7. Delete photo records
+                # 7. Soft delete photo records
                 cursor.execute(
                     """
-                    DELETE FROM photos
+                    UPDATE photos
+                    SET album_id = NULL, deleted_at = CURRENT_TIMESTAMP, count = count - 1
                     WHERE album_id = %s
                     """,
                     (album_id,),
@@ -698,6 +672,7 @@ async def deleteAlbum(username: str, code: str) -> str:
                 )
 
                 conn.commit()
+                await enqueue_cleanup_deleted_photos(0)
                 return code
             except Exception as e:
                 conn.rollback()
@@ -844,26 +819,13 @@ async def deletePhoto(id: str, username: str) -> bool:
 
                 # Enqueue S3 deletions if they exist
                 
-                # if s3_key:
-                #     await enqueue_delete_key(s3_key)
-                # if thumb_key:
-                #     await enqueue_delete_key(thumb_key)
-                # if mid_key:
-                #     await enqueue_delete_key(mid_key)
+                # S3 deletion logic removed for soft delete
 
-                batch = []
-                if s3_key:
-                    batch.append(s3_key)
-                if thumb_key:
-                    batch.append(thumb_key)
-                if mid_key:
-                    batch.append(mid_key)
-                await enqueue_delete_keys(batch)
-
-                # Perform the delete from DB
+                # Perform the soft delete from DB
                 cursor.execute(
                     """
-                    DELETE FROM photos
+                    UPDATE photos
+                    SET album_id = NULL, deleted_at = CURRENT_TIMESTAMP, count = count - 1
                     WHERE id = %s;
                     """,
                     (photo_id,),
@@ -881,22 +843,13 @@ async def deletePhoto(id: str, username: str) -> bool:
                         (album_owner_id, photo_size),
                     )
 
-                    # Record atomic deletion in background
-                    # Note: db.py is synchronous mostly, but deletePhoto is async.
-                    await enqueue_record_atomic_photo(
-                        photo_id,
-                        photo_owner_id,
-                        album_id,
-                        -photo_size,
-                        filename,
-                        "delete",
-                    )
-                # If DELETE affected a row, commit
+                # If UPDATE affected a row, commit
                 if cursor.rowcount == 0:
                     conn.rollback()
                     return None
 
                 conn.commit()
+                await enqueue_cleanup_deleted_photos(0)
                 return {"id": photo_id, "album_id": album_id}
             except Exception:
                 conn.rollback()
@@ -1776,44 +1729,10 @@ def updatePhotoSizes(
                         (owner_id, size),
                     )
 
-                    # Record atomic transaction (append-only)
-                    cursor.execute(
-                        """
-                        INSERT INTO photos_atomic (photo_id, user_id, album_id, size, filename, action)
-                        VALUES (%s, %s, %s, %s, %s, %s);
-                        """,
-                        (photo_id, owner_id, album_id, size, filename, "add"),
-                    )
-
                 conn.commit()
             except Exception as e:
                 conn.rollback()
                 logging.error("Error updating photo sizes for %s: %s", photo_id, e)
-
-
-def recordAtomicPhoto(
-    photo_id: int,
-    user_id: int,
-    album_id: int,
-    size: int,
-    filename: str,
-    action: str,
-) -> None:
-    """Record a photo transaction in the append-only photos_atomic table."""
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            try:
-                cursor.execute(
-                    """
-                    INSERT INTO photos_atomic (photo_id, user_id, album_id, size, filename, action)
-                    VALUES (%s, %s, %s, %s, %s, %s);
-                    """,
-                    (photo_id, user_id, album_id, size, filename, action),
-                )
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                logging.error("Error recording atomic photo %s: %s", photo_id, e)
 
 
 def uncountedPhotos() -> list:
@@ -1823,6 +1742,43 @@ def uncountedPhotos() -> list:
                 "SELECT id, s3_key, thumb_key, mid_key FROM photos WHERE size IS NULL"
             )
             return cursor.fetchall()
+
+
+def get_deleted_photos_to_clean(age_hours: int = 0) -> list:
+    """Fetch photos that were soft deleted older than 'age_hours' ago and have count=0."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            # count <= 0 as a safety measure
+            cursor.execute(
+                """
+                SELECT id, s3_key, thumb_key, mid_key 
+                FROM photos 
+                WHERE deleted_at IS NOT NULL 
+                  AND deleted_at < NOW() - INTERVAL '%s hours'
+                  AND count <= 0
+                """,
+                (age_hours,),
+            )
+            return cursor.fetchall()
+
+
+def hard_delete_photos(photo_ids: list[int]) -> None:
+    """Permanently remove photos from DB by ID."""
+    if not photo_ids:
+        return
+    
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                # PostgreSQL requires tuple for IN clause
+                cursor.execute(
+                    "DELETE FROM photos WHERE id = ANY(%s)",
+                    (photo_ids,)
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logging.error("Error hard deleting photos: %s", e)
 
 
 # --------------------------------------------------------------------------- #
