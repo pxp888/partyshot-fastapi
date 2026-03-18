@@ -14,6 +14,7 @@ import Gridview from "./Gridview";
 import MobileActions from "./MobileActions";
 import DesktopActions from "./DesktopActions";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import Importer from "./Importer";
 
 import "./Albumview.css";
 
@@ -32,6 +33,8 @@ function Albumview({ currentUser }) {
   const [sortOrder, setSortOrder] = useState("desc");
   const [limit] = useState(50);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [showImporter, setShowImporter] = useState(false);
+  const [importTarget, setImportTarget] = useState(null);
   const [viewType, setViewType] = useState(
     localStorage.getItem("viewType") || "icon",
   );
@@ -456,7 +459,8 @@ function Albumview({ currentUser }) {
     album,
     selected,
     photos,
-    uploader: uploaderElement
+    uploader: uploaderElement,
+    setShowImporter
   };
 
   if (!album) {
@@ -475,6 +479,11 @@ function Albumview({ currentUser }) {
         focus={focus}
         setFocus={setFocus}
         deletedPhoto={deletedPhoto}
+        onImport={(id) => {
+          setImportTarget([id]);
+          setShowImporter(true);
+        }}
+        userLoggedIn={userLoggedIn}
       />
 
       <section className="adetails">
@@ -609,6 +618,20 @@ function Albumview({ currentUser }) {
           setFocus={setFocus}
           isFetching={isFetching}
           onDrop={handleUpload}
+        />
+      )}
+
+      {showImporter && (
+        <Importer 
+          selected={importTarget || selected} 
+          onClose={() => {
+            setShowImporter(false);
+            setImportTarget(null);
+          }}
+          currentUser={currentUser}
+          onImportComplete={() => {
+            if (!importTarget) cancelSelect();
+          }}
         />
       )}
 

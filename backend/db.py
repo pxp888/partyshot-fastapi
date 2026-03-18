@@ -774,6 +774,108 @@ def addPhoto(data: dict) -> dict | None:
     }
 
 
+def importPhotos(photo_ids: list, target_album_id: int, username: str) -> list:
+    user = getUser(username)
+    if not user:
+        return []
+
+    user_id = user["id"]
+    imported_photos = []
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                total_imported_size = 0
+                for pid in photo_ids:
+                    # 1. Get original photo
+                    cursor.execute(
+                        """
+                        SELECT s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size
+                        FROM photos
+                        WHERE id = %s
+                        """,
+                        (pid,)
+                    )
+                    row = cursor.fetchone()
+                    if not row:
+                        continue
+
+                    s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size = row
+
+                    # 2. Insert new row
+                    cursor.execute(
+                        """
+                        INSERT INTO photos (user_id, album_id, s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id, user_id, album_id, s3_key, thumb_key, mid_key, filename, created_at, size, thumb_size, mid_size;
+                        """,
+                        (user_id, target_album_id, s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size)
+                    )
+                    new_row = cursor.fetchone()
+                    
+                    # 3. Increment count for all photos with this s3_key
+                    if s3_key:
+                        cursor.execute(
+                            """
+                            UPDATE photos
+                            SET count = count + 1
+                            WHERE s3_key = %s
+                            """,
+                            (s3_key,)
+                        )
+
+                    # Update modified_at for the target album
+                    cursor.execute(
+                        "UPDATE albums SET modified_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING modified_at",
+                        (target_album_id,)
+                    )
+                    mod_row = cursor.fetchone()
+                    album_modified_at = mod_row[0] if mod_row else None
+
+                    if new_row:
+                        created_at = new_row[7]
+                        if isinstance(created_at, datetime.datetime):
+                            created_at = created_at.isoformat()
+
+                        imported_photos.append({
+                            "id": new_row[0],
+                            "user_id": new_row[1],
+                            "album_id": new_row[2],
+                            "s3_key": aws.create_presigned_url(new_row[3]) if new_row[3] else None,
+                            "thumb_key": aws.create_presigned_url(new_row[4]) if new_row[4] else None,
+                            "mid_key": aws.create_presigned_url(new_row[5]) if new_row[5] else None,
+                            "filename": new_row[6],
+                            "created_at": created_at,
+                            "size": new_row[8],
+                            "thumb_size": new_row[9],
+                            "mid_size": new_row[10],
+                            "username": username,
+                            "album_modified_at": album_modified_at.isoformat() if isinstance(album_modified_at, datetime.datetime) else album_modified_at,
+                        })
+                        
+                    if size:
+                        total_imported_size += size
+                        
+                if total_imported_size > 0:
+                    cursor.execute(
+                        """
+                        INSERT INTO spaceused (user_id, space)
+                        VALUES ((SELECT user_id FROM albums WHERE id = %s), %s)
+                        ON CONFLICT (user_id) DO UPDATE
+                        SET space = spaceused.space + EXCLUDED.space;
+                        """,
+                        (target_album_id, total_imported_size),
+                    )
+
+                conn.commit()
+            except Exception as e:
+                logging.error("importPhotos error: %s", e)
+                conn.rollback()
+                return []
+
+    return imported_photos
+
+
 async def deletePhoto(id: str, username: str) -> bool:
     user = getUser(username)
     if not user:

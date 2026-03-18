@@ -615,6 +615,45 @@ async def deletePhoto(websocket, data, username):
         logging.info("not deleted %s", photo_id)
 
 
+async def importPhotos(websocket, data, username):
+    photo_ids = data["payload"]["photo_ids"]
+    target_album_code = data["payload"]["target_album_code"]
+    
+    # Get target album id
+    target_album = db.getAlbum(target_album_code)
+    if not target_album:
+        logging.warning("importPhotos: target album %s not found", target_album_code)
+        return
+
+    # Verify the user has permissions to the target album here.
+    # They must be the owner, or the album is open and user can upload.
+    if target_album["username"] != username and not target_album["open"]:
+        logging.warning("importPhotos: User %s lacks permission to import to album %s", username, target_album_code)
+        return
+
+    result = db.importPhotos(photo_ids, target_album["id"], username)
+    if result:
+        message = {"action": "importSuccess", "payload": len(result)}
+        await websocket.send_json(message)
+        
+        # publish to target album so the new photos show up
+        for photo in result:
+            # mimic addPhoto output
+            msg = {"action": "addPhoto", "payload": photo}
+            await redis_client.publish(f"albumadd-{target_album_code}", json.dumps(msg))
+            
+        # Also update modified_at
+        if len(result) > 0 and result[0].get("album_modified_at"):
+            mod_msg = {
+                "action": "albumModified",
+                "payload": {
+                    "code": target_album_code,
+                    "modified_at": result[0]["album_modified_at"],
+                },
+            }
+            await redis_client.publish(f"album-{target_album_code}", json.dumps(mod_msg))
+
+
 async def search(websocket, data, username):
     term = data["payload"]["term"]
     logging.info("search %s", term)
@@ -789,6 +828,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await getAlbum(websocket, payload, username)
                 elif action == "deletePhoto":
                     await deletePhoto(websocket, payload, username)
+                elif action == "importPhotos":
+                    await importPhotos(websocket, payload, username)
                 elif action == "search":
                     await search(websocket, payload, username)
                 elif action == "setAlbumName":

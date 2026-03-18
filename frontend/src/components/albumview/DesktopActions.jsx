@@ -22,7 +22,9 @@ const DesktopActions = memo(({
   userLoggedIn,
   isOwner,
   album,
+  selected,
   uploader,
+  setShowImporter,
 }) => {
   const [activePane, setActivePane] = useState(null);
 
@@ -153,6 +155,10 @@ const DesktopActions = memo(({
               <button className="pane-item" onClick={downloadSelected} disabled={!userLoggedIn}>
                 <span className="item-icon">↓</span>
                 <span className="item-label">Get</span>
+              </button>
+              <button className="pane-item" onClick={() => setShowImporter(true)} disabled={!userLoggedIn || selected.length === 0}>
+                <span className="item-icon">⇲</span>
+                <span className="item-label">Copy To</span>
               </button>
               <button className="pane-item" onClick={deleteSelected} disabled={!userLoggedIn}>
                 <span className="item-icon">⊘</span>

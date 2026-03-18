@@ -6,7 +6,7 @@ import blankImage from "../assets/blank.jpg";
 import videoImage from "../assets/video.webp";
 import { saveAs } from "file-saver";
 
-function Imageview({ files, focus, setFocus, deletedPhoto }) {
+function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedIn }) {
   const [showDetails, setShowDetails] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState("copy URL");
@@ -305,6 +305,18 @@ function Imageview({ files, focus, setFocus, deletedPhoto }) {
           <span className="actionIcon delete" onClick={handleDelete} title="Delete">
             ⊘
           </span>
+          {userLoggedIn && (
+            <span 
+              className="actionIcon" 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (files[focus]) onImport(files[focus].id);
+              }} 
+              title="Copy To"
+            >
+              ⇲
+            </span>
+          )}
         </div>
       </div>
       <div className="primo" onClick={handleImageClick}>

@@ -25,6 +25,7 @@ const MobileActions = memo(({
   selected,
   photos,
   uploader,
+  setShowImporter,
 }) => {
   const [activeDrawer, setActiveDrawer] = useState(null);
 
@@ -200,6 +201,10 @@ const MobileActions = memo(({
                 <button className="toolbar-tab" onClick={downloadSelected} disabled={!userLoggedIn}>
                   <span className="tab-icon">↓</span>
                   <span className="tab-label">Get</span>
+                </button>
+                <button className="toolbar-tab" onClick={() => { setShowImporter(true); closeDrawer(); }} disabled={!userLoggedIn || selected.length === 0}>
+                  <span className="tab-icon">⇲</span>
+                  <span className="tab-label">Copy To</span>
                 </button>
                 <button className="toolbar-tab" onClick={deleteSelected} disabled={!userLoggedIn}>
                   <span className="tab-icon">⊘</span>
