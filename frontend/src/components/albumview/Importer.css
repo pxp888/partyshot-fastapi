@@ -46,6 +46,8 @@
   border-top: 1px solid var(--border-color, #333);
   border-bottom: 1px solid var(--border-color, #333);
   padding: 12px 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .importer-album-list {
