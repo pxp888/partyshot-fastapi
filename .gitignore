@@ -23,6 +23,7 @@ backend/env.py
 env2.py
 env1.py
 env.py
+env3.py
 
 # Django
 # (Keep migrations – they are part of the repo – but ignore local media & static)

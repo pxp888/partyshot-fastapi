@@ -7,7 +7,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-import env
+import env3 as env 
 
 _pool = None
 _db_pool = None
@@ -63,6 +63,8 @@ def get_customer_summary():
             u.created_at, 
             u.stripe_customer_id,
             COALESCE(s.space, 0) / (1024.0 * 1024.0) as total_mb,
+            COALESCE((SELECT SUM(COALESCE(thumb_size, 0)) FROM photos p WHERE p.user_id = u.id), 0) / (1024.0 * 1024.0) as thumb_mb,
+            COALESCE((SELECT SUM(COALESCE(mid_size, 0)) FROM photos p WHERE p.user_id = u.id), 0) / (1024.0 * 1024.0) as mid_mb,
             (SELECT COUNT(*) FROM photos p WHERE p.user_id = u.id) as total_photos,
             (SELECT COUNT(*) FROM albums a WHERE a.user_id = u.id) as total_albums
         FROM users u
@@ -78,7 +80,7 @@ def get_customer_summary():
                 
         with open(filename, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['username', 'email', 'class', 'created_at', 'stripe_customer_id', 'total Mb', 'total photos', 'total albums'])
+            writer.writerow(['username', 'email', 'class', 'created_at', 'stripe_customer_id', 'total Mb', 'thumb Mb', 'mid Mb', 'total photos', 'total albums'])
             writer.writerows(rows)
             
         print(f"Customer summary exported to {filename}")
