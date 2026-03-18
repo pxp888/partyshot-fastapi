@@ -36,7 +36,7 @@ function Albumview({ currentUser }) {
   const [showImporter, setShowImporter] = useState(false);
   const [importTarget, setImportTarget] = useState(null);
   const [viewType, setViewType] = useState(
-    localStorage.getItem("viewType") || "icon",
+    localStorage.getItem("viewType") || "grid",
   );
   const isMobile = useMediaQuery("(max-width: 900px)");
 
@@ -628,8 +628,8 @@ function Albumview({ currentUser }) {
       )}
 
       {showImporter && (
-        <Importer 
-          selected={importTarget || selected} 
+        <Importer
+          selected={importTarget || selected}
           onClose={() => {
             setShowImporter(false);
             setImportTarget(null);

@@ -22,7 +22,7 @@
 /* Larger FileItem sizing for Gridview */
 .gridview .fileItem {
     min-height: 150px;
-    flex: var(--ar, 1) 1 calc(300px * var(--ar, 1));
+    flex: var(--ar, 1) 1 calc(250px * var(--ar, 1));
     max-height: 400px;
 }
 
