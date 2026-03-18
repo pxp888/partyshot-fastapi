@@ -270,6 +270,11 @@ function Albumview({ currentUser }) {
     }
   }, [lastJsonMessage, currentUser, albumcode, album, sortOrder, isDownloadingAll, showMessage, startZipProcess]);
 
+  const copyAll = useCallback(() => {
+    setImportTarget(photos.map(p => p.id));
+    setShowImporter(true);
+  }, [photos]);
+
   const handleDeleteAlbum = useCallback(() => {
     showConfirm(
       "Are you sure you want to delete this album?",
@@ -448,6 +453,7 @@ function Albumview({ currentUser }) {
     downloadAll,
     handleDeleteAlbum,
     toggleSubscription,
+    copyAll,
     handleViewTypeChange,
     viewType,
     sortField,

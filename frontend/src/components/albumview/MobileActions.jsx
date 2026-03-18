@@ -13,6 +13,7 @@ const MobileActions = memo(({
   downloadAll,
   handleDeleteAlbum,
   toggleSubscription,
+  copyAll,
   handleViewTypeChange,
   viewType,
   sortField,
@@ -221,6 +222,10 @@ const MobileActions = memo(({
                 <button className="toolbar-tab" onClick={() => { downloadAll(); closeDrawer(); }} disabled={!userLoggedIn}>
                   <span className="tab-icon">⇓</span>
                   <span className="tab-label">ZIP All</span>
+                </button>
+                <button className="toolbar-tab" onClick={() => { copyAll(); closeDrawer(); }} disabled={!userLoggedIn}>
+                  <span className="tab-icon">⇲</span>
+                  <span className="tab-label">Copy To</span>
                 </button>
                 <div className="toolbar-divider" />
                 {isOwner ? (

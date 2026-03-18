@@ -13,6 +13,7 @@ const DesktopActions = memo(({
   downloadAll,
   handleDeleteAlbum,
   toggleSubscription,
+  copyAll,
   handleViewTypeChange,
   viewType,
   sortField,
@@ -87,6 +88,11 @@ const DesktopActions = memo(({
               <button className="dt-tab" onClick={downloadAll} disabled={!userLoggedIn}>
                 <span className="dt-tab-icon">⇓</span>
                 <span className="dt-tab-label">ZIP All</span>
+              </button>
+              
+              <button className="dt-tab" onClick={copyAll} disabled={!userLoggedIn}>
+                <span className="dt-tab-icon">⇲</span>
+                <span className="dt-tab-label">Copy To</span>
               </button>
 
               {isOwner ? (
