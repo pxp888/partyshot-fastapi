@@ -25,7 +25,7 @@
 .toolbar-right {
     display: flex;
     align-items: center;
-    gap: 0rem;
+    gap: 0.5rem;
 }
 
 .dt-tab {
@@ -37,11 +37,12 @@
     background: transparent;
     border: none;
     color: #a1a1aa;
-    padding: 8px 12px;
+    padding: 8px 0;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 70px;
+    min-width: 80px;
     border-radius: 8px;
+    box-sizing: border-box;
 }
 
 .dt-tab:hover {
@@ -83,7 +84,7 @@
     width: 1px;
     height: 24px;
     background: rgba(255, 255, 255, 0.1);
-    margin: 0 12px;
+    margin: 0 0.25rem;
 }
 
 /* --- Uploader Tab Specifics --- */

@@ -302,9 +302,6 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
           >
             {isSharing ? "..." : (copyFeedback === "copied!" ? "✓" : "⇪")}
           </span>
-          <span className="actionIcon delete" onClick={handleDelete} title="Delete">
-            ⊘
-          </span>
           {userLoggedIn && (
             <span 
               className="actionIcon" 
@@ -317,6 +314,9 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
               ⇲
             </span>
           )}
+          <span className="actionIcon delete" onClick={handleDelete} title="Delete">
+            ⊘
+          </span>
         </div>
       </div>
       <div className="primo" onClick={handleImageClick}>

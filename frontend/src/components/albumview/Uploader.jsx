@@ -356,10 +356,10 @@ const Uploader = memo(forwardRef(
             gap: "6px"
           }}
         >
-          <span className="dt-tab-icon" style={{ fontSize: "1.4rem" }}>
+          <span className="dt-tab-icon">
             {totalFiles > 0 ? "⋯" : "↑"}
           </span>
-          <span className="dt-tab-label" style={{ fontSize: "0.65rem", fontWeight: 600 }}>
+          <span className="dt-tab-label">
             {totalFiles > 0 ? "Wait..." : "Upload"}
           </span>
         </label>

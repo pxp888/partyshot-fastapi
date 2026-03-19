@@ -7,9 +7,13 @@
 }
 
 /* Support for being placed in Toolbars */
-.mobile-toolbar .qr-hover-container,
-.desktop-toolbar .qr-hover-container {
+.mobile-toolbar .qr-hover-container {
     flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.desktop-toolbar .qr-hover-container {
     display: flex;
     justify-content: center;
 }
