@@ -18,11 +18,12 @@
 /* --- Persistent Toolbar --- */
 .mobile-toolbar {
     height: 70px;
-    background: #1c1c1e;
+    /* background: #1c1c1e; */
+    background: #2D2D2D;
     display: flex;
     justify-content: space-around;
     align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* border-top: 1px solid rgba(255, 255, 255, 0.1); */
     padding-bottom: env(safe-area-inset-bottom, 10px);
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
     position: relative;
@@ -145,7 +146,7 @@
     left: 0;
     right: 0;
     background: #1c1c1e;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* border-top: 1px solid rgba(255, 255, 255, 0.1); */
     transform: translateY(100%);
     transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 15;
