@@ -8,7 +8,7 @@
     background-color: hsl(0 0 90%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-glass);
+    /* border-bottom: 1px solid var(--border-glass); */
     color: var(--text-primary);
     display: flex;
     flex-direction: row;
@@ -51,7 +51,7 @@
 .topbar-btn {
     font-weight: 500;
     font-size: 0.9rem;
-    border-radius: 6px;
+    /* border-radius: 6px; */
     padding: 0.4rem 1rem;
     background: rgba(0, 0, 0, 0.05);
     border: none;

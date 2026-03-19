@@ -41,13 +41,13 @@
     position: absolute;
     bottom: 10px;
     left: 10px;
-    padding: 4px 8px;
+    padding: 6px 18px;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
+    /* border: 1px solid rgba(255, 255, 255, 0.5); */
+    /* border-radius: 10px; */
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 1px;
     z-index: 10;
@@ -179,9 +179,10 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: lowercase;
-    padding: 4px 12px;
-    border-radius: 100px;
-    border: 1px solid transparent;
+    padding: 6px 12px;
+    width: 80px;
+    /* border-radius: 100px; */
+    /* border: 1px solid transparent; */
     background: rgba(255, 255, 255, 0.08);
     color: #999;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -195,9 +196,15 @@
 }
 
 .ai-controls .ai-status.selected {
-    color: white !important;
-    background: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    /* color: white !important; */
+    /* background: rgba(255, 255, 255, 0.15) !important; */
+    /* border-color: rgba(255, 255, 255, 0.2) !important; */
+
+    /* color: #410001;
+    background-color: #FF7A69; */
+
+    color: white;
+    background-color: #6B7280;
 }
 
 .ai-status.clickable {

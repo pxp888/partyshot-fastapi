@@ -216,9 +216,10 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: lowercase;
-    padding: 4px 12px;
-    border-radius: 100px;
-    border: 1px solid transparent;
+    padding: 6px 12px;
+    width: 60px;
+    /* border-radius: 100px; */
+    /* border: 1px solid transparent; */
     background: rgba(0, 0, 0, 0.05);
     color: #999;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -231,19 +232,23 @@
 }
 
 .av-status.active {
-    color: black !important;
-    background: rgba(0, 0, 0, 0.08) !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
+    /* color: black !important; */
+    /* background: rgba(0, 0, 0, 0.08) !important; */
+    /* border-color: rgba(0, 0, 0, 0.1) !important; */
+    color: white;
+    background-color: #6B7280;
+    /* background-color: #2D2D2D; */
+
 }
 
 .av-status.clickable {
     cursor: pointer;
 }
 
-.av-controls .clickable:hover {
+/* .av-controls .clickable:hover {
     text-decoration: none;
     background: rgba(0, 0, 0, 0.05);
-}
+} */
 
 .spread {
     display: flex;
