@@ -341,7 +341,6 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
       </div>
       <div
         className={`fileDetails ${showDetails ? "visible" : ""}`}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="detailRow">
           <span className="filename">{files[focus].filename}</span>

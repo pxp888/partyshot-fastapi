@@ -107,6 +107,7 @@
     transform: translateY(10px);
     z-index: 10000;
     text-align: center;
+    pointer-events: none;
 }
 
 .fileDetails:hover,

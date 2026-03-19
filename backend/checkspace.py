@@ -6,7 +6,7 @@ from contextlib import contextmanager
 # Add current directory to path so we can import env
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 try:
-    import env
+    import env3 as env 
 except ImportError:
     print("Could not import env.py. Make sure this script is in the backend directory.")
     sys.exit(1)
