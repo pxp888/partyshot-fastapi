@@ -37,7 +37,7 @@
     height: 100%;
     background-color: var(--bright-color);
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 10px rgba(250, 128, 114, 0.5);
+    box-shadow: 0 0 10px rgba(255, 122, 105, 0.5);
     /* Glowing effect */
 }
 

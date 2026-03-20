@@ -7,7 +7,7 @@
     --gap-md: 1rem;
     --gap-lg: 2rem;
     --action-bg: var(--form-color, #f9f9f9);
-    --primary-color: var(--primary-color, #3b82f6);
+    --primary-color: var(--primary-color, #FF7A69);
     --text-muted: var(--text-muted, #666);
 }
 
@@ -146,7 +146,7 @@
 .albumFiles.dragging,
 .albumListview.dragging {
     outline: 2px dashed var(--primary-color);
-    background-color: rgba(59, 130, 246, 0.05);
+    background-color: rgba(255, 122, 105, 0.05);
 }
 
 .drop-overlay {
@@ -289,7 +289,7 @@
     font-family: inherit;
     letter-spacing: -0.02em;
     border: none;
-    border-bottom: 2px solid var(--primary-color, #3b82f6);
+    border-bottom: 2px solid var(--primary-color, #FF7A69);
     background-color: transparent;
     color: #1a1a1a;
     width: 100%;
