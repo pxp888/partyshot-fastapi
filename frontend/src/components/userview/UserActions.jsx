@@ -66,23 +66,23 @@ const UserActions = ({
             >
               <span className="dt-tab-icon">□</span>
               <span className="dt-tab-label">
-                {sortField === 'my_photos' ? 'my albums' : 'all photos'}
+                {sortField === 'my_photos' ? 'My Albums' : 'All photos'}
               </span>
             </button>
           )}        </div>
 
         <div className="toolbar-right">
-          <button 
+          <button
             className={`dt-tab ${profileFirst ? 'active' : ''}`}
             onClick={() => setProfileFirst(!profileFirst)}
             title="Keep profile albums pinned to the top"
           >
-            <span className="dt-tab-icon">{profileFirst ? '☑' : '☐'}</span>
+            <span className="dt-tab-icon">□</span>
             <span className="dt-tab-label">Profile</span>
           </button>
 
-          <button 
-            className="dt-tab" 
+          <button
+            className="dt-tab"
             onClick={cycleSortField}
             disabled={sortField === "my_photos"}
             title="Cycle through sorting fields (Date, Name, User)"
@@ -90,9 +90,9 @@ const UserActions = ({
             <span className="dt-tab-icon">⇅</span>
             <span className="dt-tab-label">{getSortFieldLabel()}</span>
           </button>
-          
-          <button 
-            className="dt-tab" 
+
+          <button
+            className="dt-tab"
             onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
             disabled={sortField === "my_photos"}
             title="Toggle sort direction"
