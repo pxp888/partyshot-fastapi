@@ -172,7 +172,7 @@
 /* ----- adetails ------------ */
 .adetails {
     background-color: #ffffff;
-    padding: 2.5rem 3rem;
+    padding: 2.5rem 4rem 2.5rem 3rem;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;

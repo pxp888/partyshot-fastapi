@@ -12,6 +12,7 @@ function Userview({ currentUser }) {
   const [albums, setAlbums] = useState([]);
   const [sortField, setSortField] = useState("modified_at");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [profileFirst, setProfileFirst] = useState(false);
 
   // --------------------------------------------------------
   // 1️⃣  Initial load – same as before
@@ -132,6 +133,15 @@ function Userview({ currentUser }) {
 
   // Frontend Sorting Logic
   const sortedAlbums = [...albums].sort((a, b) => {
+    // 1. Profile sorting (if enabled)
+    if (profileFirst) {
+      const aProj = a.profile ? 1 : 0;
+      const bProj = b.profile ? 1 : 0;
+      if (aProj !== bProj) {
+        return bProj - aProj; // Profile (1) comes before Non-profile (0)
+      }
+    }
+
     let valA = a[sortField];
     let valB = b[sortField];
 
@@ -158,6 +168,8 @@ function Userview({ currentUser }) {
         setSortField={setSortField}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+        profileFirst={profileFirst}
+        setProfileFirst={setProfileFirst}
         sendJsonMessage={sendJsonMessage}
       />
       <div className="album-list">
