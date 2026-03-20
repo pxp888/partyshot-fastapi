@@ -10,19 +10,35 @@ function Userview({ currentUser }) {
   const navigate = useNavigate();
   const { sendJsonMessage, lastJsonMessage } = useSocket(); // ← websocket
   const [albums, setAlbums] = useState([]);
-  const [sortField, setSortField] = useState("modified_at");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [profileFirst, setProfileFirst] = useState(false);
+  const [sortField, setSortField] = useState(() => localStorage.getItem("userview_sortField") || "modified_at");
+  const [sortOrder, setSortOrder] = useState(() => localStorage.getItem("userview_sortOrder") || "desc");
+  const [profileFirst, setProfileFirst] = useState(() => localStorage.getItem("userview_profileFirst") === "true");
 
-  // --------------------------------------------------------
-  // 1️⃣  Initial load – same as before
-  // --------------------------------------------------------
+  // Save preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem("userview_sortField", sortField);
+  }, [sortField]);
 
   useEffect(() => {
-    sendJsonMessage({
-      action: "getAlbums",
-      payload: { target: username },
-    });
+    localStorage.setItem("userview_sortOrder", sortOrder);
+  }, [sortOrder]);
+
+  useEffect(() => {
+    localStorage.setItem("userview_profileFirst", profileFirst);
+  }, [profileFirst]);
+
+  // 1️⃣  Initial load – check if we should fetch albums or user photos
+  useEffect(() => {
+    if (sortField === "my_photos") {
+      sendJsonMessage({
+        action: "getAlbumsWithUserPhotos",
+      });
+    } else {
+      sendJsonMessage({
+        action: "getAlbums",
+        payload: { target: username },
+      });
+    }
   }, [username, sendJsonMessage]);
 
   // 2️⃣ Keep Alive Heartbeat (every 2 minutes)

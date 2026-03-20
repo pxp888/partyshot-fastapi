@@ -197,7 +197,9 @@ const Uploader = memo(forwardRef(
 
       const processingTasks = [];
       processingTasks.push(processMedia(file, 500, 500, 0.6).then(blob => { thumbnailBlob = blob; }));
-      if (!file.type.startsWith("video/")) {
+      
+      const isGif = file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif");
+      if (mid_presigned && !file.type.startsWith("video/") && !isGif) {
         processingTasks.push(processMedia(file, 2560, 2560, 0.8).then(blob => {
           if (blob && blob.size <= file.size * 0.75) midBlob = blob;
         }));
