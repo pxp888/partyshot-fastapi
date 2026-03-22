@@ -222,23 +222,29 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
     setIsSharing(true);
     const originalUrl = photo.s3_key;
     const shareData = {
-      title: photo.filename || "PartyShot Photo",
+      title: photo.filename || (isVideo ? "PartyShot Video" : "PartyShot Photo"),
     };
 
     try {
-      // Fetch the original high-res image on demand
+      // Fetch the original high-res media on demand
       if (originalUrl) {
-        console.log("[Share Debug] Fetching original image for share...");
+        console.log("[Share Debug] Fetching original media for share...");
         const res = await fetch(originalUrl, { mode: "cors", cache: "default" });
         if (res.ok) {
           const blob = await res.blob();
-          const file = new File([blob], photo.filename || "photo.jpg", { 
-            type: blob.type || "image/jpeg" 
+          
+          // Use the blob's type or fallback based on isVideo
+          const mimeType = blob.type || (isVideo ? "video/mp4" : "image/jpeg");
+          const defaultName = isVideo ? "video.mp4" : "photo.jpg";
+          
+          const file = new File([blob], photo.filename || defaultName, { 
+            type: mimeType
           });
           
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             shareData.files = [file];
           } else {
+            // Fallback to URL sharing if file sharing is not supported for this type
             shareData.url = window.location.href;
           }
         } else {
