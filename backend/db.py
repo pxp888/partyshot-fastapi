@@ -580,7 +580,7 @@ def getDownloadList(
         with conn.cursor() as cursor:
             filter_clause = "AND p.user_id = %s" if user_id_filter else ""
             query = f"""
-                SELECT p.s3_key, p.filename
+                SELECT p.s3_key, p.filename, p.id
                 FROM photos p
                 WHERE p.album_id = %s {filter_clause}
                 ORDER BY p.created_at DESC;
@@ -595,6 +595,7 @@ def getDownloadList(
             {
                 "s3_key": row[0],
                 "filename": row[1],
+                "id": row[2],
             }
         )
     return {"photos": photos}

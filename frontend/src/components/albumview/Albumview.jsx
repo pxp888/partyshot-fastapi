@@ -32,7 +32,8 @@ function Albumview({ currentUser }) {
   const [sortField, setSortField] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
   const [limit] = useState(50);
-  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const isDownloadingAllRef = useRef(false);
+  const isCopyingAllRef = useRef(false);
   const [showImporter, setShowImporter] = useState(false);
   const [importTarget, setImportTarget] = useState(null);
   const [viewType, setViewType] = useState(
@@ -189,9 +190,14 @@ function Albumview({ currentUser }) {
 
       case "getDownloadList": {
         const photosToDownload = payload?.photos ?? [];
-        if (isDownloadingAll) {
+        if (isDownloadingAllRef.current) {
           startZipProcess(photosToDownload);
-          setIsDownloadingAll(false);
+          isDownloadingAllRef.current = false;
+        }
+        if (isCopyingAllRef.current) {
+          setImportTarget(photosToDownload.map((p) => p.id));
+          setShowImporter(true);
+          isCopyingAllRef.current = false;
         }
         break;
       }
@@ -269,12 +275,15 @@ function Albumview({ currentUser }) {
       default:
         break;
     }
-  }, [lastJsonMessage, currentUser, albumcode, album, sortOrder, isDownloadingAll, showMessage, startZipProcess]);
+  }, [lastJsonMessage, currentUser, albumcode, album, sortOrder, showMessage, startZipProcess]);
 
   const copyAll = useCallback(() => {
-    setImportTarget(photos.map(p => p.id));
-    setShowImporter(true);
-  }, [photos]);
+    isCopyingAllRef.current = true;
+    sendJsonMessage({
+      action: "getDownloadList",
+      payload: { albumcode: albumcode },
+    });
+  }, [albumcode, sendJsonMessage]);
 
   const handleDeleteAlbum = useCallback(() => {
     showConfirm(
@@ -292,7 +301,7 @@ function Albumview({ currentUser }) {
   const downloadAll = useCallback((e) => {
     e.preventDefault();
     showConfirm("Download the full album?", "Download Album", () => {
-      setIsDownloadingAll(true);
+      isDownloadingAllRef.current = true;
       sendJsonMessage({
         action: "getDownloadList",
         payload: { albumcode: albumcode },

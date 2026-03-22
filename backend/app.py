@@ -633,7 +633,7 @@ async def importPhotos(websocket, data, username):
         return
 
     result = db.importPhotos(photo_ids, target_album["id"], username)
-    if result:
+    if isinstance(result, list):
         message = {"action": "importSuccess", "payload": len(result)}
         await websocket.send_json(message)
         
