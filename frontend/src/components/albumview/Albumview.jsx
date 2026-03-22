@@ -38,7 +38,7 @@ function Albumview({ currentUser }) {
   const [viewType, setViewType] = useState(
     localStorage.getItem("viewType") || "grid",
   );
-  const isMobile = useMediaQuery("(max-width: 900px)");
+  const isMobile = useMediaQuery("(max-width: 1100px)");
 
   const handleViewTypeChange = useCallback((type) => {
     setViewType(type);
