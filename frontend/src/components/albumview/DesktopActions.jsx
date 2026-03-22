@@ -26,6 +26,7 @@ const DesktopActions = memo(({
   selected,
   uploader,
   setShowImporter,
+  toggleArchive,
 }) => {
   const [activePane, setActivePane] = useState(null);
 
@@ -96,15 +97,27 @@ const DesktopActions = memo(({
               </button>
 
               {isOwner ? (
-                <button className="dt-tab dt-tab-danger" onClick={handleDeleteAlbum}>
-                  <span className="dt-tab-icon">⊘</span>
-                  <span className="dt-tab-label">Delete</span>
-                </button>
+                <>
+                  <button className={`dt-tab ${album.archived ? 'active' : ''}`} onClick={toggleArchive} disabled={!userLoggedIn}>
+                    <span className="dt-tab-icon">{album.archived ? "☒" : "☐"}</span>
+                    <span className="dt-tab-label">{album.archived ? "Unarch" : "Archive"}</span>
+                  </button>
+                  <button className="dt-tab dt-tab-danger" onClick={handleDeleteAlbum}>
+                    <span className="dt-tab-icon">⊘</span>
+                    <span className="dt-tab-label">Delete</span>
+                  </button>
+                </>
               ) : (
-                <button className={`dt-tab ${album.subscribed ? 'active' : ''}`} onClick={toggleSubscription} disabled={!userLoggedIn}>
-                  <span className="dt-tab-icon">{album.subscribed ? "★" : "☆"}</span>
-                  <span className="dt-tab-label">{album.subscribed ? "Sub'd" : "Follow"}</span>
-                </button>
+                <>
+                  <button className={`dt-tab ${album.archived ? 'active' : ''}`} onClick={toggleArchive} disabled={!userLoggedIn}>
+                    <span className="dt-tab-icon">{album.archived ? "☒" : "☐"}</span>
+                    <span className="dt-tab-label">{album.archived ? "Unarch" : "Archive"}</span>
+                  </button>
+                  <button className={`dt-tab ${album.subscribed ? 'active' : ''}`} onClick={toggleSubscription} disabled={!userLoggedIn}>
+                    <span className="dt-tab-icon">{album.subscribed ? "★" : "☆"}</span>
+                    <span className="dt-tab-label">{album.subscribed ? "Sub'd" : "Follow"}</span>
+                  </button>
+                </>
               )}
             </>
           )}

@@ -766,6 +766,16 @@ async def toggleOpen(websocket, data, username):
         )
 
 
+async def toggleArchive(websocket, data, username):
+    album_id = data["payload"]["album_id"]
+    updated_album = db.toggleArchive(album_id, username)
+    if updated_album:
+        message = {"action": "toggleArchive", "payload": updated_album}
+        await websocket.send_json(message)
+        message = {"action": "newAlbum", "payload": {"type": "update"}}
+        await redis_client.publish(f"user-{username}", json.dumps(message))
+
+
 async def toggleProfile(websocket, data, username):
     album_id = data["payload"]["album_id"]
     updated_album = db.toggleProfile(album_id, username)
@@ -849,6 +859,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await subscribe(websocket, payload, username)
                 elif action == "unsubscribe":
                     await unsubscribe(websocket, payload, username)
+                elif action == "toggleArchive":
+                    await toggleArchive(websocket, payload, username)
                 elif action == "recordVisit":
                     await recordVisit(websocket, payload, username)
                 elif action == "getAlbumsWithUserPhotos":

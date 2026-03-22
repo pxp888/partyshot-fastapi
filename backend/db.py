@@ -153,6 +153,7 @@ def init_db() -> None:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     profile BOOLEAN DEFAULT TRUE,
                     opened_at TIMESTAMP,
+                    archive BOOLEAN DEFAULT FALSE,
                     UNIQUE(user_id, album_id)
                 );
 
@@ -190,6 +191,7 @@ def init_db() -> None:
                 """
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
                 ALTER TABLE photos ADD COLUMN IF NOT EXISTS count INTEGER DEFAULT 1;
+                ALTER TABLE subscription ADD COLUMN IF NOT EXISTS archive BOOLEAN DEFAULT FALSE;
                 DROP TABLE IF EXISTS photos_atomic;
                 """
             )
@@ -434,7 +436,8 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
                        COALESCE(s.profile, o_s.profile) AS display_profile, 
                        a.private, a.created_at, u.username,
                        s.album_id IS NOT NULL AS subscribed,
-                       a.modified_at, o_s.opened_at, s.opened_at AS sub_opened_at
+                       a.modified_at, o_s.opened_at, s.opened_at AS sub_opened_at,
+                       COALESCE(s.archive, FALSE) AS archived
                 FROM albums a
                 JOIN users u ON a.user_id = u.id
                 LEFT JOIN subscription o_s ON a.id = o_s.album_id AND o_s.user_id = a.user_id
@@ -462,6 +465,7 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
             "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
             "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
+            "archived": bool(row[13]),
         }
     return None
 
@@ -1008,6 +1012,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                     JOIN users u ON a.user_id = u.id
                     JOIN subscription s_prof ON a.id = s_prof.album_id AND s_prof.user_id = %s
                     LEFT JOIN subscription s_auth ON a.id = s_auth.album_id AND s_auth.user_id = %s
+                    WHERE COALESCE(s_prof.archive, FALSE) = FALSE
                     ORDER BY a.modified_at DESC;
                     """,
                     (user["id"], user["id"], auth_user_id),
@@ -1087,13 +1092,15 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                             ORDER BY p2.created_at DESC LIMIT 1) as thumb_key,
                            a.modified_at,
                            CASE WHEN a.user_id = %s THEN o_s.opened_at ELSE NULL END,
-                           s.opened_at AS sub_opened_at
+                           s.opened_at AS sub_opened_at,
+                           COALESCE(s.archive, FALSE) AS archived
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
-                    JOIN photos p ON a.id = p.album_id
+                    LEFT JOIN photos p ON a.id = p.album_id AND p.user_id = %s
                     LEFT JOIN subscription o_s ON a.id = o_s.album_id AND o_s.user_id = a.user_id
                     LEFT JOIN subscription s ON a.id = s.album_id AND s.user_id = %s
-                    WHERE p.user_id = %s
+                    WHERE (p.user_id IS NOT NULL OR s.archive = TRUE)
+                      AND NOT (s.user_id IS NOT NULL AND COALESCE(s.archive, FALSE) = FALSE)
                     ORDER BY a.modified_at DESC;
                     """,
                     (user["id"], user["id"], user["id"]),
@@ -1134,6 +1141,7 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
                 "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
                 "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
+                "archived": bool(row[13]),
             }
         )
     return {"albums": albums}
@@ -1288,6 +1296,55 @@ def toggleOpen(id: str, username: str) -> dict | None:
                 return getAlbum(album_code)
 
             except Exception:
+                conn.rollback()
+                return None
+
+
+def toggleArchive(id: str, username: str) -> dict | None:
+    user = getUser(username)
+    if user is None:
+        return None
+
+    try:
+        album_id = int(id)
+    except (ValueError, TypeError):
+        return None
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                # Toggle the `archive` flag for the user's subscription.
+                cursor.execute(
+                    """
+                    SELECT archive
+                    FROM subscription
+                    WHERE user_id = %s AND album_id = %s;
+                    """,
+                    (user["id"], album_id)
+                )
+                sub_row = cursor.fetchone()
+                if sub_row is None:
+                    return None
+                    
+                new_sub_archive = not sub_row[0]
+                cursor.execute(
+                    """
+                    UPDATE subscription
+                    SET archive = %s
+                    WHERE user_id = %s AND album_id = %s;
+                    """,
+                    (new_sub_archive, user["id"], album_id)
+                )
+                conn.commit()
+
+                # Return the updated album object to the client
+                cursor.execute("SELECT code FROM albums WHERE id = %s", (album_id,))
+                album_row = cursor.fetchone()
+                if album_row:
+                    return getAlbumWithSub(album_row[0], username)
+                return None
+            except Exception as e:
+                logging.error("Error toggling archive: %s", e)
                 conn.rollback()
                 return None
 

@@ -27,6 +27,7 @@ const MobileActions = memo(({
   photos,
   uploader,
   setShowImporter,
+  toggleArchive,
 }) => {
   const [activeDrawer, setActiveDrawer] = useState(null);
 
@@ -229,15 +230,27 @@ const MobileActions = memo(({
                 </button>
                 <div className="toolbar-divider" />
                 {isOwner ? (
-                  <button className="toolbar-tab" onClick={() => { handleDeleteAlbum(); closeDrawer(); }}>
-                    <span className="tab-icon">⊘</span>
-                    <span className="tab-label">Delete</span>
-                  </button>
+                  <>
+                    <button className="toolbar-tab" onClick={() => { toggleArchive(); closeDrawer(); }}>
+                      <span className="tab-icon">{album.archived ? "☒" : "☐"}</span>
+                      <span className="tab-label">{album.archived ? "Unarch" : "Archive"}</span>
+                    </button>
+                    <button className="toolbar-tab" onClick={() => { handleDeleteAlbum(); closeDrawer(); }}>
+                      <span className="tab-icon">⊘</span>
+                      <span className="tab-label">Delete</span>
+                    </button>
+                  </>
                 ) : (
-                  <button className="toolbar-tab" onClick={toggleSubscription} disabled={!userLoggedIn}>
-                    <span className="tab-icon">{album.subscribed ? "★" : "☆"}</span>
-                    <span className="tab-label">{album.subscribed ? "Sub'd" : "Follow"}</span>
-                  </button>
+                  <>
+                    <button className="toolbar-tab" onClick={() => { toggleArchive(); closeDrawer(); }} disabled={!userLoggedIn}>
+                      <span className="tab-icon">{album.archived ? "☒" : "☐"}</span>
+                      <span className="tab-label">{album.archived ? "Unarch" : "Archive"}</span>
+                    </button>
+                    <button className="toolbar-tab" onClick={toggleSubscription} disabled={!userLoggedIn}>
+                      <span className="tab-icon">{album.subscribed ? "★" : "☆"}</span>
+                      <span className="tab-label">{album.subscribed ? "Sub'd" : "Follow"}</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>

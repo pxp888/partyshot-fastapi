@@ -260,6 +260,7 @@ function Albumview({ currentUser }) {
         break;
 
       case "togglePrivate":
+      case "toggleArchive":
         if (payload && payload.code?.toLowerCase() === albumcode?.toLowerCase()) {
           setAlbum((prev) => ({ ...prev, ...payload }));
         }
@@ -406,6 +407,13 @@ function Albumview({ currentUser }) {
     });
   }, [albumcode, sendJsonMessage]);
 
+  const toggleArchive = useCallback(() => {
+    sendJsonMessage({
+      action: "toggleArchive",
+      payload: { album_id: album?.id },
+    });
+  }, [album?.id, sendJsonMessage]);
+
   const toggleSubscription = useCallback(() => {
     const action = album?.subscribed ? "unsubscribe" : "subscribe";
     sendJsonMessage({
@@ -466,7 +474,8 @@ function Albumview({ currentUser }) {
     selected,
     photos,
     uploader: uploaderElement,
-    setShowImporter
+    setShowImporter,
+    toggleArchive,
   };
 
   if (!album) {

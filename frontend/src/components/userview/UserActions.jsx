@@ -62,11 +62,11 @@ const UserActions = ({
             <button
               className={`dt-tab ${sortField === 'my_photos' ? 'active' : ''}`}
               onClick={toggleMyPhotos}
-              title={sortField === 'my_photos' ? "Switch back to album view" : "View all photos in a single stream"}
+              title={sortField === 'my_photos' ? "Switch back to album view" : "View your archived albums and contributed photos"}
             >
               <span className="dt-tab-icon">□</span>
               <span className="dt-tab-label">
-                {sortField === 'my_photos' ? 'My Albums' : 'All photos'}
+                {sortField === 'my_photos' ? 'My Albums' : 'Archive'}
               </span>
             </button>
           )}        </div>
