@@ -1,3 +1,5 @@
+aws ecr get-login-password --region eu-north-1 | podman login --username AWS --password-stdin 431754448027.dkr.ecr.eu-north-1.amazonaws.com
+
 cd frontend
 npm run build
 cd ..
