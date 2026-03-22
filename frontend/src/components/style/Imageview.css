@@ -20,6 +20,16 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    overflow: visible;
+    cursor: zoom-in;
+}
+
+.primo[style*="scale(1)"] {
+    cursor: zoom-in;
+}
+
+.primo:not([style*="scale(1)"]) {
+    cursor: grab;
 }
 
 .primo img,

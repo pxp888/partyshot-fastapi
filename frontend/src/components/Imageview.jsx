@@ -11,18 +11,24 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState("copy URL");
   const [isSharing, setIsSharing] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const lastFocus = useRef(focus);
   const skipSwipe = useRef(false);
+  const pinchStartDist = useRef(null);
+  const initialScale = useRef(1);
+  const lastTouch = useRef(null);
+  const lastTap = useRef(0);
 
   const handlers = useSwipeable({
     onSwipeStart: (e) => {
-      // If more than one finger is touching, it's likely a pinch/zoom gesture
-      skipSwipe.current = e.event.touches?.length > 1;
+      // If more than one finger is touching or we are already zoomed, skip swipe
+      skipSwipe.current = e.event.touches?.length > 1 || scale > 1.1;
     },
-    onSwipedLeft: () => !skipSwipe.current && next(),
-    onSwipedRight: () => !skipSwipe.current && previous(),
-    onSwipedDown: () => !skipSwipe.current && hide(),
-    onSwipedUp: () => !skipSwipe.current && hide(),
+    onSwipedLeft: () => !skipSwipe.current && scale <= 1.1 && next(),
+    onSwipedRight: () => !skipSwipe.current && scale <= 1.1 && previous(),
+    onSwipedDown: () => !skipSwipe.current && scale <= 1.1 && hide(),
+    onSwipedUp: () => !skipSwipe.current && scale <= 1.1 && hide(),
     delta: 75, // Higher threshold to avoid accidental swipes during zoom
     preventScrollOnSwipe: true,
     trackMouse: false,
@@ -109,6 +115,9 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
   useEffect(() => {
     if (focus !== lastFocus.current) {
       updateUrl(focus);
+      // Reset zoom on image change
+      setScale(1);
+      setOffset({ x: 0, y: 0 });
     }
   }, [focus, files]);
 
@@ -173,7 +182,69 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
   const handleImageClick = (e) => {
     e.stopPropagation();
     if (focus === -1 || !files) return;
-    setShowDetails(!showDetails);
+
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      // Double tap - toggle zoom
+      if (scale > 1.1) {
+        setScale(1);
+        setOffset({ x: 0, y: 0 });
+      } else {
+        setScale(2.5);
+      }
+      lastTap.current = 0;
+    } else {
+      lastTap.current = now;
+      setShowDetails(!showDetails);
+    }
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].pageX - e.touches[1].pageX,
+        e.touches[0].pageY - e.touches[1].pageY
+      );
+      pinchStartDist.current = dist;
+      initialScale.current = scale;
+      skipSwipe.current = true;
+    } else if (e.touches.length === 1 && scale > 1.1) {
+      lastTouch.current = { x: e.touches[0].pageX, y: e.touches[0].pageY };
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && pinchStartDist.current) {
+      const dist = Math.hypot(
+        e.touches[0].pageX - e.touches[1].pageX,
+        e.touches[0].pageY - e.touches[1].pageY
+      );
+      const newScale = Math.max(1, Math.min(5, (dist / pinchStartDist.current) * initialScale.current));
+      setScale(newScale);
+      if (newScale > 1.1) skipSwipe.current = true;
+    } else if (e.touches.length === 1 && scale > 1.1 && lastTouch.current) {
+      const dx = e.touches[0].pageX - lastTouch.current.x;
+      const dy = e.touches[0].pageY - lastTouch.current.y;
+      setOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+      lastTouch.current = { x: e.touches[0].pageX, y: e.touches[0].pageY };
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+      pinchStartDist.current = null;
+    }
+    if (e.touches.length === 0) {
+      lastTouch.current = null;
+      // Keep skipSwipe true for a moment if we are zoomed to prevent accidental swipe on release
+      if (scale > 1.1) {
+        skipSwipe.current = true;
+      } else {
+        setTimeout(() => {
+          if (scale <= 1.1) skipSwipe.current = false;
+        }, 100);
+      }
+    }
   };
 
   const handleBackgroundClick = (e) => {
@@ -292,7 +363,14 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
   if (focus === -1) return null;
 
   return (
-    <div className="imageView" {...handlers} onClick={handleBackgroundClick}>
+    <div
+      className="imageView"
+      {...handlers}
+      onClick={handleBackgroundClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div
         className={`imageActions ${showDetails ? "visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
@@ -325,21 +403,31 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
           </span>
         </div>
       </div>
-      <div className="primo" onClick={handleImageClick}>
+      <div className={`primo ${scale > 1.1 ? "zoomed" : ""}`} onClick={handleImageClick}>
         {isVideo ? (
           <video
-            src={files[focus].s3_key}
+            src={files[focus].mid_key || files[focus].s3_key || placeholder}
             controls
             autoPlay
             loop
             muted // Many browsers require muted for autoPlay
             onKeyDown={(e) => e.stopPropagation()}
+            style={{
+              transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
+              transition: pinchStartDist.current ? "none" : "transform 0.1s ease-out",
+              touchAction: "none",
+            }}
           />
         ) : (
           <img
             src={files[focus].mid_key || files[focus].s3_key || placeholder}
             alt={`${files[focus].filename}`}
             crossOrigin="anonymous"
+            style={{
+              transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
+              transition: pinchStartDist.current ? "none" : "transform 0.1s ease-out",
+              touchAction: "none",
+            }}
             onError={(e) => {
               e.target.src = placeholder;
             }}
