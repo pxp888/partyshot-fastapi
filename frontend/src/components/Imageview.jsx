@@ -333,6 +333,7 @@ function Imageview({ files, focus, setFocus, deletedPhoto, onImport, userLoggedI
           <img
             src={files[focus].mid_key || files[focus].s3_key || placeholder}
             alt={`${files[focus].filename}`}
+            crossOrigin="anonymous"
             onError={(e) => {
               e.target.src = placeholder;
             }}

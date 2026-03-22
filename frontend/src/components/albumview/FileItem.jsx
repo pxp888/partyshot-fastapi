@@ -72,6 +72,7 @@ const FileItem = memo(forwardRef(({
             <img
               src={imgSrc}
               alt={`${file.filename}`}
+              crossOrigin="anonymous"
               className={isLoaded ? "loaded" : ""}
               onLoad={(e) => {
                 setIsLoaded(true);

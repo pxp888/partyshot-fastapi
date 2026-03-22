@@ -104,6 +104,7 @@ function AlbumItem({ album, isOtherUser, isOwnProfile, sendJsonMessage }) {
             <img
               src={thumbnailUrl}
               alt={album.name}
+              crossOrigin="anonymous"
               className={isLoaded ? "loaded" : ""}
               onLoad={() => setIsLoaded(true)}
               onError={() => {
