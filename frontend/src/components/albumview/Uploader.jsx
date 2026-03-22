@@ -34,8 +34,8 @@ async function processMedia(file, maxWidth = 300, maxHeight = 300, quality = 0.8
           try {
             const { videoWidth, videoHeight } = video;
             if (!videoWidth || !videoHeight) {
-                cleanup();
-                return reject(new Error("Video dimensions are 0."));
+              cleanup();
+              return reject(new Error("Video dimensions are 0."));
             }
             let width = videoWidth;
             let height = videoHeight;
@@ -147,7 +147,7 @@ const Uploader = memo(forwardRef(
     ref) => {
     const { showMessage, showConfirm } = useMessage();
     const { albumcode } = useParams();
-    
+
     const isUploadingRef = useRef(false);
     const timeoutRef = useRef(null);
     const uploaderId = useRef(`uploader-${Math.random().toString(36).substr(2, 9)}`);
@@ -175,7 +175,7 @@ const Uploader = memo(forwardRef(
         headers,
         body: new URLSearchParams({ filename: file.name, album_code: album.code }),
       });
-      
+
       if (!presignRes.ok) {
         const errData = await presignRes.json();
         if (presignRes.status === 403) {
@@ -196,15 +196,15 @@ const Uploader = memo(forwardRef(
       let final_mid_key = null;
 
       const processingTasks = [];
-      processingTasks.push(processMedia(file, 500, 500, 0.6).then(blob => { thumbnailBlob = blob; }));
-      
+      processingTasks.push(processMedia(file, 600, 600, 0.85).then(blob => { thumbnailBlob = blob; }));
+
       const isGif = file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif");
       if (mid_presigned && !file.type.startsWith("video/") && !isGif) {
         processingTasks.push(processMedia(file, 2560, 2560, 0.8).then(blob => {
           if (blob && blob.size <= file.size * 0.75) midBlob = blob;
         }));
       }
-      
+
       try {
         await Promise.all(processingTasks);
       } catch (err) {
@@ -281,7 +281,7 @@ const Uploader = memo(forwardRef(
       const executeUpload = async () => {
         if (isUploadingRef.current) return;
         isUploadingRef.current = true;
-        
+
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
           timeoutRef.current = null;
@@ -323,7 +323,7 @@ const Uploader = memo(forwardRef(
     useImperativeHandle(ref, () => ({ handleFiles }));
 
     return (
-      <div 
+      <div
         className={`uploader-wrapper ${totalFiles > 0 ? 'is-uploading' : ''}`}
         style={{
           width: "100%",
@@ -345,7 +345,7 @@ const Uploader = memo(forwardRef(
           disabled={disabled || totalFiles > 0}
         />
 
-        <label 
+        <label
           htmlFor={uploaderId.current}
           style={{
             cursor: (disabled || totalFiles > 0) ? "default" : "pointer",
