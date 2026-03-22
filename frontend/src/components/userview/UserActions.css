@@ -93,10 +93,15 @@
         left: 0;
         right: 0;
         border-bottom: none;
-        /* border-top: 1px solid rgba(255, 255, 255, 0.1); */
     }
 
     .user-toolbar {
-        padding-right: 2rem;
+        padding: 0;
     }
+
+    .toolbar-left,
+    .toolbar-right {
+        gap: 0rem !important;
+    }
+
 }
