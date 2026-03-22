@@ -63,7 +63,8 @@ class Settings(BaseModel):
     authjwt_cookie_domain: str = ".shareshot.eu"
     authjwt_token_location: set = {"headers", "cookies"}
     authjwt_cookie_csrf_protect: bool = False  # Set to True in production if needed
-
+    authjwt_access_token_expires: int = 86400
+    authjwt_refresh_token_expires: int = 604800
 
 class ToggleOpenRequest(BaseModel):
     album_id: int
