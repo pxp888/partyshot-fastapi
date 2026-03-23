@@ -16,23 +16,25 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const checkSession = useCallback(() => {
+  const checkSession = useCallback(async () => {
     console.log("topbar protect test");
-    receiveJson("/api/protected")
-      .then((data) => {
-        console.log("Logged in:", data);
-        if (data.user_info) {
-          setCurrentUser(data.user_info.username);
-          setUserInfo(data.user_info);
-          setUserClass(data.user_info.class);
-        } else {
-          handleLogout();
-        }
-      })
-      .catch((err) => {
-        console.error("Logged out:", err);
+    try {
+      const data = await receiveJson("/api/protected");
+      console.log("Logged in:", data);
+      if (data.user_info) {
+        setCurrentUser(data.user_info.username);
+        setUserInfo(data.user_info);
+        setUserClass(data.user_info.class);
+
+        const uuidData = await sendJson("/api/generate-wssecret", {});
+        localStorage.setItem("wssecret", uuidData.wssecret);
+      } else {
         handleLogout();
-      });
+      }
+    } catch (err) {
+      console.error("Logged out:", err);
+      handleLogout();
+    }
   }, [setCurrentUser]);
 
   useEffect(() => {
