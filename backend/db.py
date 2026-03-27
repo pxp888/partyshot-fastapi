@@ -10,9 +10,7 @@ from contextlib import contextmanager
 import arq
 import aws
 import env
-import psycopg2
 from arq.connections import RedisSettings
-from markdown_it.rules_block.list import skipBulletListMarker
 from psycopg2.pool import ThreadedConnectionPool
 
 # --------------------------------------------------------------------------- #
@@ -28,12 +26,16 @@ async def _get_arq_pool():
     global _pool
     if _pool is None:
         # If it looks like a full DSN (or specifically for Amazon/Production), use from_dsn
-        if "redis://" in env.REDIS_URL2_DSN or "rediss://" in env.REDIS_URL2_DSN or "amazon" in env.REDIS_URL2_DSN:
+        if (
+            "redis://" in env.REDIS_URL2_DSN
+            or "rediss://" in env.REDIS_URL2_DSN
+            or "amazon" in env.REDIS_URL2_DSN
+        ):
             redis_settings = RedisSettings.from_dsn(env.REDIS_URL2_DSN)
         else:
             # Otherwise treat as a bare host (common in local IP testing)
             redis_settings = RedisSettings(host=env.REDIS_URL2_DSN)
-        
+
         _pool = await arq.create_pool(redis_settings)
     return _pool
 
@@ -78,10 +80,12 @@ def close_pool():
 def get_db_connection():
     if _db_pool is None:
         init_pool()
+    assert _db_pool is not None, "Database pool not initialized"
     conn = _db_pool.getconn()
     try:
         yield conn
     finally:
+        assert _db_pool is not None, "Database pool not initialized"
         _db_pool.putconn(conn)
 
 
@@ -185,7 +189,7 @@ def init_db() -> None:
 
                 """
             )
-            
+
             # Simple migrations for existing databases
             cursor.execute(
                 """
@@ -195,9 +199,8 @@ def init_db() -> None:
                 DROP TABLE IF EXISTS photos_atomic;
                 """
             )
-            
-            conn.commit()
 
+            conn.commit()
 
     logging.info("Database schema initialized.")
 
@@ -205,13 +208,24 @@ def init_db() -> None:
     init_user_limits()
 
     # create admin user if it doesn't exist
-    if getUser(env.ADMIN_USERNAME) is None:
+    if (
+        env.ADMIN_USERNAME is None
+        or env.ADMIN_EMAIL is None
+        or env.ADMIN_PASSWORD is None
+    ):
+        logging.error("Missing environment variables for admin user setup")
+        return
+
+    admin_user = getUser(env.ADMIN_USERNAME)
+    if admin_user is None:
         setUser(env.ADMIN_USERNAME, env.ADMIN_EMAIL, env.ADMIN_PASSWORD, "admin")
     setUserData(env.ADMIN_USERNAME, user_class="admin")
 
     # create anonymous user if it doesn't exist
     if getUser("anonymous") is None:
-        setUser("anonymous", "anonymous@shareshot.eu", "anonymous_password_not_used", "free")
+        setUser(
+            "anonymous", "anonymous@shareshot.eu", "anonymous_password_not_used", "free"
+        )
     setUserData("anonymous", user_class="free")
 
 
@@ -380,8 +394,12 @@ def getAlbum(code: str) -> dict | None:
             if isinstance(row[7], datetime.datetime)
             else row[7],
             "username": row[8],
-            "modified_at": row[9].isoformat() if isinstance(row[9], datetime.datetime) else row[9],
-            "opened_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
+            "modified_at": row[9].isoformat()
+            if isinstance(row[9], datetime.datetime)
+            else row[9],
+            "opened_at": row[10].isoformat()
+            if isinstance(row[10], datetime.datetime)
+            else row[10],
         }
     return None
 
@@ -432,8 +450,8 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT a.id, a.code, a.name, a.user_id, a.open, 
-                       COALESCE(s.profile, o_s.profile) AS display_profile, 
+                SELECT a.id, a.code, a.name, a.user_id, a.open,
+                       COALESCE(s.profile, o_s.profile) AS display_profile,
                        a.private, a.created_at, u.username,
                        s.album_id IS NOT NULL AS subscribed,
                        a.modified_at, o_s.opened_at, s.opened_at AS sub_opened_at,
@@ -462,9 +480,15 @@ def getAlbumWithSub(code: str, authuser: str) -> dict | None:
             else row[7],
             "username": row[8],
             "subscribed": bool(row[9]),
-            "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
-            "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
-            "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
+            "modified_at": row[10].isoformat()
+            if isinstance(row[10], datetime.datetime)
+            else row[10],
+            "opened_at": row[11].isoformat()
+            if isinstance(row[11], datetime.datetime)
+            else row[11],
+            "sub_opened_at": row[12].isoformat()
+            if isinstance(row[12], datetime.datetime)
+            else row[12],
             "archived": bool(row[13]),
         }
     return None
@@ -476,7 +500,7 @@ def getPhotos(
     offset: int = 0,
     sort_field: str = "created_at",
     sort_order: str = "desc",
-    user_id_filter: int = None,
+    user_id_filter: int | None = None,
 ) -> dict | None:
 
     # Whitelist sort fields/orders to prevent SQL injection
@@ -574,7 +598,7 @@ def recordAlbumVisit(album_code: str, username: str) -> None:
 
 def getDownloadList(
     album_id: int,
-    user_id_filter: int = None,
+    user_id_filter: int | None = None,
 ) -> dict | None:
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
@@ -622,18 +646,6 @@ async def deleteAlbum(username: str, code: str) -> str:
                     return "album_not_found"
                 album_id = album_row[0]
 
-                # 3. Get all photos for the album
-                cursor.execute(
-                    """
-                    SELECT s3_key, thumb_key, mid_key FROM photos
-                    WHERE album_id = %s
-                    """,
-                    (album_id,),
-                )
-                photo_rows = cursor.fetchall()
-
-                # S3 deletion logic removed for soft delete
-
                 # 5. Get total size of all original photos in the album
                 cursor.execute(
                     """
@@ -669,7 +681,7 @@ async def deleteAlbum(username: str, code: str) -> str:
                         GROUP BY s3_key
                     )
                     UPDATE photos
-                    SET 
+                    SET
                         album_id = CASE WHEN album_id = %s THEN NULL ELSE album_id END,
                         deleted_at = CASE WHEN album_id = %s THEN CURRENT_TIMESTAMP ELSE deleted_at END,
                         count = count - affected_keys.count_in_album
@@ -775,7 +787,9 @@ def addPhoto(data: dict) -> dict | None:
         "thumb_size": row[9],
         "mid_size": row[10],
         "username": username,
-        "album_modified_at": album_modified_at.isoformat() if isinstance(album_modified_at, datetime.datetime) else album_modified_at,
+        "album_modified_at": album_modified_at.isoformat()
+        if isinstance(album_modified_at, datetime.datetime)
+        else album_modified_at,
     }
 
 
@@ -799,13 +813,15 @@ def importPhotos(photo_ids: list, target_album_id: int, username: str) -> list:
                         FROM photos
                         WHERE id = %s
                         """,
-                        (pid,)
+                        (pid,),
                     )
                     row = cursor.fetchone()
                     if not row:
                         continue
 
-                    s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size = row
+                    s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size = (
+                        row
+                    )
 
                     # 2. Insert new row
                     cursor.execute(
@@ -814,10 +830,20 @@ def importPhotos(photo_ids: list, target_album_id: int, username: str) -> list:
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id, user_id, album_id, s3_key, thumb_key, mid_key, filename, created_at, size, thumb_size, mid_size;
                         """,
-                        (user_id, target_album_id, s3_key, thumb_key, mid_key, filename, size, thumb_size, mid_size)
+                        (
+                            user_id,
+                            target_album_id,
+                            s3_key,
+                            thumb_key,
+                            mid_key,
+                            filename,
+                            size,
+                            thumb_size,
+                            mid_size,
+                        ),
                     )
                     new_row = cursor.fetchone()
-                    
+
                     # 3. Increment count for all photos with this s3_key
                     if s3_key:
                         cursor.execute(
@@ -826,13 +852,13 @@ def importPhotos(photo_ids: list, target_album_id: int, username: str) -> list:
                             SET count = count + 1
                             WHERE s3_key = %s
                             """,
-                            (s3_key,)
+                            (s3_key,),
                         )
 
                     # Update modified_at for the target album
                     cursor.execute(
                         "UPDATE albums SET modified_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING modified_at",
-                        (target_album_id,)
+                        (target_album_id,),
                     )
                     mod_row = cursor.fetchone()
                     album_modified_at = mod_row[0] if mod_row else None
@@ -842,25 +868,35 @@ def importPhotos(photo_ids: list, target_album_id: int, username: str) -> list:
                         if isinstance(created_at, datetime.datetime):
                             created_at = created_at.isoformat()
 
-                        imported_photos.append({
-                            "id": new_row[0],
-                            "user_id": new_row[1],
-                            "album_id": new_row[2],
-                            "s3_key": aws.create_presigned_url(new_row[3]) if new_row[3] else None,
-                            "thumb_key": aws.create_presigned_url(new_row[4]) if new_row[4] else None,
-                            "mid_key": aws.create_presigned_url(new_row[5]) if new_row[5] else None,
-                            "filename": new_row[6],
-                            "created_at": created_at,
-                            "size": new_row[8],
-                            "thumb_size": new_row[9],
-                            "mid_size": new_row[10],
-                            "username": username,
-                            "album_modified_at": album_modified_at.isoformat() if isinstance(album_modified_at, datetime.datetime) else album_modified_at,
-                        })
-                        
+                        imported_photos.append(
+                            {
+                                "id": new_row[0],
+                                "user_id": new_row[1],
+                                "album_id": new_row[2],
+                                "s3_key": aws.create_presigned_url(new_row[3])
+                                if new_row[3]
+                                else None,
+                                "thumb_key": aws.create_presigned_url(new_row[4])
+                                if new_row[4]
+                                else None,
+                                "mid_key": aws.create_presigned_url(new_row[5])
+                                if new_row[5]
+                                else None,
+                                "filename": new_row[6],
+                                "created_at": created_at,
+                                "size": new_row[8],
+                                "thumb_size": new_row[9],
+                                "mid_size": new_row[10],
+                                "username": username,
+                                "album_modified_at": album_modified_at.isoformat()
+                                if isinstance(album_modified_at, datetime.datetime)
+                                else album_modified_at,
+                            }
+                        )
+
                     if size:
                         total_imported_size += size
-                        
+
                 if total_imported_size > 0:
                     cursor.execute(
                         """
@@ -937,7 +973,7 @@ async def deletePhoto(id: str, username: str) -> bool:
                     return False
 
                 # Enqueue S3 deletions if they exist
-                
+
                 # S3 deletion logic removed for soft delete
 
                 # Perform the soft delete from DB
@@ -945,8 +981,8 @@ async def deletePhoto(id: str, username: str) -> bool:
                 cursor.execute(
                     """
                     UPDATE photos
-                    SET album_id = CASE WHEN id = %s THEN NULL ELSE album_id END, 
-                        deleted_at = CASE WHEN id = %s THEN CURRENT_TIMESTAMP ELSE deleted_at END, 
+                    SET album_id = CASE WHEN id = %s THEN NULL ELSE album_id END,
+                        deleted_at = CASE WHEN id = %s THEN CURRENT_TIMESTAMP ELSE deleted_at END,
                         count = count - 1
                     WHERE s3_key = %s;
                     """,
@@ -968,14 +1004,14 @@ async def deletePhoto(id: str, username: str) -> bool:
                 # If UPDATE affected a row, commit
                 if cursor.rowcount == 0:
                     conn.rollback()
-                    return None
+                    return False
 
                 conn.commit()
                 # await enqueue_cleanup_deleted_photos(0)
-                return {"id": photo_id, "album_id": album_id}
+                return True
             except Exception:
                 conn.rollback()
-                return None
+                return False
 
 
 def getAlbums(username: str, authuser: str) -> dict | None:
@@ -984,8 +1020,8 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         return None
 
     # Determine if requester is the profile owner or an admin
-    is_profile_owner = (username == authuser)
-    
+    is_profile_owner = username == authuser
+
     auth_user_record = user if is_profile_owner else getUser(authuser)
     is_admin = False
     if auth_user_record and auth_user_record.get("class") == "admin":
@@ -1000,14 +1036,14 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 # Also join with photos to get the latest thumbnail
                 cursor.execute(
                     """
-                    SELECT a.id, a.code, a.name, a.user_id, a.open, 
-                           s_prof.profile AS display_profile, 
+                    SELECT a.id, a.code, a.name, a.user_id, a.open,
+                           s_prof.profile AS display_profile,
                            a.private, a.created_at, u.username,
-                           (SELECT p.thumb_key FROM photos p 
-                            WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL 
+                           (SELECT p.thumb_key FROM photos p
+                            WHERE p.album_id = a.id AND p.thumb_key IS NOT NULL
                             ORDER BY p.created_at DESC LIMIT 1) as thumb_key,
-                           a.modified_at, 
-                           CASE WHEN a.user_id = %s THEN s_prof.opened_at ELSE NULL END, 
+                           a.modified_at,
+                           CASE WHEN a.user_id = %s THEN s_prof.opened_at ELSE NULL END,
                            s_auth.opened_at AS sub_opened_at
                     FROM albums a
                     JOIN users u ON a.user_id = u.id
@@ -1031,7 +1067,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         album_id = row[0]
         # Permissions check
         album_owner = row[8]
-        is_owner = (authuser == album_owner)
+        is_owner = authuser == album_owner
         is_profile = bool(row[5])
         is_private = bool(row[6])
 
@@ -1053,7 +1089,7 @@ def getAlbums(username: str, authuser: str) -> dict | None:
         thumb_key = row[9]
         if is_private and not is_owner:
             thumb_key = None
-        
+
         thumb_url = aws.create_presigned_url(thumb_key) if thumb_key else None
 
         albums.append(
@@ -1067,9 +1103,15 @@ def getAlbums(username: str, authuser: str) -> dict | None:
                 "private": is_private,
                 "created_at": created_at,
                 "thumbnail": thumb_url,
-                "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
-                "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
-                "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
+                "modified_at": row[10].isoformat()
+                if isinstance(row[10], datetime.datetime)
+                else row[10],
+                "opened_at": row[11].isoformat()
+                if isinstance(row[11], datetime.datetime)
+                else row[11],
+                "sub_opened_at": row[12].isoformat()
+                if isinstance(row[12], datetime.datetime)
+                else row[12],
             }
         )
     return {"albums": albums}
@@ -1088,8 +1130,8 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 cursor.execute(
                     """
                     SELECT DISTINCT a.id, a.code, a.name, a.user_id, a.open, o_s.profile, a.private, a.created_at, u.username,
-                           (SELECT p2.thumb_key FROM photos p2 
-                            WHERE p2.album_id = a.id AND p2.thumb_key IS NOT NULL 
+                           (SELECT p2.thumb_key FROM photos p2
+                            WHERE p2.album_id = a.id AND p2.thumb_key IS NOT NULL
                             ORDER BY p2.created_at DESC LIMIT 1) as thumb_key,
                            a.modified_at,
                            CASE WHEN a.user_id = %s THEN o_s.opened_at ELSE NULL END,
@@ -1125,7 +1167,7 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
         thumb_key = row[9]
         if is_private and not is_owner:
             thumb_key = None
-        
+
         thumb_url = aws.create_presigned_url(thumb_key) if thumb_key else None
 
         albums.append(
@@ -1139,9 +1181,15 @@ def getAlbumsWithUserPhotos(authuser: str) -> dict | None:
                 "private": is_private,
                 "created_at": created_at,
                 "thumbnail": thumb_url,
-                "modified_at": row[10].isoformat() if isinstance(row[10], datetime.datetime) else row[10],
-                "opened_at": row[11].isoformat() if isinstance(row[11], datetime.datetime) else row[11],
-                "sub_opened_at": row[12].isoformat() if isinstance(row[12], datetime.datetime) else row[12],
+                "modified_at": row[10].isoformat()
+                if isinstance(row[10], datetime.datetime)
+                else row[10],
+                "opened_at": row[11].isoformat()
+                if isinstance(row[11], datetime.datetime)
+                else row[11],
+                "sub_opened_at": row[12].isoformat()
+                if isinstance(row[12], datetime.datetime)
+                else row[12],
                 "archived": bool(row[13]),
             }
         )
@@ -1321,12 +1369,12 @@ def toggleArchive(id: str, username: str) -> dict | None:
                     FROM subscription
                     WHERE user_id = %s AND album_id = %s;
                     """,
-                    (user["id"], album_id)
+                    (user["id"], album_id),
                 )
                 sub_row = cursor.fetchone()
                 if sub_row is None:
                     return None
-                    
+
                 new_sub_archive = not sub_row[0]
                 cursor.execute(
                     """
@@ -1334,7 +1382,7 @@ def toggleArchive(id: str, username: str) -> dict | None:
                     SET archive = %s
                     WHERE user_id = %s AND album_id = %s;
                     """,
-                    (new_sub_archive, user["id"], album_id)
+                    (new_sub_archive, user["id"], album_id),
                 )
                 conn.commit()
 
@@ -1370,12 +1418,12 @@ def toggleProfile(id: str, username: str) -> dict | None:
                     FROM subscription
                     WHERE user_id = %s AND album_id = %s;
                     """,
-                    (user["id"], album_id)
+                    (user["id"], album_id),
                 )
                 sub_row = cursor.fetchone()
                 if sub_row is None:
                     return None
-                    
+
                 new_sub_profile = not sub_row[0]
                 cursor.execute(
                     """
@@ -1383,7 +1431,7 @@ def toggleProfile(id: str, username: str) -> dict | None:
                     SET profile = %s
                     WHERE user_id = %s AND album_id = %s;
                     """,
-                    (new_sub_profile, user["id"], album_id)
+                    (new_sub_profile, user["id"], album_id),
                 )
                 conn.commit()
 
@@ -1512,11 +1560,11 @@ def setAlbumName(albumcode: str, albumname: str, username: str) -> bool:
 
 def setUserData(
     username: str,
-    newusername: str = None,
-    email: str = None,
-    password: str = None,
-    user_class: str = None,
-    notify_me: str = None,
+    newusername: str | None = None,
+    email: str | None = None,
+    password: str | None = None,
+    user_class: str | None = None,
+    notify_me: str | None = None,
 ) -> str:
     """Update user information (username, email, password, or class) conditionally."""
     user = getUser(username)
@@ -1533,6 +1581,7 @@ def setUserData(
     # Check newusername
     if is_valid(newusername) and newusername != user["username"]:
         # Check if new username is already taken
+        assert newusername is not None  # Ensured by is_valid check
         if getUser(newusername) is not None:
             return "username taken"
         update_fields.append("username = %s")
@@ -1540,11 +1589,13 @@ def setUserData(
 
     # Check email
     if is_valid(email) and email != user["email"]:
+        assert email is not None  # Ensured by is_valid check
         update_fields.append("email = %s")
         params.append(email)
 
     # Check password
     if is_valid(password):
+        assert password is not None  # Ensured by is_valid check
         salt = random.randbytes(16).hex()
         passhash = hashlib.sha256((password + salt).encode()).hexdigest()
         update_fields.append("passhash = %s")
@@ -1580,7 +1631,7 @@ def setUserData(
                 return "error"
 
 
-def getEmail(username: str) -> str:
+def getEmail(username: str) -> str | None:
 
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
@@ -1742,9 +1793,12 @@ async def cleanup2(ctx=None) -> None:
                     if not rows:
                         break
                     for r in rows:
-                        if r[0]: keys.add(r[0])
-                        if r[1]: keys.add(r[1])
-                        if r[2]: keys.add(r[2])
+                        if r[0]:
+                            keys.add(r[0])
+                        if r[1]:
+                            keys.add(r[1])
+                        if r[2]:
+                            keys.add(r[2])
         return keys
 
     logging.info("Building known_keys set from database...")
@@ -1757,6 +1811,7 @@ async def cleanup2(ctx=None) -> None:
     continuation_token = None
 
     while True:
+
         def list_objects():
             params = {"Bucket": aws.BUCKET_NAME, "MaxKeys": 1000}
             if continuation_token:
@@ -1765,13 +1820,13 @@ async def cleanup2(ctx=None) -> None:
 
         page = await asyncio.to_thread(list_objects)
         contents = page.get("Contents", [])
-        
+
         if not contents:
             break
 
         for obj in contents:
             key = obj["Key"]
-            
+
             # Safeguard: Skip directory markers if they exist in R2
             if key.endswith("/"):
                 continue
@@ -1781,7 +1836,9 @@ async def cleanup2(ctx=None) -> None:
 
             # Perform bulk delete at the 1,000 key limit
             if len(delete_buffer) >= 1000:
-                logging.info("Deleting batch of %d orphaned objects...", len(delete_buffer))
+                logging.info(
+                    "Deleting batch of %d orphaned objects...", len(delete_buffer)
+                )
                 await asyncio.to_thread(
                     s3.delete_objects,
                     Bucket=aws.BUCKET_NAME,
@@ -1798,7 +1855,9 @@ async def cleanup2(ctx=None) -> None:
 
     # Clean up any remaining keys in the buffer
     if delete_buffer:
-        logging.info("Deleting final batch of %d orphaned objects...", len(delete_buffer))
+        logging.info(
+            "Deleting final batch of %d orphaned objects...", len(delete_buffer)
+        )
         await asyncio.to_thread(
             s3.delete_objects, Bucket=aws.BUCKET_NAME, Delete={"Objects": delete_buffer}
         )
@@ -1847,7 +1906,7 @@ def totalSpaceUsed() -> dict:
 
 
 def updatePhotoSizes(
-    photo_id: int, size: int, thumb_size: int = None, mid_size: int = None
+    photo_id: int, size: int, thumb_size: int | None = None, mid_size: int | None = None
 ):
     # Update the photo sizes in the database - this is called by the worker
     updates = ["size = %s"]
@@ -1926,9 +1985,9 @@ def get_deleted_photos_to_clean(age_hours: int = 0) -> list:
             # count <= 0 as a safety measure
             cursor.execute(
                 """
-                SELECT id, s3_key, thumb_key, mid_key 
-                FROM photos 
-                WHERE deleted_at IS NOT NULL 
+                SELECT id, s3_key, thumb_key, mid_key
+                FROM photos
+                WHERE deleted_at IS NOT NULL
                   AND deleted_at < NOW() - INTERVAL '%s hours'
                   AND count <= 0
                 """,
@@ -1941,15 +2000,12 @@ def hard_delete_photos(photo_ids: list[int]) -> None:
     """Permanently remove photos from DB by ID."""
     if not photo_ids:
         return
-    
+
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             try:
                 # PostgreSQL requires tuple for IN clause
-                cursor.execute(
-                    "DELETE FROM photos WHERE id = ANY(%s)",
-                    (photo_ids,)
-                )
+                cursor.execute("DELETE FROM photos WHERE id = ANY(%s)", (photo_ids,))
                 conn.commit()
             except Exception as e:
                 conn.rollback()
@@ -2000,7 +2056,7 @@ def updateUserStripeCustomerId(username: str, customer_id: str) -> None:
                 conn.rollback()
 
 
-def updateUserPlan(customer_id: str, plan: str, event_id: str = None) -> None:
+def updateUserPlan(customer_id: str, plan: str, event_id: str | None = None) -> None:
     """Update the user's plan (class) based on their Stripe customer ID and log the event."""
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
