@@ -31,6 +31,40 @@
 - **📧 Notifications**: Automated email delivery for contact form submissions and secure password recovery.  
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OQQmAABRAsSfYxZo/kSGMYQLPJrCCNxG2BFtmZquOAAD4i3Ot7mr/egIAwGvXA4qrBdGuSdJuAAAAAElFTkSuQmCC)  
 **🛠️ Tech Stack**  
+
+~~~mermaid
+flowchart LR
+user(User)
+cf(Cloudflare)
+r2(Cloudflare R2)
+cfd(Cloudflared)
+
+rds(RDS)
+elc(Elasticache)
+
+fg(server)
+arq(Arq worker)
+ec2(EC2 server)
+
+subgraph Fargate-server
+cfd
+fg
+end
+
+subgraph Fargate-worker
+arq
+end
+
+user --> cf & r2
+cf --> cfd --> fg
+r2 ---> arq
+
+ec2 --> rds
+fg --> rds & elc
+arq --> rds & elc
+
+~~~
+
 **Backend & Infrastructure**  
 - **FastAPI**: Asynchronous Python framework for high-concurrency APIs.  
 - **PostgreSQL**: Reliable metadata storage with a focus on atomic transactions and storage tracking.  
