@@ -917,7 +917,7 @@ def importPhotos(photo_ids: list, target_album_id: int, username: str) -> list:
     return imported_photos
 
 
-async def deletePhoto(id: str, username: str) -> bool:
+async def deletePhoto(id: str, username: str) -> int | bool:
     user = getUser(username)
     if not user:
         return False
@@ -1008,7 +1008,7 @@ async def deletePhoto(id: str, username: str) -> bool:
 
                 conn.commit()
                 # await enqueue_cleanup_deleted_photos(0)
-                return True
+                return album_id
             except Exception:
                 conn.rollback()
                 return False

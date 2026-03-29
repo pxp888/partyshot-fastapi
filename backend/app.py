@@ -610,7 +610,10 @@ async def deletePhoto(websocket, data, username):
     photo_id = data["payload"]["photo_id"]
     result = await db.deletePhoto(photo_id, username)
     if result:
-        message = {"action": "deletePhoto", "payload": result}
+        message = {
+            "action": "deletePhoto",
+            "payload": {"id": photo_id, "album_id": result},
+        }
         await redis_client.publish(f"album-{albumcode}", json.dumps(message))
     else:
         logging.info("not deleted %s", photo_id)
