@@ -6,6 +6,7 @@ import screen2 from "../assets/screen2.webp";
 import screen3 from "../assets/screen3.webp";
 import screen4 from "../assets/screen4.webp";
 import vid1 from "../assets/vid1.webm";
+import vid2 from "../assets/vid2.mp4";
 
 function Welcomepage() {
   return (
@@ -71,6 +72,14 @@ function Welcomepage() {
       </section>
 
       <section className="works">
+        <video
+          src={vid2}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="work-video"
+        />
         <div className="works-container">
           <div className="works-image-stack">
             <img
