@@ -2,12 +2,7 @@ import datetime
 import json
 import logging
 import os
-import time
 import uuid
-
-logging.basicConfig(
-    level=logging.WARNING, format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 import aws
 import db
@@ -38,6 +33,11 @@ from fastapi_jwt_auth2.exceptions import AuthJWTException
 from pydantic import BaseModel
 from starlette.websockets import WebSocketDisconnect
 
+logging.basicConfig(
+    level=logging.WARNING, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+
 redis_client = redis.from_url(env.REDIS_URL, decode_responses=True)
 # redis_client = redis.from_url(env.REDIS_URL)
 
@@ -65,6 +65,7 @@ class Settings(BaseModel):
     authjwt_cookie_csrf_protect: bool = False  # Set to True in production if needed
     authjwt_access_token_expires: int = 86400
     authjwt_refresh_token_expires: int = 604800
+
 
 class ToggleOpenRequest(BaseModel):
     album_id: int
@@ -247,7 +248,7 @@ async def contact_endpoint(request: ContactRequest):
         request.email,
         request.subject,
         request.body,
-        request.source
+        request.source,
     )
     return {"msg": "Message sent successfully"}
 
@@ -372,7 +373,7 @@ async def add_photo_metadata(
         await redis_client.publish(
             f"albumadd-{payload['albumcode']}", json.dumps(message)
         )
-        
+
         # Also publish the updated modified_at time to general album subscribers
         if photo_resp.get("album_modified_at"):
             mod_message = {
@@ -382,7 +383,9 @@ async def add_photo_metadata(
                     "modified_at": photo_resp["album_modified_at"],
                 },
             }
-            await redis_client.publish(f"album-{payload['albumcode']}", json.dumps(mod_message))
+            await redis_client.publish(
+                f"album-{payload['albumcode']}", json.dumps(mod_message)
+            )
 
     return {"photo_id": photo_resp}
 
@@ -427,17 +430,20 @@ class ResetCodeRequest(BaseModel):
 @app.post("/api/send-reset-code")
 async def send_reset_code_endpoint(request: ResetCodeRequest):
     import random
+
     user_email = db.getEmail(request.username)
     if not user_email:
-        logging.warning(f"Reset code requested for unknown or email-less user: {request.username}")
+        logging.warning(
+            f"Reset code requested for unknown or email-less user: {request.username}"
+        )
         return {"msg": "Reset code sent"}
 
     code = random.randint(100000, 999999)
     # Store code in Redis with 10 minute expiration
     await redis_client.set(f"reset_code:{request.username}", str(code), ex=600)
-    
+
     await app.state.redis.enqueue_job("send_reset_code_email", user_email, code)
-    
+
     return {"msg": "Reset code sent"}
 
 
@@ -457,7 +463,7 @@ async def reset_password_endpoint(request: ResetPasswordRequest):
     success = db.update_user_password(request.username, request.new_password)
     if not success:
         raise HTTPException(status_code=400, detail="User not found")
-        
+
     # Clear code from Redis after successful reset
     await redis_client.delete(f"reset_code:{request.username}")
     return {"msg": "Password reset successful"}
@@ -622,7 +628,7 @@ async def deletePhoto(websocket, data, username):
 async def importPhotos(websocket, data, username):
     photo_ids = data["payload"]["photo_ids"]
     target_album_code = data["payload"]["target_album_code"]
-    
+
     # Get target album id
     target_album = db.getAlbum(target_album_code)
     if not target_album:
@@ -632,20 +638,24 @@ async def importPhotos(websocket, data, username):
     # Verify the user has permissions to the target album here.
     # They must be the owner, or the album is open and user can upload.
     if target_album["username"] != username and not target_album["open"]:
-        logging.warning("importPhotos: User %s lacks permission to import to album %s", username, target_album_code)
+        logging.warning(
+            "importPhotos: User %s lacks permission to import to album %s",
+            username,
+            target_album_code,
+        )
         return
 
     result = db.importPhotos(photo_ids, target_album["id"], username)
     if isinstance(result, list):
         message = {"action": "importSuccess", "payload": len(result)}
         await websocket.send_json(message)
-        
+
         # publish to target album so the new photos show up
         for photo in result:
             # mimic addPhoto output
             msg = {"action": "addPhoto", "payload": photo}
             await redis_client.publish(f"albumadd-{target_album_code}", json.dumps(msg))
-            
+
         # Also update modified_at
         if len(result) > 0 and result[0].get("album_modified_at"):
             mod_msg = {
@@ -655,7 +665,9 @@ async def importPhotos(websocket, data, username):
                     "modified_at": result[0]["album_modified_at"],
                 },
             }
-            await redis_client.publish(f"album-{target_album_code}", json.dumps(mod_msg))
+            await redis_client.publish(
+                f"album-{target_album_code}", json.dumps(mod_msg)
+            )
 
 
 async def search(websocket, data, username):
@@ -753,8 +765,8 @@ async def recordVisit(websocket, data, username):
             "payload": {
                 "code": albumcode,
                 "viewer": username,
-                "opened_at": datetime.datetime.now().isoformat()
-            }
+                "opened_at": datetime.datetime.now().isoformat(),
+            },
         }
         await redis_client.publish(f"album-{albumcode}", json.dumps(msg))
 

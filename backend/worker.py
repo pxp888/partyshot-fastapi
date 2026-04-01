@@ -1,14 +1,13 @@
 import asyncio
 import logging
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import aws
 import db
 import env
 from arq.connections import RedisSettings
-from PIL import Image
 
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -114,19 +113,23 @@ async def cleanup_deleted_photos(ctx, age_hours: int = 0):
             return {"deleted_count": 0, "status": "rate_limited"}
         await redis.setex(lock_key, 60, "true")
 
-    logging.info("Starting cleanup of old deleted photos (older than %s hours)...", age_hours)
-    
-    photos_to_delete = await asyncio.to_thread(db.get_deleted_photos_to_clean, age_hours)
-    
+    logging.info(
+        "Starting cleanup of old deleted photos (older than %s hours)...", age_hours
+    )
+
+    photos_to_delete = await asyncio.to_thread(
+        db.get_deleted_photos_to_clean, age_hours
+    )
+
     if not photos_to_delete:
         logging.info("No photos found to clean up.")
         return {"deleted_count": 0}
-        
+
     logging.info("Found %s photos to hard delete.", len(photos_to_delete))
-    
+
     keys_to_delete = []
     photo_ids_to_delete = []
-    
+
     for photo_id, s3_key, thumb_key, mid_key in photos_to_delete:
         photo_ids_to_delete.append(photo_id)
         if s3_key:
@@ -135,16 +138,16 @@ async def cleanup_deleted_photos(ctx, age_hours: int = 0):
             keys_to_delete.append(thumb_key)
         if mid_key:
             keys_to_delete.append(mid_key)
-            
+
     # Delete from S3 in batches
     while keys_to_delete:
         batch = keys_to_delete[:100]
         keys_to_delete = keys_to_delete[100:]
         await asyncio.to_thread(aws.delete_files_from_s3, batch)
-        
+
     # Delete from DB
     await asyncio.to_thread(db.hard_delete_photos, photo_ids_to_delete)
-    
+
     logging.info("Successfully cleaned up %s photos.", len(photo_ids_to_delete))
     return {"deleted_count": len(photo_ids_to_delete)}
 
@@ -154,23 +157,24 @@ async def send_reset_code_email(ctx, email: str, code: int):
     Background task to send a password reset code via Gmail SMTP.
     """
     logging.info("Sending reset code to %s", email)
-    
+
     subject = "Your Password Reset Code"
     body = f"Your shareShot.eu password reset code is: {code}"
-    
+
     msg = MIMEMultipart()
     msg["From"] = env.ADMIN_MAIL_EMAIL
     msg["To"] = email
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
-    
+
     try:
+
         def send_smtp():
             with smtplib.SMTP("smtp.gmail.com", 587) as server:
                 server.starttls()
                 server.login(env.ADMIN_MAIL_EMAIL, env.ADMIN_MAIL_PASSWORD)
                 server.send_message(msg)
-        
+
         await asyncio.to_thread(send_smtp)
         return True
     except Exception as e:
@@ -178,29 +182,34 @@ async def send_reset_code_email(ctx, email: str, code: int):
         return False
 
 
-async def send_contact_email(ctx, from_email: str, subject: str, body: str, source: str = "Unknown"):
+async def send_contact_email(
+    ctx, from_email: str, subject: str, body: str, source: str = "Unknown"
+):
     """
     Background task to send a contact form message to the admin.
     """
-    logging.info("Sending contact email from %s: %s (Source: %s)", from_email, subject, source)
-    
+    logging.info(
+        "Sending contact email from %s: %s (Source: %s)", from_email, subject, source
+    )
+
     admin_email = env.ADMIN_MAIL_EMAIL
-    
+
     msg = MIMEMultipart()
     msg["From"] = env.ADMIN_MAIL_EMAIL
     msg["To"] = admin_email
     msg["Subject"] = f"Contact Form: {subject}"
-    
+
     full_body = f"From: {from_email}\nSubject: {subject}\nSource: {source}\n\n{body}"
     msg.attach(MIMEText(full_body, "plain"))
-    
+
     try:
+
         def send_smtp():
             with smtplib.SMTP("smtp.gmail.com", 587) as server:
                 server.starttls()
                 server.login(env.ADMIN_MAIL_EMAIL, env.ADMIN_MAIL_PASSWORD)
                 server.send_message(msg)
-        
+
         await asyncio.to_thread(send_smtp)
         return True
     except Exception as e:

@@ -4,7 +4,6 @@ import React from "react";
 import "./style/Policypage.css";
 import Footer from "./Footer";
 
-
 function Policypage() {
   return (
     <div className="policy-container">
@@ -13,16 +12,16 @@ function Policypage() {
 
         <h2>1. Data Controller</h2>
         <p>
-          The responsible party for your data is <strong>[Your Name]</strong>,
+          The responsible party for your data is <strong>Paul Perrine</strong>,
           operating as a sole proprietorship (<em>enskild firma</em>) in Sweden.
         </p>
         <ul>
           <li>
-            <strong>Org. nr:</strong> [Your Personnummer]
+            <strong>Org. nr:</strong> 197708124115
           </li>
           <li>
             <strong>Contact:</strong>{" "}
-            <a href="mailto:[Your Email]">[Your Email]</a>
+            <a href="mailto:[Your Email]">pxperrine@gmail.com</a>
           </li>
         </ul>
 
@@ -47,7 +46,8 @@ function Policypage() {
             <strong>Infrastructure:</strong> All metadata is hosted on{" "}
             <strong>AWS</strong>. We utilize the{" "}
             <strong>Stockholm Region (eu‑north‑1)</strong> to ensure your data
-            remains within the EEA, complying with GDPR data residency standards.
+            remains within the EEA, complying with GDPR data residency
+            standards.
           </li>
         </ul>
 
@@ -57,9 +57,9 @@ function Policypage() {
           <li>
             <strong>Strictly Necessary Session Cookies:</strong> These are used
             solely to keep you logged in and to authorize your requests. Because
-            these are essential for the service you requested, they do not require
-            a "Reject" option under the ePrivacy Directive, but we list them here
-            for full transparency.
+            these are essential for the service you requested, they do not
+            require a "Reject" option under the ePrivacy Directive, but we list
+            them here for full transparency.
           </li>
         </ul>
 
@@ -85,9 +85,14 @@ function Policypage() {
 
         <h2>5. Supervisory Authority</h2>
         <p>
-          If you believe we are mishandling your data, you have the right to file
-          a complaint with <strong>Integritetsskyddsmyndigheten (IMY)</strong> at{" "}
-          <a href="https://www.imy.se" target="_blank" rel="noopener noreferrer">
+          If you believe we are mishandling your data, you have the right to
+          file a complaint with{" "}
+          <strong>Integritetsskyddsmyndigheten (IMY)</strong> at{" "}
+          <a
+            href="https://www.imy.se"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             https://www.imy.se
           </a>
           .
