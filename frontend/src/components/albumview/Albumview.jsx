@@ -173,7 +173,11 @@ function Albumview({ currentUser }) {
 
     switch (action) {
       case "getAlbum":
-        setAlbum(payload);
+        if (payload === null) {
+          setAlbum("not-found");
+        } else {
+          setAlbum(payload);
+        }
         break;
 
       case "getPhotos": {
@@ -487,11 +491,19 @@ function Albumview({ currentUser }) {
     toggleArchive,
   };
 
+  if (album === "not-found") {
+    return (
+      <div className="helptext">
+        <h1>Sorry, this album doesn't exist.</h1>
+        <p>It may have been deleted or the code is incorrect.</p>
+      </div>
+    );
+  }
+
   if (!album) {
     return (
-      <div className="albumview">
-        <h1>Album View</h1>
-        <p>Loading album data...</p>
+      <div className="helptext">
+        <h1>Loading album data...</h1>
       </div>
     );
   }

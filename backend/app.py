@@ -514,6 +514,8 @@ async def getAlbum(websocket, data, username):
     album = db.getAlbumWithSub(albumcode, username)
     if not album:
         logging.info("getAlbum - no album found")
+        message = {"action": "getAlbum", "payload": None}
+        await websocket.send_json(message)
         return
     message = {"action": "getAlbum", "payload": album}
     await websocket.send_json(message)
