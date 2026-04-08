@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import uuid
+from functools import wraps
 
 import aws
 import db
@@ -818,6 +819,43 @@ async def togglePrivate(websocket, data, username):
         await redis_client.publish(f"user-{username}", json.dumps(message))
 
 
+async def handle_getAlbumsWithUserPhotos(websocket, payload, username):
+    result = db.getAlbumsWithUserPhotos(username)
+    message = {"action": "getAlbums", "payload": result}
+    await websocket.send_json(message)
+
+
+async def handle_keepAlive(websocket, payload, username):
+    subjects = payload.get("payload", {}).get("subjects", [])
+    await manager.keep_alive(websocket, subjects)
+
+
+websocketfuncs = {
+    "createAlbum": createAlbum,
+    "getAlbums": getAlbums,
+    "deleteAlbum": deleteAlbum,
+    "getPhotos": getPhotos,
+    "getDownloadList": getDownloadList,
+    "getAlbum": getAlbum,
+    "deletePhoto": deletePhoto,
+    "importPhotos": importPhotos,
+    "search": search,
+    "setAlbumName": setAlbumName,
+    "setUserData": setUserData,
+    "getEmail": getEmail,
+    "getAccountData": getAccountData,
+    "subscribe": subscribe,
+    "unsubscribe": unsubscribe,
+    "toggleArchive": toggleArchive,
+    "recordVisit": recordVisit,
+    "getAlbumsWithUserPhotos": handle_getAlbumsWithUserPhotos,
+    "toggleOpen": toggleOpen,
+    "toggleProfile": toggleProfile,
+    "togglePrivate": togglePrivate,
+    "keepAlive": handle_keepAlive,
+}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -842,57 +880,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 logging.info("%s %s", username, payload)
 
                 action = payload.get("action")
-                if action == "createAlbum":
-                    await createAlbum(websocket, payload, username)
-                elif action == "getAlbums":
-                    await getAlbums(websocket, payload, username)
-                elif action == "deleteAlbum":
-                    await deleteAlbum(websocket, payload, username)
-                elif action == "getPhotos":
-                    await getPhotos(websocket, payload, username)
-                elif action == "getDownloadList":
-                    await getDownloadList(websocket, payload, username)
-                elif action == "getAlbum":
-                    await getAlbum(websocket, payload, username)
-                elif action == "deletePhoto":
-                    await deletePhoto(websocket, payload, username)
-                elif action == "importPhotos":
-                    await importPhotos(websocket, payload, username)
-                elif action == "search":
-                    await search(websocket, payload, username)
-                elif action == "setAlbumName":
-                    await setAlbumName(websocket, payload, username)
-                elif action == "setUserData":
-                    await setUserData(websocket, payload, username)
-                elif action == "getEmail":
-                    await getEmail(websocket, payload, username)
-                # elif action == "getUsage":
-                #     await getUsage(websocket, payload, username)
-                # elif action == "getUserInfo":
-                #     await getUserInfo(websocket, payload, username)
-                elif action == "getAccountData":
-                    await getAccountData(websocket, payload, username)
-                elif action == "subscribe":
-                    await subscribe(websocket, payload, username)
-                elif action == "unsubscribe":
-                    await unsubscribe(websocket, payload, username)
-                elif action == "toggleArchive":
-                    await toggleArchive(websocket, payload, username)
-                elif action == "recordVisit":
-                    await recordVisit(websocket, payload, username)
-                elif action == "getAlbumsWithUserPhotos":
-                    result = db.getAlbumsWithUserPhotos(username)
-                    message = {"action": "getAlbums", "payload": result}
-                    await websocket.send_json(message)
-                elif action == "toggleOpen":
-                    await toggleOpen(websocket, payload, username)
-                elif action == "toggleProfile":
-                    await toggleProfile(websocket, payload, username)
-                elif action == "togglePrivate":
-                    await togglePrivate(websocket, payload, username)
-                elif action == "keepAlive":
-                    subjects = payload.get("payload", {}).get("subjects", [])
-                    await manager.keep_alive(websocket, subjects)
+                handler = websocketfuncs.get(action)
+                if handler:
+                    await handler(websocket, payload, username)
                 else:
                     logging.error("websocket - unknown action")
                     await websocket.close(code=1008)
