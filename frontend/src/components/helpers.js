@@ -48,7 +48,9 @@ async function authFetch(endpoint, options = {}, retry = true) {
 
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error(`Request failed: ${response.status} ${errText}`);
+    const error = new Error(`Request failed: ${response.status} ${errText}`);
+    error.status = response.status;
+    throw error;
   }
 
   // Parse JSON if possible
@@ -98,10 +100,16 @@ async function refreshToken() {
     const data = await resp.json();
     if (data.access_token) {
       localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token);
+      
+      try {
+        const uuidData = await sendJson("/api/generate-wssecret", {}); // socket secret
+        localStorage.setItem("wssecret", uuidData.wssecret); // socket secret
+      } catch (e) {
+        console.warn("Failed to refresh wssecret during token refresh", e);
+      }
+      
       return true;
     }
-    const uuidData = await sendJson("/api/generate-wssecret", {}); // socket secret
-    localStorage.setItem("wssecret", uuidData.wssecret); // socket secret
   } catch {
     return false;
   }

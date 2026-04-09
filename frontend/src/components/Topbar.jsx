@@ -16,7 +16,12 @@ function Topbar({ currentUser, setCurrentUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const checkSession = useCallback(async () => {
+  const checkSession = useCallback(async (isWakeup = false) => {
+    if (isWakeup) {
+      // Small delay on wakeup to let the radio/network stabilize on mobile
+      await new Promise(r => setTimeout(r, 1500));
+    }
+
     console.log("topbar protect test");
     try {
       const data = await receiveJson("/api/protected");
@@ -32,8 +37,12 @@ function Topbar({ currentUser, setCurrentUser }) {
         handleLogout();
       }
     } catch (err) {
-      console.error("Logged out:", err);
-      handleLogout();
+      console.error("Session check error:", err);
+      // Only logout if it's explicitly an auth failure (401 or 403)
+      // For network errors (status undefined or >= 500), we stay "logged in" locally
+      if (err.status === 401 || err.status === 403) {
+        handleLogout();
+      }
     }
   }, [setCurrentUser]);
 
@@ -45,7 +54,7 @@ function Topbar({ currentUser, setCurrentUser }) {
     const handleWakeup = () => {
       if (document.visibilityState === "visible") {
         console.log("Page wakeup/visible: checking session");
-        checkSession();
+        checkSession(true);
       }
     };
 
@@ -64,7 +73,8 @@ function Topbar({ currentUser, setCurrentUser }) {
     const refreshToken = localStorage.getItem("refresh_token");
     if (!refreshToken) return;
 
-    // Call /api/refresh every 9 minutes (less than the default 15 min expiry)
+    console.log("Starting keep-alive for", currentUser);
+
     const intervalId = setInterval(
       async () => {
         try {
@@ -75,7 +85,12 @@ function Topbar({ currentUser, setCurrentUser }) {
             },
           });
 
-          if (!resp.ok) throw new Error("Refresh failed");
+          if (!resp.ok) {
+            if (resp.status === 401 || resp.status === 403) {
+                throw new Error("Refresh failed - unauthorized");
+            }
+            return; // Ignore other errors (network)
+          }
 
           const data = await resp.json();
           localStorage.setItem("access_token", data.access_token);
@@ -85,7 +100,6 @@ function Topbar({ currentUser, setCurrentUser }) {
           localStorage.setItem("wssecret", uuidData.wssecret); // socket secret
         } catch (e) {
           console.warn("Keep‑alive failed, logging out", e);
-          // Token chain is broken – log the user out
           handleLogout();
         }
       },
@@ -94,9 +108,10 @@ function Topbar({ currentUser, setCurrentUser }) {
 
     // Clean up when component unmounts
     return () => clearInterval(intervalId);
-  }, []); // Only once on mount
+  }, [currentUser]); // Run when identity changes
 
   async function handleLogout() {
+    console.log("Logging out...");
     const token = localStorage.getItem("access_token");
     try {
       if (token) await fetch("/api/logout", { method: "POST" });
